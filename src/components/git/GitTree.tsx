@@ -1,11 +1,14 @@
+import { useLayoutEffect, useRef, useState } from 'react';
 import { headBranch, headCommit, reachable, renderText, type RepoState, type TreeLayout } from '@core/git';
 
 const LANE = 58;
 const ROW = 42;
-const R = 15;
 const PAD = 26;
 const LABEL_H = 18;
+/** 글자 폭 어림값 — 그린 뒤 실제 글꼴로 잰 값으로 바꾼다 */
 const CHAR_W = 7.3;
+const PROBE = 'abcdefghijklmnopqrst';
+const GAP = 6;
 
 type Props = {
   state: RepoState;
@@ -14,9 +17,16 @@ type Props = {
   previous?: TreeLayout;
   /** 어디에서도 닿지 않는 커밋도 흐리게 보여 줄지 (현재 트리는 보이고, 목표 트리는 숨긴다) */
   showOrphans?: boolean;
+  /**
+   * 커밋 설명(해시 + 메시지). 주면 SourceTree 처럼 커밋은 작은 점, 줄 오른쪽에 이름표와 설명을 놓는다.
+   * 없으면 커밋 원 안에 라벨(C1, C2')을 쓴다 (트리 미션)
+   */
+  names?: Readonly<Record<string, string>>;
   /** 그림 이름 (스크린 리더) */
   title: string;
 };
+
+type Tag = { key: string; text: string; head: boolean };
 
 /**
  * 그림 안 좌표. 최신이 위라서 줄(row)이 클수록 위로 올라간다(y 가 작아진다).
@@ -29,11 +39,11 @@ const at = (layout: TreeLayout, id: string) => ({
 
 /**
  * 부모(a, 아래) → 자식(b, 위) 선. SourceTree 처럼:
- * 갈라질 때는 부모 바로 위에서 꺾어 자식 레인으로 곧게, 합쳐질 때는 부모 레인으로 곧게 올라가다 자식 바로 아래에서 꺾는다
+ * early 면 부모 바로 위에서 꺾어 자식 레인으로 곧게(갈라질 때), 아니면 부모 레인으로 곧게 올라가다 자식 바로 아래에서 꺾는다(합쳐질 때)
  */
-function edgePath(a: { x: number; y: number }, b: { x: number; y: number }): string {
+function edgePath(a: { x: number; y: number }, b: { x: number; y: number }, early: boolean): string {
   if (a.x === b.x) return `M${a.x} ${a.y}L${b.x} ${b.y}`;
-  if (b.x > a.x) {
+  if (early) {
     const turn = a.y - ROW;
     return `M${a.x} ${a.y}C${a.x} ${a.y - ROW / 2} ${b.x} ${a.y - ROW / 2} ${b.x} ${turn}L${b.x} ${b.y}`;
   }
@@ -42,24 +52,39 @@ function edgePath(a: { x: number; y: number }, b: { x: number; y: number }): str
 }
 
 /**
- * 커밋 트리. git log · SourceTree · IntelliJ 처럼 최신이 위, 시작 커밋이 맨 아래.
- * 이름표는 모든 레인 오른쪽의 이름표 칸에 그 커밋의 줄 높이로 놓고 점선으로 잇는다 — 옆 레인 커밋을 덮지 않게.
+ * 커밋 트리. git log · SourceTree · IntelliJ 처럼 최신이 위, 한 줄에 커밋 하나.
+ * 이름표(와 설명)는 모든 레인 오른쪽 칸에 그 커밋의 줄 높이로 나란히 놓는다 — 옆 레인 커밋을 덮지 않게.
  * 이름표가 다른 커밋으로 옮겨 가면 미끄러지듯 움직인다.
  */
-export default function GitTree({ state, layout, previous, showOrphans = true, title }: Props) {
+export default function GitTree({ state, layout, previous, showOrphans = true, names, title }: Props) {
+  // 고정폭 글꼴이라도 기기마다 폭이 달라서, 이름표 상자 · 설명 자리를 실제 글자 폭으로 잡는다
+  const probe = useRef<SVGTextElement>(null);
+  const [charW, setCharW] = useState(CHAR_W);
+  useLayoutEffect(() => {
+    const measure = () => {
+      const w = probe.current?.getComputedTextLength?.();
+      if (w) setCharW(w / PROBE.length);
+    };
+    measure();
+    void document.fonts?.ready.then(measure);
+  }, []);
+  const tagWidth = (text: string) => text.length * charW + 14;
+
+  const compact = names !== undefined;
+  const R = compact ? 7 : 15;
   const live = reachable(state);
   const ids = Object.keys(layout).filter((id) => state.commits[id] && (showOrphans || live.has(id)));
   const current = headBranch(state);
   const head = headCommit(state);
 
   // 커밋마다 붙는 이름표: HEAD 가 가리키는 브랜치(또는 detached HEAD)가 먼저
-  const tags = new Map<string, { key: string; text: string; head: boolean }[]>();
-  const push = (id: string, tag: { key: string; text: string; head: boolean }) =>
-    tags.set(id, [...(tags.get(id) ?? []), tag]);
+  const tags = new Map<string, Tag[]>();
+  const push = (id: string, tag: Tag) => tags.set(id, [...(tags.get(id) ?? []), tag]);
   if (current === null) push(head, { key: 'HEAD', text: 'HEAD', head: true });
-  for (const name of Object.keys(state.branches).sort((a, b) =>
+  const branchNames = Object.keys(state.branches).sort((a, b) =>
     a === current ? -1 : b === current ? 1 : a.localeCompare(b),
-  )) {
+  );
+  for (const name of branchNames) {
     push(state.branches[name]!, {
       key: `b:${name}`,
       text: name === current ? `HEAD → ${name}` : name,
@@ -67,27 +92,44 @@ export default function GitTree({ state, layout, previous, showOrphans = true, t
     });
   }
 
+  // 선을 어디서 꺾을지: 첫 부모 선은 자식 레인이 비어 있게 배치했으니(layoutTree) 일찍 꺾는다.
+  // 합쳐지는 선은 부모 레인으로 올라가되, 그 사이에 다른 커밋이 있으면 일찍 꺾어 덮지 않게 한다
+  const occupied = new Set(ids.map((id) => `${layout[id]!.lane}:${layout[id]!.row}`));
+  const early = (parent: string, child: string, first: boolean) => {
+    const a = layout[parent]!;
+    const b = layout[child]!;
+    if (first || b.lane > a.lane) return true;
+    for (let row = a.row + 1; row < b.row; row++) if (occupied.has(`${a.lane}:${row}`)) return true;
+    return false;
+  };
+
   const maxLane = Math.max(0, ...ids.map((id) => layout[id]!.lane));
   const maxRow = Math.max(0, ...ids.map((id) => layout[id]!.row));
-  const longest = Math.max(0, ...[...tags.values()].flat().map((t) => t.text.length));
   const labelX = PAD + maxLane * LANE + R + 14;
-  const width = labelX + longest * CHAR_W + 12 + PAD / 2;
-  const height = PAD * 2 + maxRow * ROW + LABEL_H;
 
-  // 같은 줄의 이름표를 모아 그 줄 높이를 가운데로 쌓는다 (레인 순서대로)
-  const placed: { key: string; text: string; head: boolean; node: { x: number; y: number }; y: number }[] = [];
-  const byRow = new Map<number, string[]>();
-  for (const id of tags.keys()) {
-    if (!layout[id]) continue;
-    byRow.set(layout[id].row, [...(byRow.get(layout[id].row) ?? []), id]);
+  // 줄마다: 이름표를 가로로 나란히, 그 뒤에 설명
+  const placed: (Tag & { x: number; y: number })[] = [];
+  const descriptions: { id: string; x: number; y: number; text: string }[] = [];
+  const leads: { id: string; from: { x: number; y: number } }[] = [];
+  let widest = 0;
+  for (const id of ids) {
+    const { y } = at(layout, id);
+    let x = labelX;
+    const list = tags.get(id) ?? [];
+    for (const tag of list) {
+      placed.push({ ...tag, x, y });
+      x += tagWidth(tag.text) + GAP;
+    }
+    const text = names?.[id];
+    if (text) {
+      descriptions.push({ id, x, y, text });
+      x += text.length * charW;
+    }
+    if (list.length > 0 || text) leads.push({ id, from: at(layout, id) });
+    widest = Math.max(widest, x - labelX);
   }
-  for (const [row, commitIds] of byRow) {
-    const list = commitIds
-      .sort((a, b) => layout[a]!.lane - layout[b]!.lane)
-      .flatMap((id) => tags.get(id)!.map((tag) => ({ ...tag, node: at(layout, id) })));
-    const top = -row * ROW - ((list.length - 1) * LABEL_H) / 2;
-    list.forEach((tag, i) => placed.push({ ...tag, y: top + i * LABEL_H }));
-  }
+  const width = labelX + widest + PAD / 2;
+  const height = PAD * 2 + maxRow * ROW + LABEL_H;
 
   return (
     <svg
@@ -100,37 +142,38 @@ export default function GitTree({ state, layout, previous, showOrphans = true, t
     >
       <title>{title}</title>
       <desc>{renderText(state)}</desc>
+      <text ref={probe} visibility="hidden" aria-hidden="true">
+        {PROBE}
+      </text>
 
       {/* 줄이 늘면 그림 전체가 한 칸 아래로 미끄러지고, 새 커밋은 맨 위에 나타난다 */}
       <g className="tree-shift" style={{ transform: `translate(0px, ${PAD + maxRow * ROW}px)` }}>
         {ids.flatMap((id) =>
-          state.commits[id]!.parents.filter((p) => ids.includes(p)).map((p) => {
-            const a = at(layout, p);
-            const b = at(layout, id);
-            const d = edgePath(a, b);
-            return (
+          state.commits[id]!.parents.map((p, i) =>
+            ids.includes(p) ? (
               <path
                 key={`${p}-${id}`}
-                d={d}
+                d={edgePath(at(layout, p), at(layout, id), early(p, id, i === 0))}
                 fill="none"
                 className={`tree-fade ${live.has(id) ? 'stroke-slate-500' : 'stroke-slate-700'}`}
                 strokeWidth={2}
                 strokeDasharray={live.has(id) ? undefined : '4 4'}
               />
-            );
-          }),
+            ) : null,
+          ),
         )}
 
-        {/* 이름표까지 잇는 점선 — 커밋보다 먼저 그려 커밋 아래로 지나가게 */}
-        {placed.map((tag) => (
+        {/* 이름표 · 설명 칸까지 잇는 점선 — 커밋보다 먼저 그려 커밋 아래로 지나가게 */}
+        {leads.map(({ id, from }) => (
           <line
-            key={`lead:${tag.key}`}
-            x1={tag.node.x + R + 2}
-            y1={tag.node.y}
+            key={`lead:${id}`}
+            x1={from.x + R + 2}
+            y1={from.y}
             x2={labelX - 3}
-            y2={tag.y}
-            className={tag.head ? 'stroke-amber-400/60' : 'stroke-sky-500/50'}
+            y2={from.y}
+            className={id === head ? 'stroke-amber-400/50' : 'stroke-slate-600'}
             strokeDasharray="2 3"
+            opacity={live.has(id) ? 1 : 0.4}
           />
         ))}
 
@@ -157,27 +200,39 @@ export default function GitTree({ state, layout, previous, showOrphans = true, t
                   strokeWidth={2}
                   strokeDasharray={live.has(id) ? undefined : '3 3'}
                 />
-                <text textAnchor="middle" dominantBaseline="central" className="fill-slate-100">
-                  {c.label}
-                </text>
+                {!compact && (
+                  <text textAnchor="middle" dominantBaseline="central" className="fill-slate-100">
+                    {c.label}
+                  </text>
+                )}
               </g>
             </g>
           );
         })}
 
+        {descriptions.map((d) => (
+          <text
+            key={`desc:${d.id}`}
+            className={`tree-label ${live.has(d.id) ? 'fill-slate-300' : 'fill-slate-600 line-through'}`}
+            style={{ transform: `translate(${d.x}px, ${d.y}px)` }}
+            dominantBaseline="central"
+          >
+            {d.text}
+          </text>
+        ))}
+
         {placed.map((tag) => {
-          const w = tag.text.length * CHAR_W + 12;
           const h = LABEL_H - 2;
           return (
             <g
               key={tag.key}
               className="tree-label"
-              style={{ transform: `translate(${labelX}px, ${tag.y}px)` }}
+              style={{ transform: `translate(${tag.x}px, ${tag.y}px)` }}
               data-label={tag.text}
             >
               <rect
                 y={-h / 2}
-                width={w}
+                width={tagWidth(tag.text)}
                 height={h}
                 rx={4}
                 className={tag.head ? 'fill-amber-500/20 stroke-amber-400' : 'fill-sky-500/15 stroke-sky-500/60'}

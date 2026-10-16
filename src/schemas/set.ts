@@ -57,6 +57,20 @@ export const copyItemSchema = z
     output: z.string().min(1).optional(),
     /** Enter 를 치면 보여 줄 그림 (그림 보기를 켰을 때). 문제 마지막 줄에 붙는다 */
     scene: sceneSchema.optional(),
+    /** (engine 세트) 이 명령 앞에 엔진에서 몰래 실행할 명령 — 이야기 속 "커밋한 뒤" 같은 것. 치지 않는다 */
+    before: z.array(z.string().min(1)).optional(),
+    /** (engine 세트) 트리와 상관없는 명령(stash · log …)은 엔진에서 뺀다 */
+    skipEngine: z.boolean().optional(),
+    /** (engine 세트) Enter 를 치면 이 명령 전 · 후 커밋 트리를 그림으로 */
+    tree: z
+      .object({ caption: z.string().min(1).max(80) })
+      .strict()
+      .optional(),
+    /** (engine 세트) 이 명령이 만든 커밋에 그림에서 붙일 해시 (출력에 나온 해시와 맞추려고) */
+    hash: z
+      .string()
+      .regex(/^[0-9a-f]{7}$/, '7자리 16진수')
+      .optional(),
     /** 치지 않는 앞뒤 코드 — 컴파일 검증용 (M6) */
     hidden: z.object({ before: z.string().optional(), after: z.string().optional() }).strict().optional(),
   })
@@ -88,6 +102,11 @@ export const setSchema = z
     /** 카테고리 목록·검색 설명 */
     description: z.string().min(1),
     level: z.number().int().min(1).max(3),
+    /** 명령들을 Git 엔진으로 차례로 돌려 커밋 트리 그림을 만든다. root = 시작 커밋(C1)의 설명 */
+    engine: z
+      .object({ root: z.string().min(1).max(60) })
+      .strict()
+      .optional(),
     items: z.array(z.discriminatedUnion('type', [copyItemSchema, recallItemSchema])).min(1),
   })
   .strict();

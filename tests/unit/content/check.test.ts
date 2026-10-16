@@ -39,6 +39,7 @@ describe('정상 세트', () => {
       comments: ['상태를 본다'],
       output: null,
       scene: null,
+      tree: null,
       itemId: 'status',
     });
     expect(set.lines).toHaveLength(19);
@@ -72,10 +73,18 @@ describe('정상 세트', () => {
         comments: ['전체 설명'],
         output: null,
         scene: null,
+        tree: null,
         itemId: 'stream',
       },
-      { text: '    .map(User::name)', comments: [], output: null, scene: null, itemId: 'stream' },
-      { text: '    .toList();', comments: ['수정할 수 없는 List'], output: null, scene: null, itemId: 'stream' },
+      { text: '    .map(User::name)', comments: [], output: null, scene: null, tree: null, itemId: 'stream' },
+      {
+        text: '    .toList();',
+        comments: ['수정할 수 없는 List'],
+        output: null,
+        scene: null,
+        tree: null,
+        itemId: 'stream',
+      },
     ]);
   });
 });
@@ -293,5 +302,92 @@ describe('예상 시간', () => {
     );
     expect(errors(r)).toEqual([]);
     expect(r.problems).toEqual([expect.objectContaining({ level: 'warning', message: expect.stringMatching(/예상/) })]);
+  });
+});
+
+describe('엔진으로 도는 세트 (트리 그림)', () => {
+  // 엔진에서 빼는 채움 줄 (log 는 엔진이 모르는 명령)
+  const quiet = Array.from(
+    { length: 16 },
+    (_, i) => `  - id: q${i}\n    type: copy\n    text: git log --oneline --graph --all\n    skipEngine: true\n`,
+  ).join('');
+  const engineSet = (items: string, head = "engine: { root: '3f2a9c1 docs: add README' }\n") =>
+    buildContent(
+      [
+        file(
+          'content/sets/git/basic-commit.yaml',
+          setYaml().replace(/\nitems:\n[\s\S]*$/, `\n${head}items:\n${items}${quiet}`),
+        ),
+      ],
+      GUIDES,
+    );
+
+  it('명령마다 엔진 상태를 이어 가며, tree 가 있는 줄에 전 · 후 트리와 설명을 붙인다', () => {
+    const r = engineSet(
+      [
+        '  - id: create',
+        '    type: copy',
+        '    text: git branch feature',
+        '    tree: { caption: 이름표가 붙었다 }',
+        '  - id: switch',
+        '    type: copy',
+        '    text: git switch feature',
+        '  - id: back',
+        '    type: copy',
+        '    text: git switch main',
+        '    before: [\'git commit -m "a1b2c3d feat: login"\']',
+        '  - id: merge',
+        '    type: copy',
+        '    text: git merge --no-ff feature',
+        '    hash: e4f5a6b',
+        '    tree: { caption: 머지 커밋 }',
+        '',
+      ].join('\n'),
+    );
+    expect(errors(r)).toEqual([]);
+    const [create, sw, back, merge] = r.sets[0]!.lines;
+    expect(sw!.tree).toBeNull();
+    expect(back!.tree).toBeNull();
+    expect(create!.tree).toMatchObject({ caption: '이름표가 붙었다', names: { c1: '3f2a9c1 docs: add README' } });
+    expect(create!.tree!.before.branches).toEqual({ main: 'c1' });
+    expect(create!.tree!.after.branches).toEqual({ main: 'c1', feature: 'c1' });
+    const t = merge!.tree!;
+    expect(t.names).toEqual({
+      c1: '3f2a9c1 docs: add README',
+      c2: 'a1b2c3d feat: login',
+      c3: "e4f5a6b Merge branch 'feature'",
+    });
+    expect(t.after.commits.c3!.parents).toEqual(['c1', 'c2']);
+    expect(Object.keys(t.layoutBefore)).toEqual(['c1', 'c2']);
+    expect(t.layoutAfter.c3).toEqual({ lane: 0, row: 2 });
+  });
+
+  it('엔진에서 실패하는 명령 · 숨은 명령은 오류 (콘텐츠의 Git 흐름을 엔진이 검사한다)', () => {
+    const one = (item: string) => errors(engineSet(item))[0];
+    expect(one('  - id: x\n    type: copy\n    text: git switch nope\n')).toMatch(/엔진.*invalid reference: nope/);
+    expect(one("  - id: x\n    type: copy\n    text: git branch\n    before: ['git merge nope']\n")).toMatch(
+      /before.*not something we can merge/,
+    );
+  });
+
+  it('형식 규칙: tree 는 엔진에서 도는 줄에만, 엔진 세트의 명령은 한 줄, 엔진 칸은 엔진 세트에서만', () => {
+    expect(
+      errors(
+        engineSet('  - id: x\n    type: copy\n    text: git stash\n    skipEngine: true\n    tree: { caption: c }\n'),
+      )[0],
+    ).toMatch(/tree.*skipEngine/);
+    expect(errors(engineSet('  - id: x\n    type: copy\n    text: "git branch a\\ngit branch b"\n'))[0]).toMatch(
+      /한 줄/,
+    );
+    const plain = buildContent(
+      [
+        file(
+          'content/sets/git/basic-commit.yaml',
+          setYaml({}, `  - id: x\n    type: copy\n    text: git branch\n    tree: { caption: c }\n${filler}`),
+        ),
+      ],
+      GUIDES,
+    );
+    expect(errors(plain)[0]).toMatch(/engine/);
   });
 });
