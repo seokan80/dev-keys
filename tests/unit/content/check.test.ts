@@ -411,6 +411,33 @@ describe('엔진으로 도는 세트 (트리 그림)', () => {
     expect(t.layoutAfter.c3).toEqual({ lane: 0, row: 2 });
   });
 
+  it('복사한 커밋(cherry-pick)의 설명은 새 해시 + 원본 메시지 (원본 메시지 앞의 해시는 뺀다)', () => {
+    const r = engineSet(
+      [
+        '  - id: side',
+        '    type: copy',
+        '    text: git switch -c side',
+        '  - id: back',
+        '    type: copy',
+        '    text: git switch side',
+        '    before: [git switch main, \'git commit -m "a1b2c3d feat: login"\']',
+        '  - id: pick',
+        '    type: copy',
+        '    text: git cherry-pick main',
+        '    hash: 5307cb3',
+        '    tree: { caption: 복사했다 }',
+        '',
+      ].join('\n'),
+    );
+    expect(errors(r)).toEqual([]);
+    const pick = r.sets[0]!.lines.find((l) => l.itemId === 'pick')!;
+    expect(pick.tree!.names).toEqual({
+      c1: '3f2a9c1 docs: add README',
+      c2: 'a1b2c3d feat: login',
+      c3: '5307cb3 feat: login',
+    });
+  });
+
   it('엔진에서 실패하는 명령 · 숨은 명령은 오류 (콘텐츠의 Git 흐름을 엔진이 검사한다)', () => {
     const one = (item: string) => errors(engineSet(item))[0];
     expect(one('  - id: x\n    type: copy\n    text: git switch nope\n')).toMatch(/엔진.*invalid reference: nope/);

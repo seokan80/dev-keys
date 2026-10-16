@@ -244,8 +244,9 @@ function simulate(data: SetData, report: (msg: string) => void): Map<string, Tre
       report(`문제 ${item.id}: 엔진에서 실패 — ${r.error.message}`);
       return scenes;
     }
+    // hash 를 주면 "새 해시 + 메시지". 복사한 커밋(cherry-pick · rebase)은 원본 메시지 앞의 해시를 떼고 붙인다
     nameNew(state, r.state, (message, label) =>
-      item.hash ? `${item.hash} ${message ?? ''}`.trim() : (message ?? label),
+      item.hash ? `${item.hash} ${(message ?? '').replace(/^[0-9a-f]{7} /, '')}`.trim() : (message ?? label),
     );
     state = r.state;
     layout = layoutTree(state, layout);
