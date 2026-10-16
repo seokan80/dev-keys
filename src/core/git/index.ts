@@ -4,5 +4,6 @@ export { ancestors, headBranch, headCommit, isAncestor, reachable } from './grap
 export { tokenize } from './parse';
 export { resolve } from './refs';
 export { renderText } from './render';
+export { layoutSteps, layoutTree, type NodePos, type TreeLayout } from './layout';
 export { initialRepo } from './state';
 export type { Commit, ExecResult, GitError, GitEvent, Head, RepoState, ResetMode } from './types';
