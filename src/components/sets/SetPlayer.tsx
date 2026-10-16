@@ -3,6 +3,7 @@ import { bestKey, recordBest, setLastPlayed, updateSettings, type Best, type Set
 import type { TypingStats } from '@core/typing';
 import type { CodeLine } from '../../lib/content/check';
 import { updateSave, useSave } from '../../lib/save';
+import GitScene from '../scenes/GitScene';
 import TypingArea from '../typing/TypingArea';
 import type { NextSet } from './NextSetCard';
 import ResultScreen from './ResultScreen';
@@ -16,6 +17,8 @@ type Props = {
   commentMark?: string;
   /** 줄 앞 표시 (터미널의 $) */
   prompt?: string;
+  /** 결과 값 앞 표시 (→) */
+  outputMark?: string;
   /** 해설 문서 위치 (결과 화면의 "해설 읽기") */
   guideHref?: string;
 };
@@ -25,7 +28,7 @@ type Phase =
   | { kind: 'result'; run: number; stats: TypingStats; improved: boolean; previous: Best | null };
 
 /** 기본 모드 한 세트: 설정 · 최고 기록 · 따라치기 · 결과 */
-export default function SetPlayer({ setId, href, lines, next, commentMark, prompt, guideHref }: Props) {
+export default function SetPlayer({ setId, href, lines, next, commentMark, prompt, outputMark, guideHref }: Props) {
   const save = useSave();
   const [phase, setPhase] = useState<Phase>({ kind: 'typing', run: 0 });
   const key = bestKey(setId, 'copy');
@@ -33,6 +36,11 @@ export default function SetPlayer({ setId, href, lines, next, commentMark, promp
   const { settings } = save;
 
   const change = (patch: Partial<Settings>) => updateSave((s) => updateSettings(s, patch));
+  const hasScenes = lines.some((l) => l.scene !== null);
+  const previousScene = (i: number) => {
+    for (let k = i - 1; k >= 0; k--) if (lines[k]!.scene) return lines[k]!.scene;
+    return null;
+  };
 
   const onFinish = (stats: TypingStats) => {
     const at = new Date().toISOString();
@@ -54,6 +62,16 @@ export default function SetPlayer({ setId, href, lines, next, commentMark, promp
             : '아직 기록이 없어요'}
         </p>
         <div className="flex flex-wrap gap-4 text-slate-300">
+          {hasScenes && (
+            <label className="flex items-center gap-1">
+              <input
+                type="checkbox"
+                checked={settings.showScenes}
+                onChange={(e) => change({ showScenes: e.target.checked })}
+              />
+              그림 보기
+            </label>
+          )}
           <label className="flex items-center gap-1">
             <input
               type="checkbox"
@@ -99,6 +117,9 @@ export default function SetPlayer({ setId, href, lines, next, commentMark, promp
           outputs={lines.map((l) => l.output)}
           commentMark={commentMark}
           prompt={prompt}
+          outputMark={outputMark}
+          pauseAfter={lines.map((l) => settings.showScenes && l.scene !== null)}
+          renderScene={(i) => <GitScene scene={lines[i]!.scene!} previous={previousScene(i)} />}
           typingOptions={{ autoIndent: settings.autoIndent }}
           keyboardOptions={{ sixFinger: settings.sixFinger }}
           showKeyboard={settings.showKeyboard}

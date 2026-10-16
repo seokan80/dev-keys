@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { getSets } from '../../src/lib/content/load';
-import { hydrated } from './helpers';
+import { hydrated, typeLines as typeSet } from './helpers';
 
 const sets = getSets();
 const [first, second] = sets;
@@ -9,15 +9,6 @@ const java = sets.find((s) => s.category === 'java')!;
 
 const escapeHtml = (text: string) =>
   text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
-
-async function typeSet(page: Page, lines: readonly { text: string }[]) {
-  await page.getByTestId('typing-area').click();
-  for (const line of lines) {
-    // 들여쓰기 자동 입력(기본 켬)이라 줄 앞 공백은 치지 않는다
-    await page.keyboard.type(line.text.trimStart());
-    await page.keyboard.press('Enter');
-  }
-}
 
 test('메인 → 카테고리 → 세트로 들어간다', async ({ page }) => {
   await page.goto('/');

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { describeStrokes, keyStroke, strokesFor, type KeyboardOptions, type Strokes } from '@core/keyboard';
 import {
   apply,
@@ -25,6 +25,12 @@ type Props = {
   commentMark?: string;
   /** 줄 앞 표시 (터미널의 $) */
   prompt?: string;
+  /** 출력 줄 앞 표시 (코드 결과 값의 →) */
+  outputMark?: string;
+  /** 이 줄을 다 치면 그림을 보여 주고 Enter 를 한 번 더 기다린다 */
+  pauseAfter?: readonly boolean[];
+  /** 그 그림 */
+  renderScene?: (lineIndex: number) => ReactNode;
   typingOptions?: Partial<TypingOptions>;
   keyboardOptions?: KeyboardOptions;
   showKeyboard?: boolean;
@@ -68,6 +74,9 @@ export default function TypingArea({
   outputs,
   commentMark = '//',
   prompt,
+  outputMark,
+  pauseAfter,
+  renderScene,
   typingOptions,
   keyboardOptions = {},
   showKeyboard = true,
@@ -82,6 +91,12 @@ export default function TypingArea({
   const hydrated = useHydrated();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const currentLineRef = useRef<HTMLDivElement>(null);
+  /** 그림을 보여 주는 중인 줄. 이때는 Enter 만 받는다 */
+  const [showing, setShowing] = useState<number | null>(null);
+  const showingRef = useRef<number | null>(null);
+  const sceneRef = useRef<HTMLDivElement>(null);
+  /** 마지막 줄 그림을 다 본 뒤에 알릴 결과 */
+  const pendingFinish = useRef<TypingStats | null>(null);
 
   const commit = (next: TypingState) => {
     stateRef.current = next;
@@ -104,14 +119,43 @@ export default function TypingArea({
     currentLineRef.current?.scrollIntoView({ block: 'nearest' });
   }, [state.lineIndex]);
 
+  useEffect(() => {
+    if (showing !== null) sceneRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [showing]);
+
+  const setScene = (line: number | null) => {
+    showingRef.current = line;
+    setShowing(line);
+  };
+
   const send = (input: TypingInput) => {
+    // 그림을 보는 중에는 Enter 로 넘어가기만 한다
+    if (showingRef.current !== null) {
+      if (input.kind !== 'enter') return;
+      setScene(null);
+      const finish = pendingFinish.current;
+      pendingFinish.current = null;
+      if (finish) onFinish?.(finish);
+      return;
+    }
+
     const now = Date.now();
     const prev = stateRef.current;
     const next = apply(prev, input, now);
     if (next === prev) return;
-    commit(next);
     setTick(now);
-    if (prev.finishedAt === null && next.finishedAt !== null) onFinish?.(stats(next, now));
+    const finishedNow = prev.finishedAt === null && next.finishedAt !== null;
+    const lineDone = finishedNow || next.lineIndex !== prev.lineIndex;
+
+    if (lineDone && pauseAfter?.[prev.lineIndex]) {
+      // 그림 보는 시간은 타수 시간에 넣지 않는다
+      commit(pause(next));
+      setScene(prev.lineIndex);
+      if (finishedNow) pendingFinish.current = stats(next, now);
+      return;
+    }
+    commit(next);
+    if (finishedNow) onFinish?.(stats(next, now));
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -143,8 +187,12 @@ export default function TypingArea({
 
   const c = cursor(state);
   const s = stats(state, tick);
-  const hint = hintFor(state, keyboardOptions);
-  const finished = state.finishedAt !== null;
+  const hint: Hint | null =
+    showing !== null
+      ? { label: 'Enter', strokes: strokesFor('\n'), note: '그림을 보고 계속' }
+      : hintFor(state, keyboardOptions);
+  // 마지막 줄 그림을 보는 동안에는 아직 끝난 화면으로 넘기지 않는다
+  const finished = state.finishedAt !== null && showing === null;
   const activeFingers = hint?.strokes
     ? [hint.strokes.finger, ...(hint.strokes.shift ? [hint.strokes.shift.finger] : [])]
     : [];
@@ -189,8 +237,9 @@ export default function TypingArea({
         data-testid="typing-area"
       >
         {lines.map((target, i) => {
-          const current = i === c.lineIndex && !finished;
-          const done = i < c.lineIndex || finished;
+          const ended = state.finishedAt !== null;
+          const current = i === c.lineIndex && !ended;
+          const done = i < c.lineIndex || ended;
           const output = outputs?.[i];
           return (
             <div key={i} ref={i === c.lineIndex ? currentLineRef : undefined}>
@@ -214,10 +263,19 @@ export default function TypingArea({
                 prefix={prompt}
               />
               {output && done && (
-                <pre className="mb-2 text-sm whitespace-pre text-slate-400" data-testid="output">
-                  {output}
+                <pre
+                  className={`mb-2 text-sm whitespace-pre ${outputMark ? 'text-emerald-300/80' : 'text-slate-400'}`}
+                  data-testid="output"
+                >
+                  {outputMark
+                    ? output
+                        .split('\n')
+                        .map((l) => `${outputMark} ${l}`)
+                        .join('\n')
+                    : output}
                 </pre>
               )}
+              {showing === i && renderScene && <div ref={sceneRef}>{renderScene(i)}</div>}
             </div>
           );
         })}

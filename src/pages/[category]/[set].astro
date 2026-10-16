@@ -47,6 +47,7 @@ const { Content } = await render(guide);
       next={next}
       commentMark={category.comment}
       prompt={'prompt' in category ? category.prompt : undefined}
+      outputMark={'result' in category ? category.result : undefined}
       guideHref="#guide"
     />
 
