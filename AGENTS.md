@@ -33,6 +33,7 @@
 ## 작업 방식
 
 - 이슈 하나 = 브랜치 하나(`<이슈번호>-<짧은 이름>`) → PR → 저장소 주인 Approve → 병합
+- 할 일은 시작하기 전에 이슈로 만들어 프로젝트 보드(#6) Todo 에 할 순서대로 올려 둔다 — 저장소 주인이 다음 작업을 미리 볼 수 있게. 시작할 때 In Progress, PR 은 In Review
 - main은 보호돼 있다: 승인 1명, 마지막 푸시 뒤 승인, 대화 해결 필요
 - PR마다 미리보기 `https://pr-<번호>-dev-keys.seokan.workers.dev`, main은 `https://dev-keys.seokan.workers.dev`로 자동 배포
 - 콘텐츠 검수는 PR 미리보기(또는 `npm run dev`)에서 오른쪽 아래 "검수 모드"를 켜고 `↓`(채우기) · Enter(출력 · 그림)로 넘겨 본다. 운영 빌드에는 이 스위치가 없다

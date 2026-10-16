@@ -416,6 +416,23 @@ describe('엔진으로 도는 세트 (트리 그림)', () => {
     expect(g.layout).toEqual({ c1: { lane: 0, row: 0 }, c2: { lane: 1, row: 1 }, c3: { lane: 0, row: 2 } });
   });
 
+  it('엔진이 모르는 명령은 as 로 엔진에서 돌릴 명령을 준다 (worktree add -b → git branch)', () => {
+    const r = engineSet(
+      [
+        '  - id: wt',
+        '    type: copy',
+        '    text: git worktree add ../devkeys-search -b agent/search',
+        '    as: git branch agent/search',
+        '    tree: { caption: 에이전트 브랜치 }',
+        '',
+      ].join('\n'),
+    );
+    expect(errors(r)).toEqual([]);
+    const [wt] = r.sets[0]!.lines;
+    expect(wt!.graph).toEqual({ during: 0, after: 1, caption: '에이전트 브랜치' });
+    expect(r.sets[0]!.graph!.steps[1]!.branches).toEqual({ main: 'c1', 'agent/search': 'c1' });
+  });
+
   it('엔진 세트가 아니면 그래프가 없다', () => {
     const plain = buildContent([file('content/sets/git/basic-commit.yaml', setYaml())], GUIDES);
     expect(plain.sets[0]!.graph).toBeNull();
@@ -461,6 +478,11 @@ describe('엔진으로 도는 세트 (트리 그림)', () => {
         engineSet('  - id: x\n    type: copy\n    text: git stash\n    skipEngine: true\n    tree: { caption: c }\n'),
       )[0],
     ).toMatch(/tree.*skipEngine/);
+    expect(
+      errors(
+        engineSet('  - id: x\n    type: copy\n    text: git stash\n    skipEngine: true\n    as: git branch a\n'),
+      )[0],
+    ).toMatch(/as.*skipEngine/);
     expect(errors(engineSet('  - id: x\n    type: copy\n    text: "git branch a\\ngit branch b"\n'))[0]).toMatch(
       /한 줄/,
     );

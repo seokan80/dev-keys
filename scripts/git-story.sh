@@ -2,6 +2,7 @@
 # Git 세트의 이야기를 실제 git 으로 실행해 "$ 명령"과 출력을 찍는다 (콘텐츠 작성용).
 # 홈 폴더(/home/kim) · 커밋 시각을 고정해 경로와 해시가 매번 같게 나온다. 탭은 공백으로 펼친다(세트 출력 규칙).
 # 줄 끝 공백은 화면에 보이지 않으니 지운다 (log --graph 의 |/ 뒤 등).
+# 줄 중간의 \r 은 터미널처럼 덮어쓴다 — 편집기를 닫으면 지워지는 "hint: Waiting for your editor…" 같은 줄.
 # 터미널에서 친 것과 같게 가상 터미널(script)에서 실행하고 색 코드만 지운다 — 파이프로 받으면 git 이 (HEAD -> main) 같은 표시를 뺀다.
 #
 #   scripts/git-story.sh content/stories/git/<슬러그>.sh
@@ -32,7 +33,7 @@ tick() {
 run() {
   tick
   printf '\n$ %s\n' "$1"
-  script -qec "$1" /dev/null 2>&1 | sed -e 's/\x1b\[[0-9;]*[mK]//g' -e 's/\r$//' -e "s#$root##g" | expand -t 8 | sed 's/ *$//' || true
+  script -qec "$1" /dev/null 2>&1 | sed -e 's/\x1b\[[0-9;]*[mK]//g' -e 's/\r$//' -e 's/^.*\r//' -e "s#$root##g" | expand -t 8 | sed 's/ *$//' || true
 }
 
 quiet() {

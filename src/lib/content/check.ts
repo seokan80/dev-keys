@@ -249,7 +249,7 @@ function simulate(
       lines.set(item.id, { during, after: during, caption });
       continue;
     }
-    const r = execute(state, item.text.trim());
+    const r = execute(state, (item.as ?? item.text).trim());
     if (r.error) {
       report(`문제 ${item.id}: 엔진에서 실패 — ${r.error.message}`);
       return null;
@@ -312,11 +312,13 @@ export function buildContent(setFiles: RawFile[], guidePaths: string[]): { sets:
       if (itemIds.has(item.id)) report(`문제 id "${item.id}" 가 겹친다`);
       itemIds.add(item.id);
       if (item.type === 'copy') {
-        const engineFields = item.before || item.skipEngine !== undefined || item.tree || item.hash;
+        const engineFields = item.before || item.skipEngine !== undefined || item.tree || item.hash || item.as;
         if (!data.engine && engineFields)
-          report(`문제 ${item.id}: tree · before · skipEngine · hash 는 engine 세트에서만 쓴다`);
+          report(`문제 ${item.id}: tree · before · skipEngine · hash · as 는 engine 세트에서만 쓴다`);
         if (data.engine && item.tree && item.skipEngine)
           report(`문제 ${item.id}: tree 는 엔진에서 도는 줄에만 — skipEngine 과 함께 쓸 수 없다`);
+        if (data.engine && item.as && item.skipEngine)
+          report(`문제 ${item.id}: as 는 엔진에서 돌릴 명령 — skipEngine 과 함께 쓸 수 없다`);
         const itemLines = checkCopyItem(item, report);
         if (data.engine && itemLines.length > 1) report(`문제 ${item.id}: engine 세트의 명령은 한 줄씩`);
         lines.push(...itemLines);

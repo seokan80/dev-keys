@@ -1,0 +1,169 @@
+id: git-agent-worktree
+category: git
+order: 21
+title: 에이전트 작업 격리
+description: AI 에이전트 여럿에게 일을 맡길 때 — 작업 하나 = 브랜치 하나 = worktree 하나. 검토하고 합친 뒤 바로 정리하기
+level: 2
+# 이야기: ~/devkeys(main)에서 AI 에이전트 둘에게 검색 기능과 로그인 버그를 맡긴다.
+#   에이전트마다 옆 폴더(worktree)와 브랜치를 주고, 끝나면 검토해서 차례로 합친 뒤 폴더와 브랜치를 지운다.
+# 출력은 실제 git 2.53 으로 뽑았다: scripts/git-story.sh content/stories/git/agent-worktree.sh
+# 5부(AI 에이전트와 Git) 첫 세트. worktree 는 엔진이 모르는 명령이라 as 로 엔진에서는 git branch 로 돌린다.
+engine:
+  root: 'c7bba81 docs: add README'
+items:
+  - id: worktree-search
+    type: copy
+    text: git worktree add ../devkeys-search -b agent/search
+    note: 검색 기능을 맡길 에이전트에게 옆 폴더와 새 브랜치를 준다. 내 폴더(~/devkeys)는 그대로
+    before: ['git commit -m "e7c5b44 feat: add login page"']
+    as: git branch agent/search
+    output: |-
+      Preparing worktree (new branch 'agent/search')
+      HEAD is now at e7c5b44 feat: add login page
+    tree:
+      caption: agent/search 이름표가 생겼다 — 작업은 ../devkeys-search 폴더에서
+  - id: worktree-login
+    type: copy
+    text: git worktree add ../devkeys-login -b agent/login-fix
+    note: 로그인 버그를 맡길 에이전트에게도 따로
+    as: git branch agent/login-fix
+    output: |-
+      Preparing worktree (new branch 'agent/login-fix')
+      HEAD is now at e7c5b44 feat: add login page
+    tree:
+      caption: 에이전트마다 브랜치 하나 — 서로의 파일을 건드리지 않는다
+  - id: worktree-list
+    type: copy
+    text: git worktree list
+    note: 저장소 하나에 작업 폴더 셋. 커밋 · 브랜치는 함께 쓰고 파일만 따로다
+    skipEngine: true
+    output: |-
+      /home/kim/devkeys        e7c5b44 [main]
+      /home/kim/devkeys-login  e7c5b44 [agent/login-fix]
+      /home/kim/devkeys-search e7c5b44 [agent/search]
+  - id: branch-v
+    type: copy
+    text: git branch -v
+    note: (에이전트들이 각자 폴더에서 커밋했다) + 는 다른 worktree 에서 쓰는 중인 브랜치
+    before:
+      - git switch agent/search
+      - 'git commit -m "448364f feat: add search box"'
+      - git switch agent/login-fix
+      - 'git commit -m "267ad95 fix: post login form"'
+      - git switch main
+    skipEngine: true
+    output: |-
+      + agent/login-fix 267ad95 fix: post login form
+      + agent/search    448364f feat: add search box
+      * main            e7c5b44 feat: add login page
+  - id: review
+    type: copy
+    text: git diff main...agent/login-fix --stat
+    note: 합치기 전에 에이전트가 바꾼 것을 본다. 점 세 개 — 갈라진 뒤 그 브랜치에서 바뀐 것만
+    skipEngine: true
+    output: |2-
+       login.html | 2 +-
+       1 file changed, 1 insertion(+), 1 deletion(-)
+  - id: merge-login
+    type: copy
+    text: git merge agent/login-fix
+    note: 괜찮으니 합친다. main 이 그동안 움직이지 않아 fast-forward
+    output: |-
+      Updating e7c5b44..267ad95
+      Fast-forward
+       login.html | 2 +-
+       1 file changed, 1 insertion(+), 1 deletion(-)
+    tree:
+      caption: main 이 로그인 수정 커밋으로 앞으로 — 새 커밋 없이
+  - id: remove-login
+    type: copy
+    text: git worktree remove ../devkeys-login
+    note: 합쳤으면 바로 정리. 고친 채 남은 파일이 있으면 거부한다
+    skipEngine: true
+  - id: delete-login
+    type: copy
+    text: git branch -d agent/login-fix
+    note: 브랜치도 지운다. -d 는 합쳐지지 않은 브랜치면 거부해서 안전하다
+    output: Deleted branch agent/login-fix (was 267ad95).
+    tree:
+      caption: 다 쓴 이름표를 떼었다 — 커밋은 main 에 남아 있다
+  - id: merge-search
+    type: copy
+    text: git merge --no-ff agent/search
+    note: 검색 기능도 검토한 뒤 합친다. --no-ff 로 에이전트 작업이 한 덩어리로 남게
+    hash: 3d84b13
+    output: |-
+      Merge made by the 'ort' strategy.
+       search.html | 1 +
+       1 file changed, 1 insertion(+)
+       create mode 100644 search.html
+    tree:
+      caption: 머지 커밋 — 에이전트 작업이 갈라졌다 합쳐진 흔적으로 남는다
+  - id: remove-search
+    type: copy
+    text: git worktree remove ../devkeys-search
+    skipEngine: true
+  - id: delete-search
+    type: copy
+    text: git branch -d agent/search
+    output: Deleted branch agent/search (was 448364f).
+    tree:
+      caption: 열어 둔 작업이 없다 — 진행 중인 것만 남기면 무엇을 맡겼는지 한눈에 보인다
+  - id: worktree-list-after
+    type: copy
+    text: git worktree list
+    skipEngine: true
+    output: /home/kim/devkeys 3d84b13 [main]
+  - id: graph
+    type: copy
+    text: git log --oneline --graph
+    skipEngine: true
+    output: |-
+      *   3d84b13 (HEAD -> main) Merge branch 'agent/search'
+      |\
+      | * 448364f feat: add search box
+      * | 267ad95 fix: post login form
+      |/
+      * e7c5b44 feat: add login page
+      * c7bba81 docs: add README
+
+  # ── 도전 모드(뜻 보고 치기)
+  - id: recall-worktree-add
+    type: recall
+    prompt: 에이전트에게 맡길 옆 폴더와 새 브랜치를 만든다 — 폴더는 <dir>, 브랜치는 <branch>
+    answers: [git worktree add <dir> -b <branch>, git worktree add -b <branch> <dir>]
+    placeholder: { dir: ../devkeys-search, branch: agent/search }
+  - id: recall-worktree-list
+    type: recall
+    prompt: 열려 있는 작업 폴더(worktree) 목록을 본다
+    answers: [git worktree list]
+  - id: recall-branch-v
+    type: recall
+    prompt: 브랜치마다 마지막 커밋을 본다 — 다른 worktree 에서 쓰는 브랜치는 + 로 보인다
+    answers: [git branch -v, git branch --verbose]
+  - id: recall-review
+    type: recall
+    prompt: main 에서 갈라진 뒤 <branch> 브랜치에서 바뀐 파일과 줄 수만 본다
+    answers: [git diff main...<branch> --stat, git diff --stat main...<branch>]
+    placeholder: { branch: agent/login-fix }
+  - id: recall-worktree-remove
+    type: recall
+    prompt: 합친 작업의 폴더를 지운다 — 폴더는 <dir>
+    answers: [git worktree remove <dir>]
+    placeholder: { dir: ../devkeys-login }
+  - id: recall-worktree-remove-force
+    type: recall
+    prompt: 고친 채 남은 파일이 있어도 작업 폴더를 지운다 — 폴더는 <dir>
+    answers: [git worktree remove --force <dir>, git worktree remove -f <dir>, git worktree remove <dir> --force]
+    placeholder: { dir: ../devkeys-login }
+    note: 남은 변경이 정말 필요 없는지 먼저 본다 — 지우면 되돌릴 수 없다
+  - id: recall-worktree-prune
+    type: recall
+    prompt: 폴더를 그냥 지워 버린 worktree 기록을 정리한다
+    answers: [git worktree prune, git worktree prune -v]
+  - id: recall-merge-no-ff
+    type: recall
+    prompt: fast-forward 가 되더라도 머지 커밋을 만들어 <branch> 브랜치를 합친다
+    answers: [git merge --no-ff <branch>]
+    placeholder: { branch: agent/search }
+    context: { setup: [git switch -c agent/search, git commit, git switch main] }

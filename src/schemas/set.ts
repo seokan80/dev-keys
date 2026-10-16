@@ -66,6 +66,8 @@ export const copyItemSchema = z
       .object({ caption: z.string().min(1).max(80) })
       .strict()
       .optional(),
+    /** (engine 세트) 엔진이 모르는 명령을 엔진에서는 이 명령으로 돌린다 — worktree add -b X 는 git branch X */
+    as: z.string().min(1).optional(),
     /** (engine 세트) 이 명령이 만든 커밋에 그림에서 붙일 해시 (출력에 나온 해시와 맞추려고) */
     hash: z
       .string()
