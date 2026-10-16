@@ -1,6 +1,7 @@
 export {
   DEFAULT_TYPING_OPTIONS,
   apply,
+  completeLine,
   createSession,
   cursor,
   pause,

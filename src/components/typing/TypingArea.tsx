@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } fro
 import { describeStrokes, keyStroke, strokesFor, type KeyboardOptions, type Strokes } from '@core/keyboard';
 import {
   apply,
+  completeLine,
   createSession,
   cursor,
   pause,
@@ -13,6 +14,7 @@ import {
 } from '@core/typing';
 import FingerKeyboard from '../keyboard/FingerKeyboard';
 import FingerLegend from '../keyboard/FingerLegend';
+import { useReview } from '../../lib/review';
 import Line from './Line';
 
 type Props = {
@@ -85,6 +87,7 @@ export default function TypingArea({
 }: Props) {
   const [state, setState] = useState(() => createSession(lines, typingOptions));
   const stateRef = useRef(state);
+  const review = useReview();
   const [tick, setTick] = useState(0);
   const [focused, setFocused] = useState(false);
   const [ime, setIme] = useState(false);
@@ -165,7 +168,17 @@ export default function TypingArea({
     }
     if (e.ctrlKey || e.metaKey || e.altKey) return;
 
-    if (e.key === 'Backspace') send({ kind: 'backspace' });
+    if (e.key === 'ArrowDown' && review) {
+      // 검수 모드: 지금 줄을 정답으로 채운다 (그림을 보는 중에는 무시)
+      if (showingRef.current === null) {
+        const now = Date.now();
+        const next = completeLine(stateRef.current, now);
+        if (next !== stateRef.current) {
+          setTick(now);
+          commit(next);
+        }
+      }
+    } else if (e.key === 'Backspace') send({ kind: 'backspace' });
     else if (e.key === 'Enter') send({ kind: 'enter' });
     else if (e.key === 'Tab') {
       // 들여쓰기는 스페이스로 친다. Tab 으로 포커스가 빠져나가지 않게만 막는다.

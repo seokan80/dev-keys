@@ -1,5 +1,7 @@
 ---
 import '../styles/global.css';
+import ReviewBar from '../components/review/ReviewBar';
+import { REVIEW_AVAILABLE } from '../lib/review';
 
 interface Props {
   title: string;
@@ -23,5 +25,6 @@ const { title, description = '개발자용 타자 연습 — Git 명령과 코�
   </head>
   <body class="min-h-dvh bg-slate-950 text-slate-100 antialiased">
     <slot />
+    {REVIEW_AVAILABLE && <ReviewBar client:only="react" />}
   </body>
 </html>

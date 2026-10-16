@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { compare, execute, layoutSteps, layoutTree, type GitError, type RepoState, type TreeLayout } from '@core/git';
 import { missionScore } from '@core/scoring';
+import { useReview } from '../../lib/review';
 import GitTree from './GitTree';
 
 export type MissionProps = {
@@ -22,6 +23,7 @@ const clock = (sec: number) => {
 /** 트리 미션: 명령을 쳐서 현재 트리를 목표 트리와 같게 만든다. 결과가 같으면 어떤 풀이든 성공 */
 export default function MissionPanel({ title, timeLimitSec, start, solution, next, guideHref }: MissionProps) {
   const goal = useMemo(() => layoutSteps(start, solution), [start, solution]);
+  const review = useReview();
   const startLayout = useMemo(() => layoutTree(start), [start]);
 
   const [repo, setRepo] = useState<RepoState>(start);
@@ -76,6 +78,12 @@ export default function MissionPanel({ title, timeLimitSec, start, solution, nex
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+    // 검수 모드: 입력이 비어 있고 기록을 넘겨 보는 중이 아니면 ↓ 로 권장 풀이의 다음 명령
+    if (review && e.key === 'ArrowDown' && cursor === null && input === '') {
+      e.preventDefault();
+      setInput(solution[Math.min(commands, solution.length - 1)]!);
+      return;
+    }
     e.preventDefault();
     if (history.length === 0) return;
     const i =

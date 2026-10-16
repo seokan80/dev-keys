@@ -11,6 +11,8 @@ type Props = {
   guideHref?: string;
   /** 도전 모드 주소 */
   challengeHref?: string;
+  /** 검수 모드로 끝냈다 (기록하지 않음) */
+  reviewed?: boolean;
   onRetry: () => void;
 };
 
@@ -22,12 +24,25 @@ const formatTime = (ms: number) => {
 };
 
 /** 세트를 끝냈을 때: 기록 · 최고 기록 비교 · 다시 하기 · 다음 세트 */
-export default function ResultScreen({ stats, improved, previous, next, guideHref, challengeHref, onRetry }: Props) {
+export default function ResultScreen({
+  stats,
+  improved,
+  previous,
+  next,
+  guideHref,
+  challengeHref,
+  reviewed = false,
+  onRetry,
+}: Props) {
   return (
     <section className="flex flex-col gap-6 rounded-lg border border-slate-700 bg-slate-900 p-6" data-testid="result">
       <div className="flex flex-col gap-1">
         <h2 className="text-xl font-bold">완료!</h2>
-        {improved ? (
+        {reviewed ? (
+          <p className="text-fuchsia-300" data-testid="reviewed">
+            검수 모드 — 기록하지 않았어요
+          </p>
+        ) : improved ? (
           <p className="text-emerald-300">
             새 최고 기록이에요{previous ? ` (이전 ${Math.round(previous.cpm)}타)` : ''}
           </p>

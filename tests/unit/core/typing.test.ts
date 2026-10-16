@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { apply, createSession, cursor, pause, stats, type TypingOptions, type TypingState } from '@core/typing';
+import {
+  apply,
+  completeLine,
+  createSession,
+  cursor,
+  pause,
+  stats,
+  type TypingOptions,
+  type TypingState,
+} from '@core/typing';
 
 const T0 = 1_000_000;
 
@@ -185,5 +194,33 @@ describe('입력 검사', () => {
     const s = session(['ab']);
     expect(apply(s, { kind: 'char', char: 'ab' }, T0)).toBe(s);
     expect(apply(s, { kind: 'char', char: '' }, T0)).toBe(s);
+  });
+});
+
+describe('completeLine — 검수 모드: 지금 줄을 정답으로 채운다', () => {
+  it('남은 글자를 채우고 Enter 앞에서 멈춘다', () => {
+    const s = completeLine(type(session(['git status', 'git log']), 'git s'), T0 + 1000);
+    expect(s.typed).toBe('git status');
+    expect(s.lineIndex).toBe(0);
+    expect(cursor(s).expected).toEqual({ kind: 'enter' });
+  });
+
+  it('오타가 있으면 오타부터 지운다 (잘못 친 Enter 포함)', () => {
+    const s = completeLine(type(session(['git status']), 'git sx\n'), T0 + 1000);
+    expect(s.typed).toBe('git status');
+    expect(cursor(s).errorAt).toBe(-1);
+  });
+
+  it('들여쓰기 자동 입력이면 잠긴 앞부분은 그대로 두고 채운다', () => {
+    const s0 = apply(createSession(['a', '  b()'], { autoIndent: true }), { kind: 'char', char: 'a' }, T0);
+    const s = completeLine(apply(s0, { kind: 'enter' }, T0 + 100), T0 + 200);
+    expect(s.typed).toBe('  b()');
+  });
+
+  it('이미 다 쳤거나 끝난 세션은 그대로', () => {
+    const done = type(session(['ab']), 'ab');
+    expect(completeLine(done, T0 + 1000)).toBe(done);
+    const finished = type(session(['ab']), 'ab\n');
+    expect(completeLine(finished, T0 + 1000)).toBe(finished);
   });
 });

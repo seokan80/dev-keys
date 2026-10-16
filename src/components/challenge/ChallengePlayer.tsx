@@ -1,10 +1,11 @@
 import { useMemo, useRef, useState } from 'react';
 import { hintOf, judge, sameCommand, type Verdict } from '@core/challenge';
 import { RECALL_POINTS, challengeScore, typingAccuracy, type RecallOutcome } from '@core/scoring';
-import { pickDue, review } from '@core/srs';
+import { pickDue, review as srsReview } from '@core/srs';
 import { bestKey, recordBest, setLastPlayed, type Best } from '@core/storage';
 import type { RecallLine } from '../../lib/content/check';
 import { localDay } from '../../lib/day';
+import { useReview } from '../../lib/review';
 import { updateSave, useSave } from '../../lib/save';
 
 export type ChallengeQuestion = RecallLine & { setTitle: string };
@@ -42,6 +43,7 @@ const formatTime = (ms: number) => {
 /** 도전 모드 한 세트: 설명을 보고 명령을 떠올려 친다. 틀린 문제는 오답 반복(SRS)에 올라간다 */
 export default function ChallengePlayer({ setId, href, questions, pool, prompt, basicHref, guideHref, next }: Props) {
   const save = useSave();
+  const review = useReview();
   const [run, setRun] = useState(0);
   // 세트를 시작할 때 한 번 정한다 (푸는 동안 오답 기록이 바뀌어도 문제 순서는 그대로)
   const today = useMemo(() => localDay(), [run]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -60,7 +62,10 @@ export default function ChallengePlayer({ setId, href, questions, pool, prompt, 
   const isReview = picked.review.includes(q.key);
   const points = outcomes.reduce((n, o) => n + RECALL_POINTS[o], 0);
 
-  const mark = (correct: boolean) => updateSave((s) => ({ ...s, srs: review(s.srs, q.key, correct, today) }));
+  // 검수 모드에서는 오답 기록을 남기지 않는다
+  const mark = (correct: boolean) => {
+    if (!review) updateSave((s) => ({ ...s, srs: srsReview(s.srs, q.key, correct, today) }));
+  };
 
   const answer = (outcome: RecallOutcome) => {
     setOutcomes((o) => [...o, outcome]);
@@ -75,11 +80,12 @@ export default function ChallengePlayer({ setId, href, questions, pool, prompt, 
     const at = new Date().toISOString();
     const cpm = elapsedMs > 0 ? t.inserted / (elapsedMs / 60000) : 0;
     let outcome = { improved: false, previous: null as Best | null };
-    updateSave((s) => {
-      const r = recordBest(s, bestKey(setId, 'recall'), { cpm, accuracy, score, at });
-      outcome = r;
-      return setLastPlayed(r.save, href, at);
-    });
+    if (!review)
+      updateSave((s) => {
+        const r = recordBest(s, bestKey(setId, 'recall'), { cpm, accuracy, score, at });
+        outcome = r;
+        return setLastPlayed(r.save, href, at);
+      });
     setDone({ score, accuracy, elapsedMs, ...outcome });
   };
 
@@ -148,7 +154,11 @@ export default function ChallengePlayer({ setId, href, questions, pool, prompt, 
       <section className="flex flex-col gap-6 rounded-lg border border-slate-700 bg-slate-900 p-6" data-testid="result">
         <div className="flex flex-col gap-1">
           <h2 className="text-xl font-bold">완료!</h2>
-          {done.improved ? (
+          {review ? (
+            <p className="text-fuchsia-300" data-testid="reviewed">
+              검수 모드 — 기록하지 않았어요
+            </p>
+          ) : done.improved ? (
             <p className="text-emerald-300">
               새 최고 점수예요{done.previous?.score !== undefined ? ` (이전 ${done.previous.score}점)` : ''}
             </p>
@@ -281,6 +291,13 @@ export default function ChallengePlayer({ setId, href, questions, pool, prompt, 
           value={step.kind === 'correct' ? step.input : input}
           readOnly={step.kind === 'correct'}
           onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            // 검수 모드: ↓ 로 정답 채우기
+            if (e.key === 'ArrowDown' && review && step.kind !== 'correct') {
+              e.preventDefault();
+              setInput(q.answers[0]!);
+            }
+          }}
           autoFocus
           autoCapitalize="off"
           autoComplete="off"
