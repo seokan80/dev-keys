@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import { getSets } from '../../src/lib/content/load';
+import { hydrated } from './helpers';
 
 const sets = getSets();
 const [first, second] = sets;
@@ -8,11 +9,6 @@ const java = sets.find((s) => s.category === 'java')!;
 
 const escapeHtml = (text: string) =>
   text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
-
-/** 서버에서 그린 React 아일랜드가 모두 연결될 때까지 (AGENTS.md 환경 참고) */
-async function hydrated(page: Page) {
-  await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
-}
 
 async function typeSet(page: Page, lines: readonly { text: string }[]) {
   await page.getByTestId('typing-area').click();
