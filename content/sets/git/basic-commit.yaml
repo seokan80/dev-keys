@@ -24,6 +24,8 @@ items:
     text: git init
     note: 지금 폴더(~/devkeys)를 Git 저장소로 만든다
     output: Initialized empty Git repository in /home/kim/devkeys/.git/
+    scene:
+      caption: .git 이 생겼다 — 작업 트리 · 스테이징 · 저장소 세 칸이 준비됐다
   - id: status-untracked
     type: copy
     text: git status
@@ -38,10 +40,17 @@ items:
               README.md
 
       nothing added to commit but untracked files present (use "git add" to track)
+    scene:
+      workdir: [README.md (새 파일)]
+      caption: README.md 는 작업 트리에만 있다 — Git 이 아직 추적하지 않는다
   - id: add-file
     type: copy
     text: git add README.md
     note: README.md 를 스테이징한다 — 다음 커밋에 넣을 목록에 올린다
+    scene:
+      staged: [README.md (새 파일)]
+      arrow: { from: workdir, to: staged, label: add }
+      caption: 스테이징에 올렸다 — 다음 커밋에 들어갈 목록
   - id: status-short
     type: copy
     text: git status --short
@@ -55,6 +64,10 @@ items:
       [main (root-commit) 3f2a9c1] docs: add README
        1 file changed, 1 insertion(+)
        create mode 100644 README.md
+    scene:
+      repo: ['3f2a9c1 docs: add README']
+      arrow: { from: staged, to: repo, label: commit }
+      caption: 스테이징된 것이 커밋으로 기록됐다. 스테이징은 다시 비었다
   - id: diff
     type: copy
     text: git diff
@@ -67,10 +80,20 @@ items:
       @@ -1 +1,2 @@
        # DevKeys
       +Typing practice for developers
+    scene:
+      workdir: [README.md (고침)]
+      repo: ['3f2a9c1 docs: add README']
+      compare: [workdir, staged]
+      caption: 작업 트리를 스테이징(마지막으로 add 한 상태)과 비교 — 아직 add 안 한 변경
   - id: add-all
     type: copy
     text: git add .
     note: 지금 폴더 아래의 변경을 모두 스테이징한다
+    scene:
+      staged: [README.md (고침)]
+      repo: ['3f2a9c1 docs: add README']
+      arrow: { from: workdir, to: staged, label: add }
+      caption: 고친 README.md 가 스테이징에 올라갔다
   - id: diff-staged
     type: copy
     text: git diff --staged
@@ -83,10 +106,20 @@ items:
       @@ -1 +1,2 @@
        # DevKeys
       +Typing practice for developers
+    scene:
+      staged: [README.md (고침)]
+      repo: ['3f2a9c1 docs: add README']
+      compare: [staged, repo]
+      caption: 스테이징을 마지막 커밋과 비교 — 커밋하면 들어갈 변경
   - id: restore-staged
     type: copy
     text: git restore --staged README.md
     note: 스테이징만 취소한다. 파일을 고친 내용은 그대로 남는다
+    scene:
+      workdir: [README.md (고침)]
+      repo: ['3f2a9c1 docs: add README']
+      arrow: { from: repo, to: staged, label: restore --staged }
+      caption: 스테이징을 마지막 커밋 상태로 되돌렸다 — 고친 내용은 작업 트리에 남는다
   - id: status-modified
     type: copy
     text: git status --short
@@ -103,6 +136,10 @@ items:
     output: |-
       [main 7d4e8b2] docs: describe project
        1 file changed, 1 insertion(+)
+    scene:
+      repo: ['7d4e8b2 docs: describe project', '3f2a9c1 docs: add README']
+      arrow: { from: staged, to: repo, label: commit }
+      caption: 두 번째 커밋 — 최신 커밋이 위에 쌓이고 HEAD 가 따라 올라간다
   - id: log
     type: copy
     text: git log --oneline
@@ -131,6 +168,9 @@ items:
       [main 9b1c3d5] docs: describe the project
        Date: Fri Oct 16 21:05:12 2026 +0900
        1 file changed, 1 insertion(+)
+    scene:
+      repo: ['9b1c3d5 docs: describe the project', '~7d4e8b2 docs: describe project', '3f2a9c1 docs: add README']
+      caption: 마지막 커밋을 새 커밋으로 바꿔 끼웠다 — 해시가 7d4e8b2 에서 9b1c3d5 로
   - id: log-after-amend
     type: copy
     text: git log --oneline
@@ -142,10 +182,20 @@ items:
     type: copy
     text: git restore README.md
     note: (README.md 를 실수로 망친 뒤) 스테이징하지 않은 변경을 버린다 — 되돌릴 수 없다
+    scene:
+      workdir: ['~README.md (망친 변경)']
+      repo: ['9b1c3d5 docs: describe the project', '3f2a9c1 docs: add README']
+      arrow: { from: staged, to: workdir, label: restore }
+      caption: 작업 트리를 스테이징 상태로 덮어썼다 — 망친 변경은 사라졌고 되돌릴 수 없다
   - id: reset-soft
     type: copy
     text: git reset --soft HEAD~1
     note: 마지막 커밋을 취소한다. HEAD~1 은 바로 앞 커밋. --soft 라 변경은 스테이징된 채로 남는다
+    scene:
+      staged: [README.md (고침)]
+      repo: ['~9b1c3d5 docs: describe the project', '3f2a9c1 docs: add README']
+      arrow: { from: repo, to: staged, label: reset --soft }
+      caption: HEAD 가 한 칸 뒤로 — 취소한 커밋의 변경은 스테이징에 남았다
   - id: status-staged
     type: copy
     text: git status --short

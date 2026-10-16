@@ -52,16 +52,26 @@ items:
         note: 자연 순서로 정렬한다 (문자열은 사전 순)
       - at: .toList();
         note: 'Java 16+: 수정할 수 없는 List 를 돌려준다. collect(Collectors.toList()) 는 수정 가능 여부가 정해져 있지 않다'
+        result: 'paidCustomers = [kim, park]'
       - at: .mapToInt(
         note: IntStream 으로 바꾸면 sum · average 를 바로 쓰고 Integer 박싱도 없다
       - at: groupingBy(
         note: '키(고객)별로 묶는다. 두 번째 인자는 묶인 값들을 모으는 방법'
       - at: summingInt(
         note: '묶인 주문 금액을 더한다 → Map<String, Integer>'
+        result: 'totalByCustomer = {kim=42000, lee=8000, park=5000} (HashMap 이라 순서는 정해져 있지 않다)'
       - at: joining(
         note: '구분자 · 앞 · 뒤 — 결과는 "[kim, park]"'
+        result: 'names = "[kim, park]"'
       - at: .max(
         note: 가장 큰 값. 스트림이 비어 있을 수 있어 Optional 로 돌려준다
+        result: 'biggest = Optional[Order[customer=kim, status=PAID, amount=30000]]'
+      - at: '5000));'
+        note: List.of 가 닫히는 곳 — 주문 4개짜리 List 가 만들어진다
+        result: 'orders.size() = 4'
+      - at: '.sum();'
+        note: IntStream 의 합
+        result: 'total = 55000'
     hidden:
       before: |-
         import java.util.*;
