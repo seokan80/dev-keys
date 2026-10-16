@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // 정적 자산만 올리는 Worker (스크립트 없음). astro build 결과(dist)를 그대로 내보낸다.
+  "name": "dev-keys",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "404-page",
+  },
+  "workers_dev": true,
+  // PR 미리보기: wrangler versions upload --preview-alias pr-<번호>
+  //   → https://pr-<번호>-dev-keys.seokan.workers.dev
+  "preview_urls": true,
+}
