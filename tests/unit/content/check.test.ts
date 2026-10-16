@@ -40,6 +40,7 @@ describe('정상 세트', () => {
       output: null,
       scene: null,
       graph: null,
+      prompt: null,
       itemId: 'status',
     });
     expect(set.lines).toHaveLength(19);
@@ -74,15 +75,25 @@ describe('정상 세트', () => {
         output: null,
         scene: null,
         graph: null,
+        prompt: null,
         itemId: 'stream',
       },
-      { text: '    .map(User::name)', comments: [], output: null, scene: null, graph: null, itemId: 'stream' },
+      {
+        text: '    .map(User::name)',
+        comments: [],
+        output: null,
+        scene: null,
+        graph: null,
+        prompt: null,
+        itemId: 'stream',
+      },
       {
         text: '    .toList();',
         comments: ['수정할 수 없는 List'],
         output: null,
         scene: null,
         graph: null,
+        prompt: null,
         itemId: 'stream',
       },
     ]);
@@ -263,6 +274,37 @@ describe('따라치기 글 규칙', () => {
     expect(run('      - at: commit\n        note: x\n')[0]).toMatch(/맞는 줄이 없다/);
     expect(run('      - at: git add\n        note: x\n')[0]).toMatch(/2줄에 맞는다/);
     expect(run('      - at: add .\n        note: x\n      - at: " ."\n        note: y\n')[0]).toMatch(/같은 줄/);
+  });
+});
+
+describe('대화형 답 줄 (prompt)', () => {
+  const withItems = (items: string) =>
+    buildContent([file('content/sets/git/basic-commit.yaml', setYaml({}, `${items}${filler}`))], GUIDES);
+
+  it('prompt 가 있는 줄은 $ 대신 그 질문을 앞에 보여 준다 (git add -p 의 y · n)', () => {
+    const r = withItems(
+      [
+        '  - id: add-p',
+        '    type: copy',
+        '    text: git add -p',
+        '  - id: yes',
+        '    type: copy',
+        '    text: y',
+        "    prompt: '(1/2) Stage this hunk [y,n,q,a,d,k,K,j,J,g,/,e,p,P,?]?'",
+        '',
+      ].join('\n'),
+    );
+    expect(errors(r)).toEqual([]);
+    const [addP, yes] = r.sets[0]!.lines;
+    expect(addP!.prompt).toBeNull();
+    expect(yes!.prompt).toBe('(1/2) Stage this hunk [y,n,q,a,d,k,K,j,J,g,/,e,p,P,?]?');
+  });
+
+  it('prompt 는 한 줄 답에만, ASCII 만', () => {
+    const multi = withItems('  - id: x\n    type: copy\n    text: "y\\nn"\n    prompt: \'Stage?\'\n');
+    expect(errors(multi)[0]).toMatch(/prompt.*한 줄/);
+    const korean = withItems("  - id: x\n    type: copy\n    text: y\n    prompt: '계속?'\n");
+    expect(errors(korean)[0]).toMatch(/prompt.*ASCII/);
   });
 });
 

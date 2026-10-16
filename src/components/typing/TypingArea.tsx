@@ -27,6 +27,8 @@ type Props = {
   commentMark?: string;
   /** 줄 앞 표시 (터미널의 $) */
   prompt?: string;
+  /** 줄마다 앞 표시를 바꿀 때 (대화형 질문에 답하는 줄) — null 이면 prompt */
+  prompts?: readonly (string | null)[];
   /** 출력 줄 앞 표시 (코드 결과 값의 →) */
   outputMark?: string;
   /** 이 줄을 다 치면 그림을 보여 주고 Enter 를 한 번 더 기다린다 */
@@ -78,6 +80,7 @@ export default function TypingArea({
   outputs,
   commentMark = '//',
   prompt,
+  prompts,
   outputMark,
   pauseAfter,
   renderScene,
@@ -281,7 +284,7 @@ export default function TypingArea({
                 typed={state.typed}
                 errorAt={c.errorAt}
                 focused={focused}
-                prefix={prompt}
+                prefix={prompts?.[i] ?? prompt}
               />
               {output && done && (
                 <pre

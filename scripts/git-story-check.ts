@@ -28,10 +28,15 @@ const steps = transcript
   });
 let at = 0;
 
-type Item = { id: string; type: string; text: string; output?: string };
+type Item = { id: string; type: string; text: string; output?: string; prompt?: string };
 const items = (parse(readFileSync(setFile, 'utf8')) as { items: Item[] }).items.filter((i) => i.type === 'copy');
+const clean = (text: string | undefined) => (text ?? '').replace(/\n$/, '');
 let bad = 0;
-for (const item of items) {
+for (let k = 0; k < items.length; k++) {
+  const item = items[k]!;
+  // 대화형 답 줄(prompt)은 앞 명령의 출력 안에 "질문? 답" 으로 들어 있다 — 명령과 함께 맞춰 본다
+  const answers: Item[] = [];
+  while (items[k + 1]?.prompt !== undefined) answers.push(items[++k]!);
   const found = steps.findIndex((s, i) => i >= at && s.command === item.text);
   if (found === -1) {
     bad += 1;
@@ -40,7 +45,11 @@ for (const item of items) {
   }
   at = found + 1;
   const got = steps[found]!.output;
-  const mine = (item.output ?? '').replace(/\n$/, '');
+  let mine = clean(item.output);
+  for (const a of answers) {
+    mine += `${mine ? '\n' : ''}${a.prompt} ${a.text}`;
+    if (a.output) mine += `\n${clean(a.output)}`;
+  }
   if (got !== mine) {
     bad += 1;
     console.log(

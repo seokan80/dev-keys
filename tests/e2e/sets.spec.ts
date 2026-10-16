@@ -87,3 +87,19 @@ test('설정은 저장된다', async ({ page }) => {
   await expect(page.getByLabel('키보드 보기')).not.toBeChecked();
   await expect(page.locator('[data-key="KeyA"]')).toHaveCount(0);
 });
+
+test('대화형 질문에 답하는 줄은 $ 대신 그 질문이 앞에 보인다 (git add -p 의 y · n)', async ({ page }) => {
+  const review = sets.find((s) => s.lines.some((l) => l.prompt))!;
+  const at = review.lines.findIndex((l) => l.prompt);
+  await page.goto(review.href);
+  await hydrated(page);
+  await typeSet(page, review.lines.slice(0, at));
+  const current = page.getByTestId('current-line');
+  await expect(current).toContainText(review.lines[at]!.prompt!);
+  await expect(current).not.toContainText('$');
+  await page.keyboard.type(review.lines[at]!.text);
+  await page.keyboard.press('Enter');
+  await expect(page.getByTestId('current-line')).toContainText(review.lines[at + 1]!.prompt!);
+  // 그래프 아래에는 답(y)이 아니라 질문을 띄운 명령이 보인다
+  if (review.graph) await expect(page.getByTestId('graph-caption')).toContainText(`$ ${review.lines[at - 1]!.text}`);
+});

@@ -32,6 +32,8 @@ export type CodeLine = {
   output: string | null;
   scene: Scene | null;
   graph: LineGraph | null;
+  /** 대화형 답 줄이면 앞에 보일 질문 ($ 대신) */
+  prompt: string | null;
   itemId: string;
 };
 
@@ -79,6 +81,11 @@ function checkCopyItem(item: CopyItem, report: (msg: string) => void): CodeLine[
   const where = (i: number) => `문제 ${item.id} ${i + 1}번째 줄`;
 
   if (lines[0] === '' || lines.at(-1) === '') report(`문제 ${item.id}: 앞뒤에 빈 줄이 있다`);
+  if (item.prompt !== undefined) {
+    if (lines.length > 1) report(`문제 ${item.id}: prompt 는 한 줄 답에만`);
+    const bad = [...item.prompt].find((ch) => ch < ' ' || ch > '~');
+    if (bad) report(`문제 ${item.id}: prompt 에 ASCII 밖 글자 ${charLabel(bad)}`);
+  }
   lines.forEach((line, i) => {
     if (line.includes('\t')) report(`${where(i)}: 탭은 쓰지 않는다 (공백으로)`);
     else {
@@ -131,6 +138,7 @@ function checkCopyItem(item: CopyItem, report: (msg: string) => void): CodeLine[
       output: outputs.length > 0 ? outputs.join('\n') : null,
       scene: i === last ? (item.scene ?? null) : null,
       graph: null,
+      prompt: item.prompt ?? null,
       itemId: item.id,
     };
   });
@@ -245,7 +253,8 @@ function simulate(
     }
     const during = steps.length - 1;
     const caption = item.tree?.caption ?? null;
-    if (item.skipEngine) {
+    // 대화형 답 줄(prompt)은 명령이 아니라 엔진에서 돌리지 않는다
+    if (item.skipEngine || item.prompt !== undefined) {
       lines.set(item.id, { during, after: during, caption });
       continue;
     }

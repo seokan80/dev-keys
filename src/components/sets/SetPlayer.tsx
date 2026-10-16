@@ -60,6 +60,11 @@ export default function SetPlayer({
   const [lineAt, setLineAt] = useState(0);
   const graphStep = lineAt < lines.length ? (lines[lineAt]?.graph?.during ?? 0) : (lines.at(-1)?.graph?.after ?? 0);
   const lastLine = lineAt > 0 ? lines[lineAt - 1] : undefined;
+  // 그래프 아래에는 방금 친 명령을 보인다 — 대화형 답 줄(y · n)이면 그 질문을 띄운 명령
+  const lastCommand = (() => {
+    for (let k = lineAt - 1; k >= 0; k--) if (!lines[k]!.prompt) return lines[k]!.text;
+    return null;
+  })();
   const previousScene = (i: number) => {
     for (let k = i - 1; k >= 0; k--) if (lines[k]!.scene) return lines[k]!.scene;
     return null;
@@ -98,7 +103,7 @@ export default function SetPlayer({
             <LiveGraph
               graph={graph}
               step={graphStep}
-              last={lastLine ? { command: lastLine.text, caption: lastLine.graph?.caption ?? null } : null}
+              last={lastLine && lastCommand ? { command: lastCommand, caption: lastLine.graph?.caption ?? null } : null}
             />
           </div>
         )}
@@ -126,6 +131,7 @@ export default function SetPlayer({
               outputs={lines.map((l) => l.output)}
               commentMark={commentMark}
               prompt={prompt}
+              prompts={lines.map((l) => l.prompt)}
               outputMark={outputMark}
               // 세 칸 그림만 Enter 로 멈춘다. 커밋 그래프는 옆에서 늘 바뀐다
               pauseAfter={lines.map((l) => settings.showScenes && l.scene !== null)}

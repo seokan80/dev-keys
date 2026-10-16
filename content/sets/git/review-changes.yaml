@@ -1,0 +1,290 @@
+id: git-review-changes
+category: git
+order: 22
+title: AI 변경 검토
+description: 에이전트가 바꾼 것을 훑고 필요한 것만 골라 담기 — diff --stat · add -p · diff --staged · stash --keep-index · restore -p · clean
+level: 2
+# 이야기: AI 에이전트에게 "요청에 타임아웃을 넣어 줘"를 맡겼더니 api.js 에 타임아웃과 함께 디버그 로그까지 넣고,
+#   README 를 고치고, 메모 파일(notes.tmp)도 남겼다. 바뀐 것을 훑고 필요한 것만 골라 커밋한다.
+# 출력은 실제 git 2.53 으로 뽑았다: scripts/git-story.sh content/stories/git/review-changes.sh
+# prompt 가 있는 줄은 대화형 질문(git add -p · restore -p)에 치는 답이다 — $ 대신 질문이 앞에 보인다.
+# engine: 커밋 그래프가 옆에 늘 보인다. 파일만 다루는 명령은 skipEngine, 커밋은 as 로 제목만 엔진에 준다.
+engine:
+  root: 'c7bba81 docs: add README'
+items:
+  - id: status
+    type: copy
+    text: git status --short
+    before: ['git commit -m "47ae10a feat: add api client"']
+    skipEngine: true
+    note: (에이전트에게 "요청에 타임아웃을 넣어 줘"를 맡긴 뒤) 무엇이 바뀌었나 — 부탁하지 않은 파일도 있다
+    output: |2-
+       M README.md
+       M api.js
+      ?? notes.tmp
+    scene:
+      workdir: [README.md (고침), api.js (고침), notes.tmp (새 파일)]
+      caption: 에이전트가 바꾼 것은 모두 작업 트리에 있다 — 아직 아무것도 커밋되지 않았다
+  - id: diff-stat
+    type: copy
+    text: git diff --stat
+    skipEngine: true
+    note: 얼마나 바뀌었나 먼저 훑는다. 부탁한 것보다 많이 바뀌었으면 거기부터 본다
+    output: |2-
+       README.md | 2 ++
+       api.js    | 3 ++-
+       2 files changed, 4 insertions(+), 1 deletion(-)
+  - id: add-p
+    type: copy
+    text: git add -p api.js
+    skipEngine: true
+    note: 바뀐 덩어리(hunk)마다 물어본다 — y 담기 · n 건너뛰기 · s 더 잘게 · q 그만
+    # 덩어리 끝의 빈 맥락 줄까지 보이게 끝 빈 줄을 지킨다 (|+)
+    output: |+
+      diff --git a/api.js b/api.js
+      index cdd6d22..5abfa72 100644
+      --- a/api.js
+      +++ b/api.js
+      @@ -1,6 +1,6 @@
+       export async function request(url, token) {
+         const headers = token ? { Authorization: token } : {}
+      -  const res = await fetch(url, { headers })
+      +  const res = await fetch(url, { headers, signal: AbortSignal.timeout(5000) })
+         return res.json()
+       }
+
+  - id: add-p-yes
+    type: copy
+    text: y
+    prompt: '(1/2) Stage this hunk [y,n,q,a,d,k,K,j,J,g,/,e,p,P,?]?'
+    note: 타임아웃 — 부탁한 것이니 담는다
+    output: |-
+      @@ -9,5 +9,6 @@ export function search(q) {
+       }
+
+       export function login(form) {
+      +  console.log("debug", form)
+         return request("/login", form)
+       }
+  - id: add-p-no
+    type: copy
+    text: n
+    prompt: '(2/2) Stage this hunk [y,n,q,a,d,K,J,g,/,e,p,P,?]?'
+    note: 디버그 로그 — 건너뛴다
+    scene:
+      workdir: [api.js (디버그 로그), README.md (고침), notes.tmp (새 파일)]
+      staged: [api.js (타임아웃)]
+      arrow: { from: workdir, to: staged, label: add -p }
+      caption: 한 파일의 변경이 두 곳으로 갈렸다 — 타임아웃은 스테이징, 디버그 로그는 작업 트리에
+  - id: diff-staged-stat
+    type: copy
+    text: git diff --staged --stat
+    skipEngine: true
+    note: 스테이징한 것 — api.js 의 한 줄만
+    output: |2-
+       api.js | 2 +-
+       1 file changed, 1 insertion(+), 1 deletion(-)
+  - id: diff-staged
+    type: copy
+    text: git diff --staged
+    skipEngine: true
+    note: 커밋될 내용을 끝까지 읽는다 — 지금 이대로 커밋된다
+    output: |-
+      diff --git a/api.js b/api.js
+      index cdd6d22..36b6668 100644
+      --- a/api.js
+      +++ b/api.js
+      @@ -1,6 +1,6 @@
+       export async function request(url, token) {
+         const headers = token ? { Authorization: token } : {}
+      -  const res = await fetch(url, { headers })
+      +  const res = await fetch(url, { headers, signal: AbortSignal.timeout(5000) })
+         return res.json()
+       }
+  - id: keep-index
+    type: copy
+    text: 'git stash push --keep-index -u -m "agent leftovers"'
+    skipEngine: true
+    note: 스테이징한 것만 남기고 나머지는 잠시 치운다(-u 는 새 파일까지). 이 상태로 테스트하면 커밋될 코드만 시험한다
+    output: 'Saved working directory and index state On main: agent leftovers'
+  - id: status-kept
+    type: copy
+    text: git status --short
+    skipEngine: true
+    note: 작업 트리에 스테이징한 것만 남았다 — 여기서 테스트를 돌린다
+    output: M  api.js
+  - id: stash-pop
+    type: copy
+    text: git stash pop
+    skipEngine: true
+    note: (테스트가 통과했다) 치운 것을 다시 꺼낸다
+    output: |-
+      Auto-merging api.js
+      On branch main
+      Changes to be committed:
+        (use "git restore --staged <file>..." to unstage)
+              modified:   api.js
+
+      Changes not staged for commit:
+        (use "git add <file>..." to update what will be committed)
+        (use "git restore <file>..." to discard changes in working directory)
+              modified:   README.md
+              modified:   api.js
+
+      Untracked files:
+        (use "git add <file>..." to include in what will be committed)
+              notes.tmp
+
+      Dropped refs/stash@{0} (a008f0f67c1d1c7e21c429cf7ff1a866e142cfb6)
+  - id: diff-left
+    type: copy
+    text: git diff api.js
+    skipEngine: true
+    note: 남은 변경 — 디버그 로그
+    output: |-
+      diff --git a/api.js b/api.js
+      index 36b6668..5abfa72 100644
+      --- a/api.js
+      +++ b/api.js
+      @@ -9,5 +9,6 @@ export function search(q) {
+       }
+
+       export function login(form) {
+      +  console.log("debug", form)
+         return request("/login", form)
+       }
+  - id: restore-p
+    type: copy
+    text: git restore -p api.js
+    skipEngine: true
+    note: 고친 덩어리를 골라 버린다
+    output: |-
+      diff --git a/api.js b/api.js
+      index 36b6668..5abfa72 100644
+      --- a/api.js
+      +++ b/api.js
+      @@ -9,5 +9,6 @@ export function search(q) {
+       }
+
+       export function login(form) {
+      +  console.log("debug", form)
+         return request("/login", form)
+       }
+  - id: restore-p-yes
+    type: copy
+    text: y
+    prompt: '(1/1) Discard this hunk from worktree [y,n,q,a,d,e,p,P,?]?'
+    note: 버린다 — 되돌릴 수 없으니 diff 를 보고 나서
+    scene:
+      workdir: [~api.js (디버그 로그), README.md (고침), notes.tmp (새 파일)]
+      staged: [api.js (타임아웃)]
+      caption: 디버그 로그를 버렸다 — 스테이징한 타임아웃은 그대로다
+  - id: add-readme
+    type: copy
+    text: git add README.md
+    skipEngine: true
+    note: README 는 맞게 고쳤으니 담는다
+  - id: clean-dry
+    type: copy
+    text: git clean -n
+    skipEngine: true
+    note: 에이전트가 남긴 새 파일 — 무엇이 지워질지 먼저
+    output: Would remove notes.tmp
+  - id: clean
+    type: copy
+    text: git clean -f
+    skipEngine: true
+    output: Removing notes.tmp
+    scene:
+      workdir: [~notes.tmp (새 파일)]
+      staged: [api.js (타임아웃), README.md (고침)]
+      caption: 커밋할 것만 스테이징에 남았다
+  - id: status-ready
+    type: copy
+    text: git status --short
+    skipEngine: true
+    note: 커밋할 것만 남았다
+    output: |-
+      M  README.md
+      M  api.js
+  - id: commit
+    type: copy
+    text: 'git commit -m "feat: add request timeout" -m "Abort fetch after 5 seconds."'
+    as: 'git commit -m "feat: add request timeout"'
+    hash: 981090a
+    note: -m 을 두 번 쓰면 둘째는 본문. 무엇을 왜 바꿨는지는 검토한 사람이 쓴다
+    output: |-
+      [main 981090a] feat: add request timeout
+       2 files changed, 3 insertions(+), 1 deletion(-)
+    scene:
+      repo: ['981090a feat: add request timeout', '47ae10a feat: add api client', 'c7bba81 docs: add README']
+      arrow: { from: staged, to: repo, label: commit }
+      caption: 부탁한 변경만 커밋됐다
+    tree:
+      caption: 검토를 거친 변경만 커밋으로 남았다
+  - id: show
+    type: copy
+    text: git show --stat HEAD
+    skipEngine: true
+    output: |-
+      commit 981090ae9ddf86349d1ab78bfe003a6c38187f4a (HEAD -> main)
+      Author: Kim Dev <dev@example.com>
+      Date:   Sat Oct 17 09:22:00 2026 +0900
+
+          feat: add request timeout
+
+          Abort fetch after 5 seconds.
+
+       README.md | 2 ++
+       api.js    | 2 +-
+       2 files changed, 3 insertions(+), 1 deletion(-)
+  - id: log
+    type: copy
+    text: git log --oneline -3
+    skipEngine: true
+    output: |-
+      981090a (HEAD -> main) feat: add request timeout
+      47ae10a feat: add api client
+      c7bba81 docs: add README
+
+  # ── 도전 모드(뜻 보고 치기)
+  - id: recall-diff-stat
+    type: recall
+    prompt: 스테이징하기 전, 바뀐 파일과 줄 수만 훑어본다
+    answers: [git diff --stat]
+  - id: recall-add-p
+    type: recall
+    prompt: <file> 파일의 변경을 덩어리마다 골라 스테이징한다
+    answers: [git add -p <file>, git add --patch <file>]
+    placeholder: { file: api.js }
+  - id: recall-keep-index
+    type: recall
+    prompt: 스테이징한 것만 남기고, 나머지 변경과 새 파일은 잠시 치워 둔다
+    answers:
+      - git stash push --keep-index -u
+      - git stash push -u --keep-index
+      - git stash push -k -u
+      - git stash --keep-index -u
+      - git stash -k -u
+      - git stash push --keep-index --include-untracked
+    note: 이 상태로 테스트하면 커밋될 코드만 시험한다. 끝나면 git stash pop
+  - id: recall-restore-p
+    type: recall
+    prompt: <file> 파일에서 고친 덩어리를 골라 버린다
+    answers: [git restore -p <file>, git restore --patch <file>, git checkout -p <file>]
+    placeholder: { file: api.js }
+  - id: recall-unstage-p
+    type: recall
+    prompt: <file> 파일에서 스테이징한 덩어리를 골라 내린다
+    answers:
+      [git restore --staged -p <file>, git restore -p --staged <file>, git restore -S -p <file>, git reset -p <file>]
+    placeholder: { file: api.js }
+  - id: recall-commit-v
+    type: recall
+    prompt: 커밋 메시지를 쓰는 편집기에 바뀐 내용(diff)도 함께 띄운다
+    answers: [git commit -v, git commit --verbose]
+  - id: recall-commit-body
+    type: recall
+    prompt: 제목과 본문을 함께 써서 커밋한다 — 제목은 <title>, 본문은 <body>
+    answers: ['git commit -m "<title>" -m "<body>"']
+    placeholder: { title: 'feat: add request timeout', body: Abort fetch after 5 seconds. }

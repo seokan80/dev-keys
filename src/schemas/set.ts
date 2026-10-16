@@ -66,6 +66,8 @@ export const copyItemSchema = z
       .object({ caption: z.string().min(1).max(80) })
       .strict()
       .optional(),
+    /** 대화형 질문에 답하는 줄 — $ 대신 이 질문을 앞에 보여 준다 (git add -p 의 y · n). 엔진에서는 돌리지 않는다 */
+    prompt: z.string().min(1).max(80).optional(),
     /** (engine 세트) 엔진이 모르는 명령을 엔진에서는 이 명령으로 돌린다 — worktree add -b X 는 git branch X */
     as: z.string().min(1).optional(),
     /** (engine 세트) 이 명령이 만든 커밋에 그림에서 붙일 해시 (출력에 나온 해시와 맞추려고) */

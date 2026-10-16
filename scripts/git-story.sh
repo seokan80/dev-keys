@@ -8,11 +8,12 @@
 #   scripts/git-story.sh content/stories/git/<슬러그>.sh
 #
 # 이야기 파일에서 쓰는 함수:
-#   run '명령'    — 칠 명령. "$ 명령"과 출력을 찍는다
+#   run '명령' [답 …] — 칠 명령. "$ 명령"과 출력을 찍는다. 답을 주면 대화형 질문(git add -p 등)이 뜰 때 하나씩 넣는다
 #   quiet '명령'  — 이야기 속 준비(파일 만들기 · 숨은 커밋). 찍지 않는다
 set -euo pipefail
 
 story=$(realpath "$1")
+here=$(dirname "$(realpath "$0")")
 root=$(mktemp -d)
 trap 'rm -rf "$root"' EXIT
 
@@ -33,7 +34,9 @@ tick() {
 run() {
   tick
   printf '\n$ %s\n' "$1"
-  script -qec "$1" /dev/null 2>&1 | sed -e 's/\x1b\[[0-9;]*[mK]//g' -e 's/\r$//' -e 's/^.*\r//' -e "s#$root##g" | expand -t 8 | sed 's/ *$//' || true
+  local command=$1
+  shift
+  if [ $# -gt 0 ]; then python3 "$here/pty-run.py" "$command" "$@"; else script -qec "$command" /dev/null; fi 2>&1 | sed -e 's/\x1b\[[0-9;]*[mK]//g' -e 's/\r$//' -e 's/^.*\r//' -e "s#$root##g" | expand -t 8 | sed 's/ *$//' || true
 }
 
 quiet() {

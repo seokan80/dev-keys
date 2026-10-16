@@ -14,6 +14,7 @@ export default function WarmupPlayer({ next }: { next: NextSet | null }) {
       output: null,
       scene: null,
       graph: null,
+      prompt: null,
       itemId: stage.finger,
     })),
   );
