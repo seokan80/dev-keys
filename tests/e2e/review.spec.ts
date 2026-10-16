@@ -5,7 +5,7 @@ import { hydrated } from './helpers';
 
 // 검수 모드는 개발 서버 · PR 미리보기 빌드에만 있다. 스위치가 없는 빌드(운영 · 로컬 기본 빌드)에서는 건너뛴다.
 const sets = getSets();
-const branch = sets.find((s) => s.lines.some((l) => l.tree))!;
+const branch = sets.find((s) => s.graph !== null)!;
 const basic = sets.find((s) => s.id === 'git-basic-commit')!;
 const mission = getMissions()[0]!;
 
@@ -32,7 +32,7 @@ test('따라치기: ↓ 로 줄을 채우고 Enter 로 그림까지 넘겨 끝�
   for (const line of branch.lines) {
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
-    if (line.tree || line.scene) {
+    if (line.scene) {
       await expect(page.getByTestId('scene')).toBeVisible();
       await page.keyboard.press('Enter');
     }

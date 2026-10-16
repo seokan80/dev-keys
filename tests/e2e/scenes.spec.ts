@@ -6,7 +6,7 @@ const sets = getSets();
 const git = sets.find((s) => s.lines.some((l) => l.scene))!;
 const firstScene = git.lines.findIndex((l) => l.scene);
 const java = sets.find((s) => s.category === 'java')!;
-const branching = sets.find((s) => s.lines.some((l) => l.tree))!;
+const branching = sets.find((s) => s.graph && s.lines.some((l) => l.graph?.caption))!;
 
 test('그림이 있는 명령은 Enter 뒤에 그림을 보여 주고, Enter 를 한 번 더 치면 넘어간다', async ({ page }) => {
   await page.goto(git.href);
@@ -29,26 +29,37 @@ test('그림이 있는 명령은 Enter 뒤에 그림을 보여 주고, Enter 를
   await expect(page.getByTestId('next-key')).toContainText(git.lines[firstScene + 1]!.text[0]!);
 });
 
-test('브랜치 세트는 Enter 뒤에 엔진이 만든 커밋 트리를 보여 준다', async ({ page }) => {
-  const at = branching.lines.findIndex((l) => l.tree?.after.commits.c4);
+test('브랜치 세트는 커밋 그래프를 늘 보여 주고, 줄을 끝낼 때마다 바꾼다 (멈추지 않는다)', async ({ page }) => {
+  const graph = branching.graph!;
+  // 머지 커밋을 만드는 줄
+  const at = branching.lines.findIndex((l) => l.graph && graph.steps[l.graph.after]!.commits.c4);
   const line = branching.lines[at]!;
   await page.goto(branching.href);
   await hydrated(page);
-  await typeLines(page, branching.lines.slice(0, at));
-  await page.keyboard.type(line.text);
-  await page.keyboard.press('Enter');
 
-  const scene = page.getByTestId('scene');
-  await expect(scene).toContainText(line.tree!.caption);
-  // 명령 전 트리를 잠깐 보여 준 뒤 명령 뒤 트리로 — 새 머지 커밋과 설명이 나타난다
-  const tree = scene.getByTestId('git-tree');
-  await expect(tree).toContainText(line.tree!.names.c4!);
+  const live = page.getByTestId('live-graph');
+  await expect(live).toBeVisible();
+  await expect(live).toHaveAttribute('data-step', String(branching.lines[0]!.graph!.during));
+  await expect(page.getByTestId('graph-caption')).toContainText('명령을 치면');
+
+  await typeLines(page, branching.lines.slice(0, at + 1));
+  // 멈추지 않고 다음 줄로 — 그래프는 머지 뒤 상태, 아래에 방금 친 명령과 설명
+  await expect(page.getByTestId('scene')).toHaveCount(0);
+  await expect(page.getByTestId('next-key')).toContainText(branching.lines[at + 1]!.text[0]!);
+  await expect(page.getByTestId('graph-caption')).toContainText(`$ ${line.text}`);
+  await expect(page.getByTestId('graph-caption')).toContainText(line.graph!.caption!);
+  const tree = live.getByTestId('git-tree');
+  await expect(tree).toContainText(graph.names.c4!);
   await expect(tree.locator('[data-label="HEAD → main"]')).toBeVisible();
   await expect(tree.locator('[data-commit]')).toHaveCount(4);
+});
 
-  await page.keyboard.press('Enter');
-  await expect(scene).toHaveCount(0);
-  await expect(page.getByTestId('next-key')).toContainText(branching.lines[at + 1]!.text[0]!);
+test('그림 보기를 끄면 커밋 그래프도 숨긴다', async ({ page }) => {
+  await page.goto(branching.href);
+  await hydrated(page);
+  await expect(page.getByTestId('live-graph')).toBeVisible();
+  await page.getByLabel('그림 보기').uncheck();
+  await expect(page.getByTestId('live-graph')).toHaveCount(0);
 });
 
 test('그림 보기를 끄면 멈추지 않는다', async ({ page }) => {

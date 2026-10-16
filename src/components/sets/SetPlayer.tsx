@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { bestKey, recordBest, setLastPlayed, type Best } from '@core/storage';
 import type { TypingStats } from '@core/typing';
-import type { CodeLine } from '../../lib/content/check';
+import type { CodeLine, SetGraph } from '../../lib/content/check';
 import { useReview } from '../../lib/review';
 import { updateSave, useSave } from '../../lib/save';
+import LiveGraph from '../git/LiveGraph';
 import GitScene from '../scenes/GitScene';
-import TreeSceneView from '../scenes/TreeSceneView';
 import SettingsControls from '../settings/SettingsControls';
 import TypingArea from '../typing/TypingArea';
 import type { NextSet } from './NextSetCard';
@@ -26,6 +26,8 @@ type Props = {
   guideHref?: string;
   /** 도전 모드 주소 (뜻 보고 치기 문제가 있는 세트) */
   challengeHref?: string;
+  /** engine 세트의 커밋 그래프 — 타자 영역 옆에 늘 보인다 */
+  graph?: SetGraph | null;
 };
 
 type Phase =
@@ -43,6 +45,7 @@ export default function SetPlayer({
   outputMark,
   guideHref,
   challengeHref,
+  graph = null,
 }: Props) {
   const save = useSave();
   const review = useReview();
@@ -51,7 +54,12 @@ export default function SetPlayer({
   const best = save.bests[key];
   const { settings } = save;
 
-  const hasScenes = lines.some((l) => l.scene !== null || l.tree !== null);
+  const hasScenes = graph !== null || lines.some((l) => l.scene !== null);
+  const showGraph = graph !== null && settings.showScenes;
+  /** 지금 치는 줄 (다 치면 lines.length) */
+  const [lineAt, setLineAt] = useState(0);
+  const graphStep = lineAt < lines.length ? (lines[lineAt]?.graph?.during ?? 0) : (lines.at(-1)?.graph?.after ?? 0);
+  const lastLine = lineAt > 0 ? lines[lineAt - 1] : undefined;
   const previousScene = (i: number) => {
     for (let k = i - 1; k >= 0; k--) if (lines[k]!.scene) return lines[k]!.scene;
     return null;
@@ -84,42 +92,54 @@ export default function SetPlayer({
         <SettingsControls settings={settings} showScenes={hasScenes} />
       </div>
 
-      {phase.kind === 'result' ? (
-        <ResultScreen
-          stats={phase.stats}
-          improved={phase.improved}
-          previous={phase.previous}
-          next={next}
-          guideHref={guideHref}
-          challengeHref={challengeHref}
-          reviewed={phase.reviewed}
-          onRetry={() => setPhase({ kind: 'typing', run: phase.run + 1 })}
-        />
-      ) : (
-        <TypingArea
-          // 설정을 바꾸면 처음부터 다시 시작한다
-          key={`${phase.run}-${settings.autoIndent}-${settings.sixFinger}`}
-          lines={lines.map((l) => l.text)}
-          comments={lines.map((l) => l.comments)}
-          outputs={lines.map((l) => l.output)}
-          commentMark={commentMark}
-          prompt={prompt}
-          outputMark={outputMark}
-          pauseAfter={lines.map((l) => settings.showScenes && (l.scene !== null || l.tree !== null))}
-          renderScene={(i) =>
-            lines[i]!.tree ? (
-              <TreeSceneView tree={lines[i]!.tree!} />
-            ) : (
-              <GitScene scene={lines[i]!.scene!} previous={previousScene(i)} />
-            )
-          }
-          typingOptions={{ autoIndent: settings.autoIndent }}
-          keyboardOptions={{ sixFinger: settings.sixFinger }}
-          showKeyboard={settings.showKeyboard}
-          autoFocus={phase.run > 0}
-          onFinish={onFinish}
-        />
-      )}
+      <div className={showGraph ? 'grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_400px]' : 'contents'}>
+        {showGraph && (
+          <div className="lg:sticky lg:top-4 lg:order-2">
+            <LiveGraph
+              graph={graph}
+              step={graphStep}
+              last={lastLine ? { command: lastLine.text, caption: lastLine.graph?.caption ?? null } : null}
+            />
+          </div>
+        )}
+        <div className="flex min-w-0 flex-col gap-4">
+          {phase.kind === 'result' ? (
+            <ResultScreen
+              stats={phase.stats}
+              improved={phase.improved}
+              previous={phase.previous}
+              next={next}
+              guideHref={guideHref}
+              challengeHref={challengeHref}
+              reviewed={phase.reviewed}
+              onRetry={() => {
+                setLineAt(0);
+                setPhase({ kind: 'typing', run: phase.run + 1 });
+              }}
+            />
+          ) : (
+            <TypingArea
+              // 설정을 바꾸면 처음부터 다시 시작한다
+              key={`${phase.run}-${settings.autoIndent}-${settings.sixFinger}`}
+              lines={lines.map((l) => l.text)}
+              comments={lines.map((l) => l.comments)}
+              outputs={lines.map((l) => l.output)}
+              commentMark={commentMark}
+              prompt={prompt}
+              outputMark={outputMark}
+              // 세 칸 그림만 Enter 로 멈춘다. 커밋 그래프는 옆에서 늘 바뀐다
+              pauseAfter={lines.map((l) => settings.showScenes && l.scene !== null)}
+              renderScene={(i) => <GitScene scene={lines[i]!.scene!} previous={previousScene(i)} />}
+              typingOptions={{ autoIndent: settings.autoIndent }}
+              keyboardOptions={{ sixFinger: settings.sixFinger }}
+              showKeyboard={settings.showKeyboard}
+              autoFocus={phase.run > 0}
+              onLine={setLineAt}
+              onFinish={onFinish}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 }

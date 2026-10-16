@@ -39,7 +39,7 @@ describe('정상 세트', () => {
       comments: ['상태를 본다'],
       output: null,
       scene: null,
-      tree: null,
+      graph: null,
       itemId: 'status',
     });
     expect(set.lines).toHaveLength(19);
@@ -73,16 +73,16 @@ describe('정상 세트', () => {
         comments: ['전체 설명'],
         output: null,
         scene: null,
-        tree: null,
+        graph: null,
         itemId: 'stream',
       },
-      { text: '    .map(User::name)', comments: [], output: null, scene: null, tree: null, itemId: 'stream' },
+      { text: '    .map(User::name)', comments: [], output: null, scene: null, graph: null, itemId: 'stream' },
       {
         text: '    .toList();',
         comments: ['수정할 수 없는 List'],
         output: null,
         scene: null,
-        tree: null,
+        graph: null,
         itemId: 'stream',
       },
     ]);
@@ -371,7 +371,7 @@ describe('엔진으로 도는 세트 (트리 그림)', () => {
       GUIDES,
     );
 
-  it('명령마다 엔진 상태를 이어 가며, tree 가 있는 줄에 전 · 후 트리와 설명을 붙인다', () => {
+  it('명령마다 엔진 상태를 이어 가며 그래프 단계를 쌓고, 줄마다 치는 동안 · 끝낸 뒤 단계와 설명을 붙인다', () => {
     const r = engineSet(
       [
         '  - id: create',
@@ -394,21 +394,31 @@ describe('엔진으로 도는 세트 (트리 그림)', () => {
       ].join('\n'),
     );
     expect(errors(r)).toEqual([]);
-    const [create, sw, back, merge] = r.sets[0]!.lines;
-    expect(sw!.tree).toBeNull();
-    expect(back!.tree).toBeNull();
-    expect(create!.tree).toMatchObject({ caption: '이름표가 붙었다', names: { c1: '3f2a9c1 docs: add README' } });
-    expect(create!.tree!.before.branches).toEqual({ main: 'c1' });
-    expect(create!.tree!.after.branches).toEqual({ main: 'c1', feature: 'c1' });
-    const t = merge!.tree!;
-    expect(t.names).toEqual({
+    const set = r.sets[0]!;
+    const [create, sw, back, merge, quiet] = set.lines;
+    // 단계: 0 시작 · 1 branch · 2 switch · 3 숨은 커밋(before) · 4 switch main · 5 merge
+    expect(create!.graph).toEqual({ during: 0, after: 1, caption: '이름표가 붙었다' });
+    expect(sw!.graph).toEqual({ during: 1, after: 2, caption: null });
+    expect(back!.graph).toEqual({ during: 3, after: 4, caption: null }); // 숨은 커밋은 그 줄을 시작할 때 나타난다
+    expect(merge!.graph).toEqual({ during: 4, after: 5, caption: '머지 커밋' });
+    expect(quiet!.graph).toEqual({ during: 5, after: 5, caption: null }); // 엔진에서 뺀 줄은 그대로
+    const g = set.graph!;
+    expect(g.steps).toHaveLength(6);
+    expect(g.steps[0]!.branches).toEqual({ main: 'c1' });
+    expect(g.steps[1]!.branches).toEqual({ main: 'c1', feature: 'c1' });
+    expect(g.steps[5]!.commits.c3!.parents).toEqual(['c1', 'c2']);
+    expect(g.names).toEqual({
       c1: '3f2a9c1 docs: add README',
       c2: 'a1b2c3d feat: login',
       c3: "e4f5a6b Merge branch 'feature'",
     });
-    expect(t.after.commits.c3!.parents).toEqual(['c1', 'c2']);
-    expect(Object.keys(t.layoutBefore)).toEqual(['c1', 'c2']);
-    expect(t.layoutAfter.c3).toEqual({ lane: 0, row: 2 });
+    // 배치는 한 번 정한 자리를 바꾸지 않으니 마지막 배치 하나로 모든 단계를 그린다
+    expect(g.layout).toEqual({ c1: { lane: 0, row: 0 }, c2: { lane: 1, row: 1 }, c3: { lane: 0, row: 2 } });
+  });
+
+  it('엔진 세트가 아니면 그래프가 없다', () => {
+    const plain = buildContent([file('content/sets/git/basic-commit.yaml', setYaml())], GUIDES);
+    expect(plain.sets[0]!.graph).toBeNull();
   });
 
   it('복사한 커밋(cherry-pick)의 설명은 새 해시 + 원본 메시지 (원본 메시지 앞의 해시는 뺀다)', () => {
@@ -430,8 +440,7 @@ describe('엔진으로 도는 세트 (트리 그림)', () => {
       ].join('\n'),
     );
     expect(errors(r)).toEqual([]);
-    const pick = r.sets[0]!.lines.find((l) => l.itemId === 'pick')!;
-    expect(pick.tree!.names).toEqual({
+    expect(r.sets[0]!.graph!.names).toEqual({
       c1: '3f2a9c1 docs: add README',
       c2: 'a1b2c3d feat: login',
       c3: '5307cb3 feat: login',
