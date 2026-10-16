@@ -150,6 +150,7 @@ items:
     note: (로그인 페이지에 문제가 있다. 이미 push 했다) 그 커밋을 되돌리는 새 커밋을 만든다
     output: |-
       [main 714db12] Revert "feat: add login page"
+       Date: Sat Oct 17 09:28:00 2026 +0900
        1 file changed, 1 deletion(-)
        delete mode 100644 login.html
     scene:

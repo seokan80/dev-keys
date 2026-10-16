@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Git 세트의 이야기를 실제 git 으로 실행해 "$ 명령"과 출력을 찍는다 (콘텐츠 작성용).
 # 홈 폴더(/home/kim) · 커밋 시각을 고정해 경로와 해시가 매번 같게 나온다. 탭은 공백으로 펼친다(세트 출력 규칙).
+# 줄 끝 공백은 화면에 보이지 않으니 지운다 (log --graph 의 |/ 뒤 등).
 # 터미널에서 친 것과 같게 가상 터미널(script)에서 실행하고 색 코드만 지운다 — 파이프로 받으면 git 이 (HEAD -> main) 같은 표시를 뺀다.
 #
 #   scripts/git-story.sh content/stories/git/<슬러그>.sh
@@ -31,11 +32,7 @@ tick() {
 run() {
   tick
   printf '\n$ %s\n' "$1"
-  # revert · cherry-pick 은 작성 시각이 지금과 다르면 " Date:" 줄을 더 찍는다. 시각을 고정해서 생기는 줄이라 뺀다
-  # (amend 는 실제로도 원래 작성 시각을 찍으니 그대로 둔다)
-  local drop='^$^'
-  [[ $1 =~ ^git\ (revert|cherry-pick) ]] && drop='^ Date: '
-  script -qec "$1" /dev/null 2>&1 | sed -e 's/\x1b\[[0-9;]*[mK]//g' -e 's/\r$//' -e "s#$root##g" -e "/$drop/d" | expand -t 8 || true
+  script -qec "$1" /dev/null 2>&1 | sed -e 's/\x1b\[[0-9;]*[mK]//g' -e 's/\r$//' -e "s#$root##g" | expand -t 8 | sed 's/ *$//' || true
 }
 
 quiet() {
