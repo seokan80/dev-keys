@@ -2,6 +2,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildContent, type ContentSet } from './check';
+import { buildMissions, type ContentMission } from './missions';
 import { orderedSets } from './next';
 
 function listFiles(root: string, sub: string, ext: RegExp): string[] {
@@ -13,24 +14,45 @@ function listFiles(root: string, sub: string, ext: RegExp): string[] {
     .sort();
 }
 
+const read = (root: string, path: string) => ({ path, text: readFileSync(join(root, path), 'utf8') });
+
 export function loadContent(root = process.cwd()) {
-  const setFiles = listFiles(root, 'sets', /\.ya?ml$/).map((path) => ({
-    path,
-    text: readFileSync(join(root, path), 'utf8'),
-  }));
-  return buildContent(setFiles, listFiles(root, 'guides', /\.md$/));
+  const guides = listFiles(root, 'guides', /\.md$/);
+  const sets = buildContent(
+    listFiles(root, 'sets', /\.ya?ml$/).map((p) => read(root, p)),
+    guides,
+  );
+  const missions = buildMissions(
+    listFiles(root, 'missions', /\.ya?ml$/).map((p) => read(root, p)),
+    guides,
+  );
+  return { sets: sets.sets, missions: missions.missions, problems: [...sets.problems, ...missions.problems] };
 }
 
 let cached: ContentSet[] | null = null;
+let cachedMissions: ContentMission[] | null = null;
+
+function errorsOf(problems: { path: string; message: string; level: string }[]) {
+  const errors = problems.filter((p) => p.level === 'error');
+  if (errors.length > 0) {
+    throw new Error(`콘텐츠 오류 ${errors.length}건:\n${errors.map((p) => `${p.path}: ${p.message}`).join('\n')}`);
+  }
+}
+
+/** 페이지용: 미션 (order 순). 오류가 있으면 빌드를 멈춘다 */
+export function getMissions(): ContentMission[] {
+  if (cachedMissions) return cachedMissions;
+  const { missions, problems } = loadContent();
+  errorsOf(problems);
+  cachedMissions = missions;
+  return missions;
+}
 
 /** 페이지용: 오류가 있으면 빌드를 멈춘다 (보통은 validate:content 가 먼저 막는다) */
 export function getSets(): ContentSet[] {
   if (cached) return cached;
   const { sets, problems } = loadContent();
-  const errors = problems.filter((p) => p.level === 'error');
-  if (errors.length > 0) {
-    throw new Error(`콘텐츠 오류 ${errors.length}건:\n${errors.map((p) => `${p.path}: ${p.message}`).join('\n')}`);
-  }
+  errorsOf(problems);
   cached = orderedSets(sets);
   return cached;
 }

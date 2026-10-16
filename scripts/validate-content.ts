@@ -2,7 +2,7 @@
 import { join } from 'node:path';
 import { loadContent } from '../src/lib/content/load.ts';
 
-const { sets, problems } = loadContent(join(import.meta.dirname, '..'));
+const { sets, missions, problems } = loadContent(join(import.meta.dirname, '..'));
 const errors = problems.filter((p) => p.level === 'error');
 const warnings = problems.filter((p) => p.level === 'warning');
 
@@ -15,4 +15,6 @@ if (errors.length > 0) {
 }
 
 const lineCount = sets.reduce((n, s) => n + s.lines.length, 0);
-console.log(`콘텐츠 검증 통과: 세트 ${sets.length}개 · 따라칠 줄 ${lineCount}줄 · 경고 ${warnings.length}건`);
+console.log(
+  `콘텐츠 검증 통과: 세트 ${sets.length}개 · 따라칠 줄 ${lineCount}줄 · 미션 ${missions.length}개 · 경고 ${warnings.length}건`,
+);

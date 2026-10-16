@@ -1,0 +1,20 @@
+id: mission-rebase-feature
+order: 2
+title: 기능 브랜치를 최신 main 위로
+description: 갈라진 feature 를 rebase 로 main 끝에 옮기고, 머지 커밋 없이 fast-forward 로 합치기
+level: 2
+story: |-
+  feature 를 만든 뒤 main 에 커밋이 하나 더 쌓였다. 팀은 기록을 한 줄로 유지하고 싶어 한다.
+  feature 의 커밋들을 main 끝으로 옮긴 뒤, 머지 커밋 없이 main 을 feature 까지 앞으로 보내라.
+timeLimitSec: 150
+start:
+  - git switch -c feature
+  - 'git commit -m "search box"'
+  - 'git commit -m "search api"'
+  - git switch main
+  - 'git commit -m "update readme"'
+solution:
+  - git switch feature
+  - git rebase main
+  - git switch main
+  - git merge feature

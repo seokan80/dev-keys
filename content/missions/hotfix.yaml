@@ -1,0 +1,20 @@
+id: mission-hotfix
+order: 1
+title: 운영 긴급 수정
+description: 기능 개발 중에 main 에서 hotfix 브랜치를 만들어 수정하고 합치기 — switch -c · commit · merge
+level: 1
+story: |-
+  feature 브랜치에서 로그인 기능을 만들던 중, 운영(main)에서 오타 버그가 신고됐다.
+  main 에서 hotfix 브랜치를 만들어 수정 커밋을 하나 쌓고, main 에 합쳐라. feature 는 건드리지 않는다.
+timeLimitSec: 120
+start:
+  - 'git commit -m "init app"'
+  - git switch -c feature
+  - 'git commit -m "login form"'
+  - 'git commit -m "login api"'
+  - git switch main
+solution:
+  - git switch -c hotfix
+  - 'git commit -m "fix typo"'
+  - git switch main
+  - git merge hotfix

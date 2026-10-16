@@ -1,0 +1,17 @@
+id: mission-pick-fix
+order: 3
+title: 수정 하나만 가져오기
+description: 다른 브랜치에서 버그 수정 커밋 하나만 main 으로 복사하기 — cherry-pick
+level: 2
+story: |-
+  experiment 브랜치에는 버그 수정(C3)과 아직 덜 된 실험(C4)이 섞여 있다.
+  main 에는 버그 수정만 필요하다. 수정 커밋 하나만 main 에 가져와라. experiment 는 그대로 둔다.
+timeLimitSec: 90
+start:
+  - 'git commit -m "base"'
+  - git switch -c experiment
+  - 'git commit -m "fix null check"'
+  - 'git commit -m "wip: new cache"'
+  - git switch main
+solution:
+  - git cherry-pick C3

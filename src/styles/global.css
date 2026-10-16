@@ -108,6 +108,44 @@
   }
 }
 
+/* 커밋 트리: 새 커밋은 튀어나오고, 복사본은 원본 자리에서 날아오고, 이름표는 미끄러지듯 옮겨 간다 */
+@keyframes tree-pop {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+.tree-pop {
+  animation: tree-pop 300ms ease-out;
+}
+@keyframes tree-copy {
+  from {
+    transform: translate(var(--dx), var(--dy));
+    opacity: 0.3;
+  }
+}
+.tree-copy {
+  animation: tree-copy 550ms ease-out;
+}
+.tree-label,
+.tree-shift {
+  transition: transform 350ms ease;
+}
+.tree-fade {
+  transition: opacity 400ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tree-pop,
+  .tree-copy {
+    animation: none;
+  }
+  .tree-label,
+  .tree-shift,
+  .tree-fade {
+    transition: none;
+  }
+}
+
 /* 따라치기 화면에서 `=>`, `!==` 가 한 글자처럼 보이지 않게 (구현계획 2.3 #14) */
 code,
 pre,

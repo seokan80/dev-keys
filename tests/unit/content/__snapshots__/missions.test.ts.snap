@@ -1,0 +1,42 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`실제 미션의 목표 트리 (사람이 한 번 확인한 스냅샷) > hotfix 1`] = `
+{
+  "goal": "C5 <- C2 (HEAD -> main, hotfix)
+C4 <- C3 (feature)
+C3 <- C2
+C2 <- C1
+C1 <- -",
+  "start": "C4 <- C3 (feature)
+C3 <- C2
+C2 <- C1 (HEAD -> main)
+C1 <- -",
+}
+`;
+
+exports[`실제 미션의 목표 트리 (사람이 한 번 확인한 스냅샷) > pick-fix 1`] = `
+{
+  "goal": "C3' <- C2 (HEAD -> main)
+C4 <- C3 (experiment)
+C3 <- C2
+C2 <- C1
+C1 <- -",
+  "start": "C4 <- C3 (experiment)
+C3 <- C2
+C2 <- C1 (HEAD -> main)
+C1 <- -",
+}
+`;
+
+exports[`실제 미션의 목표 트리 (사람이 한 번 확인한 스냅샷) > rebase-feature 1`] = `
+{
+  "goal": "C3' <- C2' (HEAD -> main, feature)
+C2' <- C4
+C4 <- C1
+C1 <- -",
+  "start": "C4 <- C1 (HEAD -> main)
+C3 <- C2 (feature)
+C2 <- C1
+C1 <- -",
+}
+`;
