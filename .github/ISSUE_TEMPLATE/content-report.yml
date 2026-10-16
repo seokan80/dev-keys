@@ -1,0 +1,20 @@
+name: 문제 신고
+description: 오탈자, 틀린 정답, 이상한 설명 신고
+title: '[신고] '
+labels: [content, 버그]
+body:
+  - type: input
+    id: where
+    attributes:
+      label: 어디서
+      description: 페이지 주소 또는 세트·문제 id
+      placeholder: https://dev-keys.seokan.workers.dev/git/basic-branch
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: 무엇이 이상한가요
+      placeholder: '정답이 git switch -c 인데 git checkout -b 를 입력하니 오답 처리됨'
+    validations:
+      required: true

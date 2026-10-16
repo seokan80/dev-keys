@@ -1,0 +1,133 @@
+name: CI
+
+# PR: 검사 → 미리보기 업로드 → 미리보기 대상 E2E
+# main: 검사 → 운영 배포 → 운영 대상 E2E
+# 콘텐츠 검증은 build 안에서 먼저 돌아서, 실패하면 배포 단계까지 가지 않는다.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  ASTRO_TELEMETRY_DISABLED: 1
+  WRANGLER_SEND_METRICS: false
+  WORKER_HOST: dev-keys.seokan.workers.dev
+
+jobs:
+  check:
+    name: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist
+          retention-days: 7
+
+  deploy:
+    name: deploy
+    needs: check
+    # 포크 PR·Dependabot PR 에는 Cloudflare 시크릿이 없으므로 배포하지 않는다.
+    if: >-
+      github.actor != 'dependabot[bot]' &&
+      (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    environment:
+      name: ${{ github.event_name == 'push' && 'production' || 'preview' }}
+      url: ${{ steps.url.outputs.url }}
+    outputs:
+      url: ${{ steps.url.outputs.url }}
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist
+
+      - name: 미리보기 업로드 (PR)
+        if: github.event_name == 'pull_request'
+        run: >-
+          npx wrangler versions upload
+          --preview-alias "pr-${{ github.event.pull_request.number }}"
+          --message "PR #${{ github.event.pull_request.number }} ${{ github.event.pull_request.head.sha }}"
+
+      - name: 운영 배포 (main)
+        if: github.event_name == 'push'
+        run: npx wrangler deploy --message "main ${{ github.sha }}"
+
+      - id: url
+        name: 주소 정하기
+        run: |
+          if [ "${{ github.event_name }}" = pull_request ]; then
+            echo "url=https://pr-${{ github.event.pull_request.number }}-${WORKER_HOST}" >> "$GITHUB_OUTPUT"
+          else
+            echo "url=https://${WORKER_HOST}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: PR 에 미리보기 주소 남기기
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh pr comment "${{ github.event.pull_request.number }}"
+          --repo "${{ github.repository }}"
+          --edit-last --create-if-none
+          --body "미리보기: ${{ steps.url.outputs.url }} (커밋 ${{ github.event.pull_request.head.sha }})"
+
+  e2e:
+    name: e2e
+    needs: deploy
+    runs-on: ubuntu-latest
+    env:
+      E2E_BASE_URL: ${{ needs.deploy.outputs.url }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: 배포 주소가 응답할 때까지 대기
+        run: |
+          for i in $(seq 1 20); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$E2E_BASE_URL/") && [ "$code" = 200 ] && exit 0
+            echo "대기 $i: HTTP $code"; sleep 6
+          done
+          echo "배포 주소가 200을 돌려주지 않음: $E2E_BASE_URL"; exit 1
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7

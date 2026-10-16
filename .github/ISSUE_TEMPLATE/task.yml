@@ -1,0 +1,24 @@
+name: 작업
+description: 마일스톤 작업 (docs/구현계획.md 기준)
+body:
+  - type: textarea
+    id: scope
+    attributes:
+      label: 작업
+      description: 구현계획의 해당 항목을 체크리스트로 옮긴다
+      placeholder: |
+        - [ ] ...
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: 완료 기준
+      placeholder: |
+        - ...
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: 참고

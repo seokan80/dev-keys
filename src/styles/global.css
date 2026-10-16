@@ -1,0 +1,13 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-mono: 'JetBrains Mono', 'D2Coding', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* 따라치기 화면에서 `=>`, `!==` 가 한 글자처럼 보이지 않게 (구현계획 2.3 #14) */
+code,
+pre,
+kbd,
+.font-mono {
+  font-variant-ligatures: none;
+}
