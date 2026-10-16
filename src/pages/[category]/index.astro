@@ -22,6 +22,17 @@ const sets = getSets().filter((s) => s.category === category.id);
       <h1 class="text-3xl font-bold">{category.title} 타자 연습</h1>
       <p class="text-slate-400">{category.description}</p>
     </header>
+    {category.id === 'git' && (
+      <a
+        href="/git/tree"
+        class="flex flex-col gap-1 rounded-lg border border-emerald-700/70 bg-emerald-500/5 p-4 hover:bg-emerald-500/10"
+        data-testid="tree-missions-card"
+      >
+        <span class="text-xs text-emerald-300">그림으로 익히기</span>
+        <strong class="text-lg">트리 미션</strong>
+        <span class="text-sm text-slate-400">명령을 쳐서 커밋 트리를 목표 모양으로 — merge · rebase · cherry-pick</span>
+      </a>
+    )}
     {sets.length === 0 ? (
       <p class="text-slate-500">준비 중입니다.</p>
     ) : (
