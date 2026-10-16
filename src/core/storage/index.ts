@@ -4,6 +4,7 @@ export {
   DEFAULT_SETTINGS,
   STORAGE_KEY,
   bestKey,
+  clearRecords,
   loadSave,
   memoryStore,
   parseSave,

@@ -1,0 +1,39 @@
+---
+import Base from '../layouts/Base.astro';
+import Breadcrumb from '../components/Breadcrumb.astro';
+import MyRecords, { type MeRecall, type MeSet } from '../components/me/MyRecords';
+import { getSets } from '../lib/content/load';
+import { challengeHref } from '../lib/content/next';
+import { categoryOf } from '../schemas/categories';
+
+const sets = getSets();
+const meSets: MeSet[] = sets.map((s) => ({
+  id: s.id,
+  title: s.title,
+  href: s.href,
+  challengeHref: s.recalls.length > 0 ? challengeHref(s) : null,
+  category: categoryOf(s.category).title,
+}));
+const recalls: MeRecall[] = sets.flatMap((s) =>
+  s.recalls.map((r) => ({
+    key: r.key,
+    prompt: r.prompt.map((p) => p.text).join(''),
+    answer: r.answers[0]!,
+    setTitle: s.title,
+    challengeHref: challengeHref(s),
+  })),
+);
+---
+
+<Base title="내 기록 — DevKeys" noindex>
+  <main class="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-10">
+    <Breadcrumb items={[{ label: 'DevKeys', href: '/' }, { label: '내 기록' }]} />
+    <h1 class="text-3xl font-bold">내 기록</h1>
+    <!-- 기록은 브라우저에만 있으니 브라우저에서 그린다 -->
+    <MyRecords client:only="react" sets={meSets} recalls={recalls}>
+      <p slot="fallback" class="text-slate-500">
+        불러오는 중…
+      </p>
+    </MyRecords>
+  </main>
+</Base>

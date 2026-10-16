@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { bestKey, recordBest, setLastPlayed, updateSettings, type Best, type Settings } from '@core/storage';
+import { bestKey, recordBest, setLastPlayed, type Best } from '@core/storage';
 import type { TypingStats } from '@core/typing';
 import type { CodeLine } from '../../lib/content/check';
 import { updateSave, useSave } from '../../lib/save';
 import GitScene from '../scenes/GitScene';
 import TreeSceneView from '../scenes/TreeSceneView';
+import SettingsControls from '../settings/SettingsControls';
 import TypingArea from '../typing/TypingArea';
 import type { NextSet } from './NextSetCard';
 import ResultScreen from './ResultScreen';
@@ -48,7 +49,6 @@ export default function SetPlayer({
   const best = save.bests[key];
   const { settings } = save;
 
-  const change = (patch: Partial<Settings>) => updateSave((s) => updateSettings(s, patch));
   const hasScenes = lines.some((l) => l.scene !== null || l.tree !== null);
   const previousScene = (i: number) => {
     for (let k = i - 1; k >= 0; k--) if (lines[k]!.scene) return lines[k]!.scene;
@@ -74,42 +74,7 @@ export default function SetPlayer({
             ? `최고 기록 ${Math.round(best.cpm)}타 · 정확도 ${Math.round(best.accuracy * 100)}%`
             : '아직 기록이 없어요'}
         </p>
-        <div className="flex flex-wrap gap-4 text-slate-300">
-          {hasScenes && (
-            <label className="flex items-center gap-1">
-              <input
-                type="checkbox"
-                checked={settings.showScenes}
-                onChange={(e) => change({ showScenes: e.target.checked })}
-              />
-              그림 보기
-            </label>
-          )}
-          <label className="flex items-center gap-1">
-            <input
-              type="checkbox"
-              checked={settings.autoIndent}
-              onChange={(e) => change({ autoIndent: e.target.checked })}
-            />
-            들여쓰기 자동 입력
-          </label>
-          <label className="flex items-center gap-1">
-            <input
-              type="checkbox"
-              checked={settings.showKeyboard}
-              onChange={(e) => change({ showKeyboard: e.target.checked })}
-            />
-            키보드 보기
-          </label>
-          <label className="flex items-center gap-1">
-            <input
-              type="checkbox"
-              checked={settings.sixFinger === 'left'}
-              onChange={(e) => change({ sixFinger: e.target.checked ? 'left' : 'right' })}
-            />
-            숫자 6을 왼손 검지로
-          </label>
-        </div>
+        <SettingsControls settings={settings} showScenes={hasScenes} />
       </div>
 
       {phase.kind === 'result' ? (

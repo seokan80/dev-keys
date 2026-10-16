@@ -143,6 +143,11 @@ export function setLastPlayed(save: SaveV1, path: string, at: string): SaveV1 {
   return { ...save, lastPlayed: { path, at } };
 }
 
+/** 기록 초기화: 최고 기록 · 오답 기록 · 마지막 세트를 지운다. 설정은 남긴다 */
+export function clearRecords(save: SaveV1): SaveV1 {
+  return { version: 1, bests: {}, srs: {}, settings: save.settings };
+}
+
 /** 시험·저장소를 못 쓰는 환경용 */
 export function memoryStore(initial: Record<string, string> = {}): KeyValueStore {
   const data = new Map(Object.entries(initial));
