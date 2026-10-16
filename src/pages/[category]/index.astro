@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import Breadcrumb from '../../components/Breadcrumb.astro';
 import { getSets } from '../../lib/content/load';
+import { challengeHref } from '../../lib/content/next';
 import { CATEGORIES } from '../../schemas/categories';
 
 export function getStaticPaths() {
@@ -38,14 +39,23 @@ const sets = getSets().filter((s) => s.category === category.id);
     ) : (
       <ol class="flex flex-col gap-3">
         {sets.map((set) => (
-          <li>
-            <a href={set.href} class="flex flex-col gap-1 rounded-lg border border-slate-700 p-4 hover:bg-slate-900">
+          <li class="flex rounded-lg border border-slate-700">
+            <a href={set.href} class="flex flex-1 flex-col gap-1 rounded-l-lg p-4 hover:bg-slate-900">
               <strong class="text-lg">{set.title}</strong>
               <span class="text-sm text-slate-400">{set.description}</span>
               <span class="text-xs text-slate-500">
-                {set.lines.length}줄 · 난이도 {set.level}
+                {set.lines.length}줄{set.recalls.length > 0 && ` · 도전 ${set.recalls.length}문제`} · 난이도 {set.level}
               </span>
             </a>
+            {set.recalls.length > 0 && (
+              <a
+                href={challengeHref(set)}
+                class="flex items-center rounded-r-lg border-l border-slate-700 px-4 text-sm text-amber-300 hover:bg-amber-500/10"
+                aria-label={`도전 모드: ${set.title}`}
+              >
+                도전 →
+              </a>
+            )}
           </li>
         ))}
       </ol>

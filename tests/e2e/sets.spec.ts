@@ -14,7 +14,7 @@ test('메인 → 카테고리 → 세트로 들어간다', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('link', { name: /Git/ }).first().click();
   await expect(page).toHaveURL('/git');
-  await page.getByRole('link', { name: new RegExp(first!.title) }).click();
+  await page.getByRole('link', { name: new RegExp(`^${first!.title}`) }).click();
   await expect(page).toHaveURL(first!.href);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(first!.title);
 });

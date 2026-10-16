@@ -292,6 +292,55 @@ describe('뜻 보고 치기(recall) 규칙', () => {
   it('Git 정답은 git 으로 시작한다', () => {
     expect(recall('    prompt: 상태 보기\n    answers: ["status"]\n')[0]).toMatch(/git 으로 시작/);
   });
+
+  it('context 준비 명령은 엔진에서 돌아야 한다', () => {
+    expect(
+      recall('    prompt: 이동\n    answers: ["git switch main"]\n    context: { setup: ["git switch nope"] }\n')[0],
+    ).toMatch(/context.*git switch nope.*invalid reference/);
+  });
+
+  it('context 가 있으면 정답들은 엔진에서 모두 같은 결과여야 한다 (동의어가 맞는지 엔진이 검사)', () => {
+    const ok =
+      '    prompt: 만들고 이동\n    answers: ["git switch -c x", "git checkout -b x"]\n    context: { setup: [] }\n';
+    expect(recall(ok)).toEqual([]);
+    expect(
+      recall(
+        '    prompt: 만들고 이동\n    answers: ["git switch -c x", "git branch x"]\n    context: { setup: [] }\n',
+      )[0],
+    ).toMatch(/정답 "git branch x".*첫 정답과 결과가 다르다/);
+    expect(recall('    prompt: 치워 두기\n    answers: ["git stash"]\n    context: { setup: [] }\n')[0]).toMatch(
+      /정답 "git stash".*엔진/,
+    );
+  });
+
+  it('문제는 placeholder 를 채워 세트에 담긴다 (prompt 는 채운 값을 표시할 수 있게 조각으로)', () => {
+    const r = buildContent(
+      [
+        file(
+          'content/sets/git/basic-commit.yaml',
+          setYaml(
+            {},
+            `${filler}  - id: create\n    type: recall\n    prompt: <name> 브랜치를 만들고 이동\n    answers: ["git switch -c <name>", "git checkout -b <name>"]\n    placeholder: { name: hotfix }\n    context: { setup: [] }\n    note: 만들면서 이동\n`,
+          ),
+        ),
+      ],
+      GUIDES,
+    );
+    expect(r.sets[0]!.recalls).toEqual([
+      {
+        key: 'git-basic-commit/create',
+        setId: 'git-basic-commit',
+        itemId: 'create',
+        prompt: [
+          { text: 'hotfix', value: true },
+          { text: ' 브랜치를 만들고 이동', value: false },
+        ],
+        answers: ['git switch -c hotfix', 'git checkout -b hotfix'],
+        context: { setup: [] },
+        note: '만들면서 이동',
+      },
+    ]);
+  });
 });
 
 describe('예상 시간', () => {

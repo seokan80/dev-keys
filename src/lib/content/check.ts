@@ -1,5 +1,7 @@
 import { parse } from 'yaml';
+import { judge } from '../../core/challenge';
 import { execute, initialRepo, layoutTree, type RepoState, type TreeLayout } from '../../core/git';
+import { srsKey } from '../../core/srs';
 import { CATEGORY_IDS, type CategoryId } from '../../schemas/categories';
 import { setSchema, type CopyItem, type RecallItem, type Scene, type SetData } from '../../schemas/set';
 
@@ -30,6 +32,19 @@ export type CodeLine = {
   itemId: string;
 };
 
+/** 뜻 보고 치기 한 문제 (placeholder 를 채운 것). prompt 는 채운 값(value)을 따로 표시할 수 있게 조각으로 */
+export type RecallLine = {
+  /** 오답 기록 키 `${setId}/${itemId}` */
+  key: string;
+  setId: string;
+  itemId: string;
+  prompt: { text: string; value: boolean }[];
+  /** 첫 번째가 대표 정답 */
+  answers: string[];
+  context: { setup: string[] } | null;
+  note: string | null;
+};
+
 export type ContentSet = SetData & {
   slug: string;
   href: string;
@@ -37,6 +52,8 @@ export type ContentSet = SetData & {
   file: string;
   /** 기본 모드에서 따라칠 줄 (따라치기 문제를 순서대로 이어 붙인 것) */
   lines: CodeLine[];
+  /** 도전 모드 문제 (없으면 도전 모드가 없다) */
+  recalls: RecallLine[];
 };
 
 const RESERVED_SLUGS = new Set(['challenge', 'tree', 'index']);
@@ -114,7 +131,12 @@ function checkCopyItem(item: CopyItem, report: (msg: string) => void): CodeLine[
   });
 }
 
-function checkRecallItem(item: RecallItem, category: CategoryId, report: (msg: string) => void) {
+function checkRecallItem(
+  item: RecallItem,
+  setId: string,
+  category: CategoryId,
+  report: (msg: string) => void,
+): RecallLine {
   const defined = new Set(Object.keys(item.placeholder ?? {}));
   const used = new Set([item.prompt, ...item.answers].flatMap((t) => [...t.matchAll(PLACEHOLDER)].map((m) => m[1]!)));
   for (const name of used) {
@@ -130,6 +152,58 @@ function checkRecallItem(item: RecallItem, category: CategoryId, report: (msg: s
     if (bad) report(`문제 ${item.id} 정답 "${answer}": ASCII 밖 글자 ${charLabel(bad)}`);
     if (category === 'git' && !answer.startsWith('git '))
       report(`문제 ${item.id} 정답 "${answer}": git 으로 시작해야 한다`);
+  }
+
+  const fill = (text: string) =>
+    text.replace(PLACEHOLDER, (_, name: string) => item.placeholder?.[name] ?? `<${name}>`);
+  const answers = item.answers.map(fill);
+  const context = item.context ? { setup: item.context.setup.map(fill) } : null;
+  if (context) checkContext(item.id, context.setup, answers, report);
+
+  const prompt: RecallLine['prompt'] = [];
+  let at = 0;
+  for (const m of item.prompt.matchAll(PLACEHOLDER)) {
+    if (m.index > at) prompt.push({ text: item.prompt.slice(at, m.index), value: false });
+    prompt.push({ text: item.placeholder?.[m[1]!] ?? m[0], value: true });
+    at = m.index + m[0].length;
+  }
+  if (at < item.prompt.length) prompt.push({ text: item.prompt.slice(at), value: false });
+
+  return { key: srsKey(setId, item.id), setId, itemId: item.id, prompt, answers, context, note: item.note ?? null };
+}
+
+/**
+ * context 가 있는 문제는 엔진으로 동의어를 판정한다. 그래서 준비 명령이 엔진에서 돌아야 하고,
+ * 정답들이 엔진에서 모두 첫 정답과 같은 결과여야 한다 — 콘텐츠의 동의어가 맞는지 엔진이 검사하는 셈
+ */
+function checkContext(id: string, setup: readonly string[], answers: readonly string[], report: (msg: string) => void) {
+  let state = initialRepo();
+  for (const command of setup) {
+    const r = execute(state, command);
+    if (r.error) {
+      report(`문제 ${id} context "${command}": 엔진에서 실패 — ${r.error.message}`);
+      return;
+    }
+    state = r.state;
+  }
+  const [first, ...rest] = answers;
+  const r = execute(state, first!);
+  if (r.error) {
+    report(
+      `문제 ${id} 정답 "${first}": 엔진에서 실패 — ${r.error.message} (엔진이 모르는 명령이면 context 를 빼야 한다)`,
+    );
+    return;
+  }
+  for (const answer of rest) {
+    const verdict = judge({ answers: [first!], context: { setup } }, answer);
+    if (!verdict.correct) {
+      const fail = execute(state, answer).error;
+      report(
+        fail
+          ? `문제 ${id} 정답 "${answer}": 엔진에서 실패 — ${fail.message}`
+          : `문제 ${id} 정답 "${answer}": 엔진에서 첫 정답과 결과가 다르다`,
+      );
+    }
   }
 }
 
@@ -233,6 +307,7 @@ export function buildContent(setFiles: RawFile[], guidePaths: string[]): { sets:
 
     const itemIds = new Set<string>();
     const lines: CodeLine[] = [];
+    const recalls: RecallLine[] = [];
     for (const item of data.items) {
       if (itemIds.has(item.id)) report(`문제 id "${item.id}" 가 겹친다`);
       itemIds.add(item.id);
@@ -245,7 +320,7 @@ export function buildContent(setFiles: RawFile[], guidePaths: string[]): { sets:
         const itemLines = checkCopyItem(item, report);
         if (data.engine && itemLines.length > 1) report(`문제 ${item.id}: engine 세트의 명령은 한 줄씩`);
         lines.push(...itemLines);
-      } else checkRecallItem(item, data.category, report);
+      } else recalls.push(checkRecallItem(item, data.id, data.category, report));
     }
     if (data.engine) {
       const scenes = simulate(data, report);
@@ -262,7 +337,7 @@ export function buildContent(setFiles: RawFile[], guidePaths: string[]): { sets:
       }
     }
 
-    sets.push({ ...data, slug, href: `/${folder}/${slug}`, file: file.path, lines });
+    sets.push({ ...data, slug, href: `/${folder}/${slug}`, file: file.path, lines, recalls });
   }
 
   // 카테고리 안 order 중복

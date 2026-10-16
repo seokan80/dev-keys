@@ -5,7 +5,7 @@ import Breadcrumb from '../../components/Breadcrumb.astro';
 import SetPlayer from '../../components/sets/SetPlayer';
 import type { ContentSet } from '../../lib/content/check';
 import { getSets } from '../../lib/content/load';
-import { nextSetOf } from '../../lib/content/next';
+import { challengeHref, nextSetOf } from '../../lib/content/next';
 import { categoryOf } from '../../schemas/categories';
 
 export function getStaticPaths() {
@@ -15,6 +15,7 @@ export function getStaticPaths() {
 const { set } = Astro.props as { set: ContentSet };
 const category = categoryOf(set.category);
 const nextSet = nextSetOf(getSets(), set);
+const challenge = set.recalls.length > 0 ? challengeHref(set) : undefined;
 const next = nextSet ? { href: nextSet.href, title: nextSet.title, description: nextSet.description } : null;
 
 const guide = await getEntry('guides', `${set.category}/${set.slug}`);
@@ -34,9 +35,16 @@ const { Content } = await render(guide);
     <header class="flex flex-col gap-1">
       <h1 class="text-3xl font-bold">{set.title}</h1>
       <p class="text-slate-400">{set.description}</p>
-      <a href="#guide" class="text-sm text-sky-300 hover:underline">
-        해설 읽기 ↓
-      </a>
+      <div class="flex flex-wrap gap-4 text-sm">
+        <a href="#guide" class="text-sky-300 hover:underline">
+          해설 읽기 ↓
+        </a>
+        {challenge && (
+          <a href={challenge} class="text-amber-300 hover:underline" data-testid="challenge-link">
+            도전 모드: 뜻 보고 치기 →
+          </a>
+        )}
+      </div>
     </header>
 
     <SetPlayer
@@ -49,6 +57,7 @@ const { Content } = await render(guide);
       prompt={'prompt' in category ? category.prompt : undefined}
       outputMark={'result' in category ? category.result : undefined}
       guideHref="#guide"
+      challengeHref={challenge}
     />
 
     <article id="guide" class="guide scroll-mt-6 border-t border-slate-800 pt-6">

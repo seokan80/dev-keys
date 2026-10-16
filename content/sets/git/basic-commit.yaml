@@ -201,3 +201,76 @@ items:
     text: git status --short
     note: 왼쪽 칸의 M — 고친 것이 스테이징돼 있다. 다시 커밋하면 된다
     output: M  README.md
+
+  # ── 도전 모드(뜻 보고 치기): 위에서 따라 친 명령을 설명만 보고 떠올려 친다.
+  #    context 가 있는 문제는 정답 목록에 없는 동의어도 엔진으로 실행해 결과가 같으면 정답이다.
+  - id: recall-init
+    type: recall
+    prompt: 지금 폴더를 Git 저장소로 만든다
+    answers: [git init]
+  - id: recall-config-name
+    type: recall
+    prompt: 이 PC 의 모든 저장소에서 커밋에 남을 이름을 정한다 — 이름은 <name>
+    answers: ['git config --global user.name "<name>"']
+    placeholder: { name: Kim Dev }
+    note: 값에 공백이 있으면 따옴표로 감싼다. --global 을 빼면 이 저장소에만 적용된다
+  - id: recall-status
+    type: recall
+    prompt: 어떤 파일이 바뀌었고 무엇이 스테이징됐는지 상태를 본다
+    answers: [git status]
+  - id: recall-add-file
+    type: recall
+    prompt: <file> 파일을 스테이징한다 — 다음 커밋에 넣을 목록에 올린다
+    answers: [git add <file>, git stage <file>]
+    placeholder: { file: README.md }
+  - id: recall-add-all
+    type: recall
+    prompt: 저장소 맨 위 폴더에서, 바뀐 파일을 모두 스테이징한다
+    answers: [git add ., git add -A, git add --all]
+    note: git add . 은 지금 폴더 아래만, -A 는 저장소 전체. 맨 위 폴더에서는 같다
+  - id: recall-commit
+    type: recall
+    prompt: 스테이징한 변경을 <msg> 메시지로 커밋한다
+    answers: ['git commit -m "<msg>"']
+    placeholder: { msg: 'docs: add README' }
+    context: { setup: [] }
+  - id: recall-diff
+    type: recall
+    prompt: 아직 스테이징하지 않은 변경 내용을 본다
+    answers: [git diff]
+  - id: recall-diff-staged
+    type: recall
+    prompt: 스테이징된 변경, 즉 다음 커밋에 들어갈 내용을 본다
+    answers: [git diff --staged, git diff --cached]
+  - id: recall-restore-staged
+    type: recall
+    prompt: <file> 의 스테이징만 취소한다 — 고친 내용은 그대로 둔다
+    answers:
+      - git restore --staged <file>
+      - git reset <file>
+      - git reset HEAD <file>
+      - git reset -- <file>
+      - git reset HEAD -- <file>
+    placeholder: { file: README.md }
+    note: 예전에는 git reset <파일> 을 썼다. restore 는 이 일을 따로 떼어 낸 새 명령
+  - id: recall-log
+    type: recall
+    prompt: 커밋 기록을 한 줄씩 짧게 본다
+    answers: [git log --oneline]
+  - id: recall-amend
+    type: recall
+    prompt: 마지막 커밋의 메시지를 고친다 — 새 메시지는 <msg>
+    answers: ['git commit --amend -m "<msg>"', 'git commit -m "<msg>" --amend']
+    placeholder: { msg: 'docs: describe the project' }
+    note: 커밋을 새로 만들어 바꿔 끼운다 — 이미 push 한 커밋에는 쓰지 않는다
+  - id: recall-restore
+    type: recall
+    prompt: <file> 의 스테이징하지 않은 변경을 버린다 (되돌릴 수 없다)
+    answers: [git restore <file>, git checkout -- <file>]
+    placeholder: { file: README.md }
+  - id: recall-reset-soft
+    type: recall
+    prompt: 마지막 커밋을 취소하되, 변경은 스테이징된 채로 남긴다
+    answers: [git reset --soft HEAD~1, git reset --soft HEAD^]
+    context: { setup: [git commit, git commit] }
+    note: --hard 는 변경까지 버리고, 옵션 없이(--mixed) 치면 스테이징도 취소된다
