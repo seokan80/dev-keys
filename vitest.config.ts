@@ -15,8 +15,8 @@ export default defineConfig({
       include: ['src/core/**', 'src/schemas/**', 'scripts/lib/**'],
       reporter: ['text-summary', 'html'],
       thresholds: {
-        // Git 엔진은 90% 이상 (M3 완료 기준)
-        'src/core/git/**': { lines: 90, functions: 90, branches: 90, statements: 90 },
+        // core 는 90% 이상. Git 엔진은 M3 완료 기준이기도 하다.
+        'src/core/**': { lines: 90, functions: 90, branches: 90, statements: 90 },
       },
     },
   },
