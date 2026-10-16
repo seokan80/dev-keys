@@ -1,12 +1,15 @@
 import { parse } from 'yaml';
 import { CATEGORY_IDS, type CategoryId } from '../../schemas/categories';
-import { setSchema, type CopyItem, type RecallItem, type SetData } from '../../schemas/set';
+import { setSchema, type CopyItem, type RecallItem, type Scene, type SetData } from '../../schemas/set';
 
 export type RawFile = { path: string; text: string };
 export type Problem = { path: string; message: string; level: 'error' | 'warning' };
 
-/** 따라칠 한 줄. comments 는 그 줄 위에 주석처럼, output 은 줄을 다 치면 아래에 보인다 (둘 다 치지 않는다) */
-export type CodeLine = { text: string; comments: string[]; output: string | null; itemId: string };
+/**
+ * 따라칠 한 줄. 모두 치지 않는 것:
+ * comments 는 그 줄 위에 주석처럼, output 은 줄을 다 치면 아래에, scene 은 Enter 뒤에 그림으로
+ */
+export type CodeLine = { text: string; comments: string[]; output: string | null; scene: Scene | null; itemId: string };
 
 export type ContentSet = SetData & {
   slug: string;
@@ -64,22 +67,31 @@ function checkCopyItem(item: CopyItem, report: (msg: string) => void): CodeLine[
   }
 
   const lineNotes = new Map<number, string>();
-  for (const { at, note } of item.notes ?? []) {
+  const lineResults = new Map<number, string>();
+  for (const { at, note, result } of item.notes ?? []) {
     const hits = lines.flatMap((line, i) => (line.includes(at) ? [i] : []));
     if (hits.length === 0) report(`문제 ${item.id} 해설 at "${at}": 맞는 줄이 없다`);
     else if (hits.length > 1)
       report(`문제 ${item.id} 해설 at "${at}": ${hits.length}줄에 맞는다 — 한 줄에만 있는 조각으로`);
     else if (lineNotes.has(hits[0]!)) report(`문제 ${item.id} 해설 at "${at}": 다른 해설과 같은 줄`);
-    else lineNotes.set(hits[0]!, note);
+    else {
+      lineNotes.set(hits[0]!, note);
+      if (result) lineResults.set(hits[0]!, result);
+    }
   }
 
-  const output = item.output === undefined ? null : item.output.replace(/\n$/, '');
-  return lines.map((text, i) => ({
-    text,
-    comments: [...(i === 0 && item.note ? [item.note] : []), ...(lineNotes.has(i) ? [lineNotes.get(i)!] : [])],
-    output: i === lines.length - 1 ? output : null,
-    itemId: item.id,
-  }));
+  const last = lines.length - 1;
+  const itemOutput = item.output === undefined ? null : item.output.replace(/\n$/, '');
+  return lines.map((text, i) => {
+    const outputs = [lineResults.get(i), i === last ? itemOutput : null].filter((o): o is string => !!o);
+    return {
+      text,
+      comments: [...(i === 0 && item.note ? [item.note] : []), ...(lineNotes.has(i) ? [lineNotes.get(i)!] : [])],
+      output: outputs.length > 0 ? outputs.join('\n') : null,
+      scene: i === last ? (item.scene ?? null) : null,
+      itemId: item.id,
+    };
+  });
 }
 
 function checkRecallItem(item: RecallItem, category: CategoryId, report: (msg: string) => void) {

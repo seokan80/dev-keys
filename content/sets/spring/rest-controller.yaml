@@ -63,8 +63,18 @@ items:
         note: 새로 만든 자원의 주소
       - at: ResponseEntity.created(
         note: '201 Created + Location 헤더 + 본문'
+        result: 'POST /api/posts → 201 Created, Location: /api/posts/4'
       - at: '@ResponseStatus('
         note: 성공하면 204 No Content — 본문 없이 응답한다
+      - at: 'return postService.findAll();'
+        note: 서비스가 돌려준 목록을 그대로 반환한다
+        result: 'GET /api/posts → 200 OK [{"id":3,"title":"Hello"}]'
+      - at: 'return postService.find(id);'
+        note: 조회한 하나를 그대로 반환한다
+        result: 'GET /api/posts/3 → 200 OK {"id":3,"title":"Hello"}'
+      - at: 'postService.delete(id);'
+        note: 지우기만 하고 돌려줄 본문은 없다
+        result: 'DELETE /api/posts/3 → 204 No Content'
     hidden:
       before: |-
         import java.net.URI;

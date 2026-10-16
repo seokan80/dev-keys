@@ -21,6 +21,8 @@ const settingsSchema = z.object({
   autoIndent: z.boolean(),
   showKeyboard: z.boolean(),
   sixFinger: z.enum(['right', 'left']),
+  /** Enter 를 치면 동작을 그림으로 보여 준다 */
+  showScenes: z.boolean(),
 });
 
 export type Best = z.infer<typeof bestSchema>;
@@ -36,7 +38,12 @@ export type SaveV1 = {
   lastPlayed?: { path: string; at: string };
 };
 
-export const DEFAULT_SETTINGS: Settings = { autoIndent: true, showKeyboard: true, sixFinger: 'right' };
+export const DEFAULT_SETTINGS: Settings = {
+  autoIndent: true,
+  showKeyboard: true,
+  sixFinger: 'right',
+  showScenes: true,
+};
 export const DEFAULT_SAVE: SaveV1 = { version: 1, bests: {}, srs: {}, settings: DEFAULT_SETTINGS };
 
 /** 잘못된 항목 하나 때문에 전부 잃지 않도록, 항목마다 따로 검사한다 */

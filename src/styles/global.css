@@ -77,6 +77,37 @@
   text-align: left;
 }
 
+/* Enter 뒤 그림: 화살표가 자라고, 새로 생긴 표가 튀어나온다 */
+@keyframes scene-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+.scene-grow-right {
+  transform-origin: left;
+  animation: scene-grow 450ms ease-out;
+}
+.scene-grow-left {
+  transform-origin: right;
+  animation: scene-grow 450ms ease-out;
+}
+@keyframes scene-pop {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+}
+.scene-pop {
+  animation: scene-pop 350ms 300ms ease-out backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .scene-grow-left,
+  .scene-grow-right,
+  .scene-pop {
+    animation: none;
+  }
+}
+
 /* 따라치기 화면에서 `=>`, `!==` 가 한 글자처럼 보이지 않게 (구현계획 2.3 #14) */
 code,
 pre,

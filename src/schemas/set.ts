@@ -3,6 +3,35 @@ import { CATEGORY_IDS } from './categories';
 
 const slugLike = z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, '영문 소문자·숫자·하이픈만');
 
+/** Git 세 칸: 작업 트리(고친 것) · 스테이징(커밋할 것) · 저장소(커밋) */
+const zone = z.enum(['workdir', 'staged', 'repo']);
+/** 칸 안의 표 한 장. "~" 로 시작하면 사라진 것(취소선) */
+const chip = z.string().min(1).max(60);
+
+/** 명령을 치고 Enter 를 누르면 보여 줄 그림 — 그 명령 뒤의 상태 */
+export const sceneSchema = z
+  .object({
+    workdir: z.array(chip).default([]),
+    staged: z.array(chip).default([]),
+    repo: z.array(chip).default([]),
+    /** 무엇이 어디로 옮겨 갔는지 */
+    arrow: z
+      .object({ from: zone, to: zone, label: z.string().min(1).max(20).optional() })
+      .strict()
+      .refine((a) => a.from !== a.to, '서로 다른 두 칸')
+      .optional(),
+    /** 두 칸을 비교 (diff) */
+    compare: z
+      .tuple([zone, zone])
+      .refine(([a, b]) => a !== b, '서로 다른 두 칸')
+      .optional(),
+    caption: z.string().min(1).max(80),
+  })
+  .strict();
+
+export type Scene = z.infer<typeof sceneSchema>;
+export type SceneZone = z.infer<typeof zone>;
+
 /** 따라치기 문제. text 는 한 줄 이상 (코드 세트는 여러 줄 블록) */
 export const copyItemSchema = z
   .object({
@@ -12,9 +41,22 @@ export const copyItemSchema = z
     /** 문제 설명 — 첫 줄 위에 주석처럼 보인다 */
     note: z.string().min(1).optional(),
     /** 줄별 해설 — 그 줄 위에 주석처럼 보인다. at 은 그 줄에만 있는 글자 조각 */
-    notes: z.array(z.object({ at: z.string().min(1), note: z.string().min(1) }).strict()).optional(),
+    notes: z
+      .array(
+        z
+          .object({
+            at: z.string().min(1),
+            note: z.string().min(1),
+            /** 그 줄을 다 치면 아래에 보여 줄 결과 값 (예: paidCustomers -> [kim, park]) */
+            result: z.string().min(1).max(100).optional(),
+          })
+          .strict(),
+      )
+      .optional(),
     /** 명령을 치고 Enter 를 누르면 그 아래에 보여 줄 출력 (터미널 화면) */
     output: z.string().min(1).optional(),
+    /** Enter 를 치면 보여 줄 그림 (그림 보기를 켰을 때). 문제 마지막 줄에 붙는다 */
+    scene: sceneSchema.optional(),
     /** 치지 않는 앞뒤 코드 — 컴파일 검증용 (M6) */
     hidden: z.object({ before: z.string().optional(), after: z.string().optional() }).strict().optional(),
   })

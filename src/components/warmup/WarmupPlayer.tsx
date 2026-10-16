@@ -12,6 +12,7 @@ export default function WarmupPlayer({ next }: { next: NextSet | null }) {
       text: line.text,
       comments: line.comment ? [line.comment] : [],
       output: null,
+      scene: null,
       itemId: stage.finger,
     })),
   );
