@@ -95,6 +95,8 @@ jobs:
 
       - name: PR 에 미리보기 주소 남기기
         if: github.event_name == 'pull_request'
+        # 안내 댓글일 뿐이라 GitHub API 일시 오류로 배포 · E2E 를 막지 않는다
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
         run: >-
