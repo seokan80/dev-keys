@@ -2,7 +2,7 @@ import { execute } from './execute';
 import { bySeq } from './graph';
 import type { RepoState } from './types';
 
-/** 커밋 하나의 자리: lane = 왼쪽부터 몇 번째 줄기, row = 위(시작 커밋)부터 몇 번째 줄 */
+/** 커밋 하나의 자리: lane = 왼쪽부터 몇 번째 줄기, row = 몇 번째로 생긴 커밋인가 (0 = 시작 커밋) */
 export type NodePos = { lane: number; row: number };
 export type TreeLayout = Readonly<Record<string, NodePos>>;
 
@@ -10,18 +10,22 @@ export type TreeLayout = Readonly<Record<string, NodePos>>;
 const TRUNK = new Set(['main', 'master']);
 
 /**
- * 커밋 그래프 배치. previous 에 있던 커밋은 자리를 그대로 두고 새 커밋만 놓는다 —
- * 명령마다 그림이 다시 흩어지지 않게 (구현계획 M4).
- * - row: 부모 중 가장 아래 줄 + 1
- * - lane: main 이 가리키는 새 커밋은 0, 나머지는 부모 레인(0 이면 1부터). 차 있으면 오른쪽 빈 레인
+ * 커밋 그래프 배치 — SourceTree · IntelliJ 처럼 한 줄에 커밋 하나 (그림에서는 최신이 위).
+ * previous 에 있던 커밋은 자리를 그대로 두고 새 커밋만 놓는다 — 명령마다 그림이 흩어지지 않게 (구현계획 M4).
+ * - row: 생긴 순서. 새 커밋은 늘 맨 위 새 줄
+ * - lane: main 이 가리키는 새 커밋은 0 부터, 나머지는 부모 레인(0 이면 1)부터 찾되,
+ *   첫 부모와 잇는 선이 그 사이 다른 커밋을 지나가지 않는 레인(그 레인의 가장 위 커밋이 부모 줄 이하)을 고른다
  */
 export function layoutTree(state: RepoState, previous: TreeLayout = {}): TreeLayout {
   const out: Record<string, NodePos> = {};
-  const taken = new Set<string>();
+  const topOfLane = new Map<number, number>();
+  const mark = (pos: NodePos) => topOfLane.set(pos.lane, Math.max(topOfLane.get(pos.lane) ?? -1, pos.row));
+  let nextRow = 0;
   for (const [id, pos] of Object.entries(previous)) {
     if (!state.commits[id]) continue;
     out[id] = pos;
-    taken.add(`${pos.lane}:${pos.row}`);
+    mark(pos);
+    nextRow = Math.max(nextRow, pos.row + 1);
   }
 
   const onTrunk = new Set(
@@ -32,13 +36,15 @@ export function layoutTree(state: RepoState, previous: TreeLayout = {}): TreeLay
 
   for (const id of Object.keys(state.commits).sort(bySeq)) {
     if (out[id]) continue;
-    const parents = state.commits[id]!.parents.map((p) => out[p]!);
-    const row = parents.length === 0 ? 0 : Math.max(...parents.map((p) => p.row)) + 1;
-    const parentLane = parents[0]?.lane ?? 0;
-    let lane = onTrunk.has(id) || parents.length === 0 ? 0 : Math.max(parentLane, 1);
-    while (taken.has(`${lane}:${row}`)) lane += 1;
+    const parent = state.commits[id]!.parents[0];
+    const from = parent === undefined ? undefined : out[parent];
+    const row = nextRow;
+    nextRow += 1;
+    let lane = from === undefined || onTrunk.has(id) ? 0 : Math.max(from.lane, 1);
+    const parentRow = from?.row ?? -1;
+    while ((topOfLane.get(lane) ?? -1) > parentRow) lane += 1;
     out[id] = { lane, row };
-    taken.add(`${lane}:${row}`);
+    mark(out[id]);
   }
   return out;
 }

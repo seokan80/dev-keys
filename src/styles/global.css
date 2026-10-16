@@ -127,7 +127,8 @@
 .tree-copy {
   animation: tree-copy 550ms ease-out;
 }
-.tree-label {
+.tree-label,
+.tree-shift {
   transition: transform 350ms ease;
 }
 .tree-fade {
@@ -139,6 +140,7 @@
     animation: none;
   }
   .tree-label,
+  .tree-shift,
   .tree-fade {
     transition: none;
   }
