@@ -1,0 +1,83 @@
+id: git-branch-merge
+category: git
+order: 2
+title: 브랜치 만들고 합치기
+description: branch · switch · merge · rebase · stash 로 브랜치를 나누고 합치는 명령
+level: 1
+items:
+  - id: branch-list
+    type: copy
+    text: git branch
+    note: 브랜치 목록. 지금 있는 브랜치 앞에 * 가 붙는다
+  - id: branch-create
+    type: copy
+    text: git branch feature/login
+    note: 브랜치를 만든다. 그 브랜치로 이동하지는 않는다
+  - id: switch
+    type: copy
+    text: git switch feature/login
+    note: 그 브랜치로 이동한다
+  - id: switch-create
+    type: copy
+    text: git switch -c feature/signup
+    note: 브랜치를 만들면서 바로 이동한다
+  - id: checkout-b
+    type: copy
+    text: git checkout -b hotfix/typo
+    note: 옛 방식으로 switch -c 와 같다. checkout 이 하던 일은 switch(이동)와 restore(복원)로 나뉘었다
+  - id: switch-main
+    type: copy
+    text: git switch main
+    note: main 으로 돌아간다
+  - id: switch-back
+    type: copy
+    text: git switch -
+    note: 바로 전에 있던 브랜치로 돌아간다
+  - id: switch-main-again
+    type: copy
+    text: git switch main
+    note: 합치기 전에 합칠 쪽(main)으로 이동한다
+  - id: merge
+    type: copy
+    text: git merge feature/login
+    note: 지금 브랜치에 합친다. 갈라진 적이 없으면 fast-forward 로 포인터만 옮긴다
+  - id: merge-no-ff
+    type: copy
+    text: git merge --no-ff feature/signup
+    note: fast-forward 가 가능해도 항상 머지 커밋을 만든다 — 기능 단위가 기록에 남는다
+  - id: log-graph
+    type: copy
+    text: git log --oneline --graph
+    note: 합쳐진 모양을 그래프로 확인한다
+  - id: branch-delete
+    type: copy
+    text: git branch -d feature/login
+    note: 합쳐진 브랜치를 지운다. 합쳐지지 않았으면 거부한다
+  - id: branch-force-delete
+    type: copy
+    text: git branch -D hotfix/typo
+    note: 합쳐지지 않았어도 강제로 지운다 — 그 브랜치에만 있던 커밋은 찾기 어려워진다
+  - id: branch-rename
+    type: copy
+    text: git branch -m feature/signup feature/join
+    note: 브랜치 이름을 바꾼다
+  - id: rebase
+    type: copy
+    text: git rebase main
+    note: 지금 브랜치의 커밋을 main 끝으로 옮겨 다시 쌓는다. 커밋 해시가 바뀐다
+  - id: cherry-pick
+    type: copy
+    text: git cherry-pick a1b2c3d
+    note: 다른 브랜치의 커밋 하나를 가져와 지금 브랜치에 적용한다
+  - id: stash
+    type: copy
+    text: git stash
+    note: 커밋하지 않은 변경을 잠시 치워 둔다
+  - id: stash-list
+    type: copy
+    text: git stash list
+    note: 치워 둔 목록을 본다
+  - id: stash-pop
+    type: copy
+    text: git stash pop
+    note: 가장 최근에 치워 둔 변경을 다시 꺼낸다

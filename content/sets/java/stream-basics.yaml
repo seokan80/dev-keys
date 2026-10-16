@@ -1,0 +1,72 @@
+id: java-stream-basics
+category: java
+order: 1
+title: Stream 기본
+description: filter · map · toList · groupingBy · joining 으로 컬렉션을 다루는 Stream 기본기
+level: 1
+items:
+  - id: orders
+    type: copy
+    text: |-
+      record Order(String customer, String status, int amount) {}
+
+      List<Order> orders = List.of(
+          new Order("kim", "PAID", 12000),
+          new Order("lee", "CANCELED", 8000),
+          new Order("kim", "PAID", 30000),
+          new Order("park", "PAID", 5000));
+
+      List<String> paidCustomers = orders.stream()
+          .filter(o -> "PAID".equals(o.status()))
+          .map(Order::customer)
+          .distinct()
+          .sorted()
+          .toList();
+
+      int total = orders.stream()
+          .mapToInt(Order::amount)
+          .sum();
+
+      Map<String, Integer> totalByCustomer = orders.stream()
+          .collect(Collectors.groupingBy(
+              Order::customer,
+              Collectors.summingInt(Order::amount)));
+
+      String names = paidCustomers.stream()
+          .collect(Collectors.joining(", ", "[", "]"));
+
+      Optional<Order> biggest = orders.stream()
+          .max(Comparator.comparingInt(Order::amount));
+    notes:
+      - at: record Order(
+        note: 'record: 불변 데이터 클래스. 생성자 · 접근자 customer() · equals · toString 이 저절로 생긴다'
+      - at: List.of(
+        note: 'List.of: 수정할 수 없는 List. null 을 넣으면 NullPointerException'
+      - at: '"PAID".equals'
+        note: 상수를 앞에 두면 status 가 null 이어도 NullPointerException 이 나지 않는다
+      - at: .map(Order::customer)
+        note: '메서드 참조 — o -> o.customer() 와 같다'
+      - at: .distinct()
+        note: equals 기준으로 중복을 뺀다
+      - at: .sorted()
+        note: 자연 순서로 정렬한다 (문자열은 사전 순)
+      - at: .toList();
+        note: 'Java 16+: 수정할 수 없는 List 를 돌려준다. collect(Collectors.toList()) 는 수정 가능 여부가 정해져 있지 않다'
+      - at: .mapToInt(
+        note: IntStream 으로 바꾸면 sum · average 를 바로 쓰고 Integer 박싱도 없다
+      - at: groupingBy(
+        note: '키(고객)별로 묶는다. 두 번째 인자는 묶인 값들을 모으는 방법'
+      - at: summingInt(
+        note: '묶인 주문 금액을 더한다 → Map<String, Integer>'
+      - at: joining(
+        note: '구분자 · 앞 · 뒤 — 결과는 "[kim, park]"'
+      - at: .max(
+        note: 가장 큰 값. 스트림이 비어 있을 수 있어 Optional 로 돌려준다
+    hidden:
+      before: |-
+        import java.util.*;
+        import java.util.stream.*;
+
+        class StreamBasics {
+            void run() {
+      after: "    }\n}"
