@@ -68,7 +68,9 @@ test('뜻을 보고 치면 판정하고, 틀리면 정답을 따라 친 뒤 넘�
   await expect(page.getByTestId('result-점수')).toHaveText(`${60 + 100 + 100 * (qs.length - 4)}점`);
   await expect(page.getByTestId('result-맞힘')).toHaveText(`${qs.length - 2} / ${qs.length}`);
   await expect(page.getByTestId('missed').getByRole('listitem')).toHaveCount(2);
-  await expect(page.getByTestId('next-set')).toHaveAttribute('href', challengeHref(branch));
+  const challenges = sets.filter((s) => s.recalls.length > 0);
+  const nextChallenge = challenges[challenges.indexOf(basic) + 1]!;
+  await expect(page.getByTestId('next-set')).toHaveAttribute('href', challengeHref(nextChallenge));
 });
 
 test('틀린 문제는 다음 날 같은 카테고리의 다른 세트 도전에 다시 나온다', async ({ page }) => {
