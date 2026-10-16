@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { compare, execute, layoutSteps, layoutTree, type GitError, type RepoState, type TreeLayout } from '@core/git';
+import { missionScore } from '@core/scoring';
 import GitTree from './GitTree';
 
 export type MissionProps = {
@@ -140,10 +141,21 @@ export default function MissionPanel({ title, timeLimitSec, start, solution, nex
           className="flex flex-col gap-3 rounded-lg border border-emerald-600 bg-emerald-500/10 p-4"
           data-testid="mission-solved"
         >
-          <p className="text-lg font-bold text-emerald-300">성공!</p>
+          <p className="text-lg font-bold text-emerald-300">
+            성공!{' '}
+            <span className="font-mono" data-testid="mission-score">
+              {missionScore({
+                solved: true,
+                secondsLeft: left,
+                commands: solved.commands,
+                recommended: solution.length,
+              })}
+              점
+            </span>
+          </p>
           <p className="text-sm text-slate-300">
             명령 {solved.commands}개 (권장 {solution.length}개) · {clock(elapsed)}
-            {elapsed > timeLimitSec ? ' — 시간은 넘겼어요' : ' — 시간 안에'}
+            {elapsed > timeLimitSec ? ' — 시간을 넘겨 점수는 0점' : ' — 남은 초 × 10, 권장보다 많은 명령마다 −100'}
           </p>
           <div className="text-sm">
             <p className="text-slate-400">권장 풀이</p>

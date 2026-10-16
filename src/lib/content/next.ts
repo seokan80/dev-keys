@@ -16,3 +16,6 @@ export function nextSetOf<T extends Pick<ContentSet, 'id' | 'category' | 'order'
   const i = ordered.findIndex((s) => s.id === current.id);
   return i === -1 ? null : (ordered[i + 1] ?? null);
 }
+
+/** 도전 모드 주소 (뜻 보고 치기 문제가 있는 세트만) */
+export const challengeHref = (set: Pick<ContentSet, 'category' | 'slug'>) => `/${set.category}/challenge/${set.slug}`;

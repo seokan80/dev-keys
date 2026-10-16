@@ -10,7 +10,13 @@ export const STORAGE_KEY = 'devkeys:save';
 /** 읽을 수 없던 저장값을 지우지 않고 남겨 두는 곳 */
 export const BROKEN_KEY = 'devkeys:save:broken';
 
-const bestSchema = z.object({ cpm: z.number().nonnegative(), accuracy: z.number().min(0).max(1), at: z.string() });
+const bestSchema = z.object({
+  cpm: z.number().nonnegative(),
+  accuracy: z.number().min(0).max(1),
+  /** 도전 모드 · 미션 점수 */
+  score: z.number().nonnegative().optional(),
+  at: z.string(),
+});
 const srsSchema = z.object({
   step: z.number().int(),
   wrong: z.number().int(),
@@ -116,14 +122,16 @@ export function saveSave(kv: KeyValueStore, save: SaveV1): void {
 
 export const bestKey = (setId: string, mode: 'copy' | 'recall' | 'mission') => `${setId}:${mode}`;
 
-/** 타수가 더 높을 때만 최고 기록을 바꾼다 */
+/** 더 나을 때만 최고 기록을 바꾼다: 점수가 있으면(도전 모드) 점수, 없으면 타수 */
 export function recordBest(
   save: SaveV1,
   key: string,
   result: Best,
 ): { save: SaveV1; improved: boolean; previous: Best | null } {
   const previous = save.bests[key] ?? null;
-  if (previous && previous.cpm >= result.cpm) return { save, improved: false, previous };
+  const better =
+    result.score !== undefined ? result.score > (previous?.score ?? -1) : result.cpm > (previous?.cpm ?? -1);
+  if (previous && !better) return { save, improved: false, previous };
   return { save: { ...save, bests: { ...save.bests, [key]: result } }, improved: true, previous };
 }
 

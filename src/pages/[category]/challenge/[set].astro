@@ -1,0 +1,66 @@
+---
+import Base from '../../../layouts/Base.astro';
+import Breadcrumb from '../../../components/Breadcrumb.astro';
+import ChallengePlayer, { type ChallengeQuestion } from '../../../components/challenge/ChallengePlayer';
+import type { ContentSet } from '../../../lib/content/check';
+import { getSets } from '../../../lib/content/load';
+import { challengeHref } from '../../../lib/content/next';
+import { categoryOf } from '../../../schemas/categories';
+
+/** 뜻 보고 치기 문제가 있는 세트만 도전 모드가 있다 */
+export function getStaticPaths() {
+  return getSets()
+    .filter((set) => set.recalls.length > 0)
+    .map((set) => ({ params: { category: set.category, set: set.slug }, props: { set } }));
+}
+
+const { set } = Astro.props as { set: ContentSet };
+const category = categoryOf(set.category);
+const sets = getSets();
+const withTitle = (s: ContentSet): ChallengeQuestion[] => s.recalls.map((r) => ({ ...r, setTitle: s.title }));
+const pool = sets.filter((s) => s.category === set.category).flatMap(withTitle);
+const challengeSets = sets.filter((s) => s.recalls.length > 0);
+const nextSet = challengeSets[challengeSets.indexOf(set) + 1];
+const href = challengeHref(set);
+---
+
+<Base
+  title={`${set.title} 도전 — 뜻 보고 치기 · ${category.title} · DevKeys`}
+  description={`${set.description}. 설명만 보고 명령을 떠올려 친다.`}
+  noindex
+>
+  <main class="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-10">
+    <Breadcrumb
+      items={[
+        { label: 'DevKeys', href: '/' },
+        { label: category.title, href: `/${set.category}` },
+        { label: set.title, href: set.href },
+        { label: '도전' },
+      ]}
+    />
+    <header class="flex flex-col gap-1">
+      <p class="text-xs font-bold tracking-widest text-amber-300">도전 모드</p>
+      <h1 class="text-3xl font-bold">{set.title}</h1>
+      <p class="text-slate-400">
+        설명만 보고 명령을 떠올려 치세요. 틀린 문제는 하루 · 3일 · 7일 · 14일 뒤 도전 모드에 다시 나옵니다.
+      </p>
+    </header>
+
+    <!-- 오답 기록(브라우저 저장)으로 문제를 고르니 브라우저에서만 그린다 -->
+    <ChallengePlayer
+      client:only="react"
+      setId={set.id}
+      href={href}
+      questions={withTitle(set)}
+      pool={pool}
+      prompt={'prompt' in category ? category.prompt : undefined}
+      basicHref={set.href}
+      guideHref={`${set.href}#guide`}
+      next={nextSet ? { href: challengeHref(nextSet), title: nextSet.title } : null}
+    >
+      <p slot="fallback" class="text-slate-500">
+        불러오는 중…
+      </p>
+    </ChallengePlayer>
+  </main>
+</Base>

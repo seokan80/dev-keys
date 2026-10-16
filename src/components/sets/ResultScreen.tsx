@@ -9,6 +9,8 @@ type Props = {
   next: NextSet | null;
   /** 해설 문서 위치 */
   guideHref?: string;
+  /** 도전 모드 주소 */
+  challengeHref?: string;
   onRetry: () => void;
 };
 
@@ -20,7 +22,7 @@ const formatTime = (ms: number) => {
 };
 
 /** 세트를 끝냈을 때: 기록 · 최고 기록 비교 · 다시 하기 · 다음 세트 */
-export default function ResultScreen({ stats, improved, previous, next, guideHref, onRetry }: Props) {
+export default function ResultScreen({ stats, improved, previous, next, guideHref, challengeHref, onRetry }: Props) {
   return (
     <section className="flex flex-col gap-6 rounded-lg border border-slate-700 bg-slate-900 p-6" data-testid="result">
       <div className="flex flex-col gap-1">
@@ -63,6 +65,15 @@ export default function ResultScreen({ stats, improved, previous, next, guideHre
               className="flex flex-1 items-center justify-center rounded-lg border border-sky-700 px-4 py-2 text-sm text-sky-300 hover:bg-sky-500/10"
             >
               해설 읽기
+            </a>
+          )}
+          {challengeHref && (
+            <a
+              href={challengeHref}
+              className="flex flex-1 items-center justify-center rounded-lg border border-amber-600/70 px-4 py-2 text-sm text-amber-300 hover:bg-amber-500/10"
+              data-testid="result-challenge"
+            >
+              도전 모드
             </a>
           )}
         </div>

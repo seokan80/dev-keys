@@ -156,3 +156,79 @@ items:
 
       no changes added to commit (use "git add" and/or "git commit -a")
       Dropped refs/stash@{0} (4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b)
+
+  # ── 도전 모드(뜻 보고 치기): 위에서 따라 친 명령을 설명만 보고 떠올려 친다.
+  #    context 가 있는 문제는 정답 목록에 없는 동의어도 엔진으로 실행해 결과가 같으면 정답이다.
+  #    결과가 같아도 뜻이 다른 명령(branch -D 와 -d, 이름을 쓴 switch 와 switch -)은 context 를 두지 않는다.
+  - id: recall-branch-create
+    type: recall
+    prompt: <name> 브랜치를 만든다 — 이동은 하지 않는다
+    answers: [git branch <name>]
+    placeholder: { name: feature/login }
+    context: { setup: [] }
+  - id: recall-switch
+    type: recall
+    prompt: <name> 브랜치로 이동한다
+    answers: [git switch <name>, git checkout <name>]
+    placeholder: { name: feature/login }
+    context: { setup: [git branch feature/login] }
+  - id: recall-switch-create
+    type: recall
+    prompt: <name> 브랜치를 만들면서 바로 이동한다
+    answers: [git switch -c <name>, git checkout -b <name>]
+    placeholder: { name: feature/signup }
+    context: { setup: [] }
+  - id: recall-switch-back
+    type: recall
+    prompt: 바로 전에 있던 브랜치로 돌아간다
+    answers: [git switch -, git checkout -]
+  - id: recall-merge
+    type: recall
+    prompt: 지금 브랜치(main)에 <name> 브랜치를 합친다 — 갈라진 적이 없으면 fast-forward 로
+    answers: [git merge <name>]
+    placeholder: { name: feature/login }
+    context: { setup: [git switch -c feature/login, git commit, git switch main] }
+  - id: recall-merge-no-ff
+    type: recall
+    prompt: fast-forward 가 되더라도 머지 커밋을 만들어 <name> 브랜치를 합친다
+    answers: [git merge --no-ff <name>]
+    placeholder: { name: feature/signup }
+    context: { setup: [git switch -c feature/signup, git commit, git switch main] }
+    note: 브랜치에서 한 작업이 기록에 한 덩어리로 남는다
+  - id: recall-branch-merged
+    type: recall
+    prompt: 지금 브랜치에 이미 합쳐진 브랜치 목록을 본다
+    answers: [git branch --merged]
+  - id: recall-branch-delete
+    type: recall
+    prompt: 합쳐진 <name> 브랜치를 지운다 — 합쳐지지 않았으면 거부하게
+    answers: [git branch -d <name>, git branch --delete <name>]
+    placeholder: { name: feature/login }
+  - id: recall-branch-force-delete
+    type: recall
+    prompt: 합쳐졌는지 따지지 않고 <name> 브랜치를 지운다
+    answers: [git branch -D <name>, git branch --delete --force <name>]
+    placeholder: { name: hotfix/typo }
+    note: 그 브랜치에만 있던 커밋은 이름표가 없어져 찾기 어려워진다
+  - id: recall-branch-rename
+    type: recall
+    prompt: <old> 브랜치의 이름을 바꾼다 — 새 이름은 <new>
+    answers: [git branch -m <old> <new>, git branch --move <old> <new>]
+    placeholder: { old: feature/signup, new: feature/join }
+  - id: recall-log-graph
+    type: recall
+    prompt: 커밋 기록을 한 줄씩, 갈라지고 합쳐진 모양까지 그래프로 본다
+    answers: [git log --oneline --graph, git log --graph --oneline]
+  - id: recall-stash
+    type: recall
+    prompt: 커밋하지 않은 변경을 잠시 치워 둔다
+    answers: [git stash, git stash push]
+  - id: recall-stash-list
+    type: recall
+    prompt: 치워 둔 변경 목록을 본다
+    answers: [git stash list]
+  - id: recall-stash-pop
+    type: recall
+    prompt: 가장 최근에 치워 둔 변경을 다시 꺼내고 목록에서 지운다
+    answers: [git stash pop]
+    note: apply 는 꺼내기만 하고 목록에 남긴다

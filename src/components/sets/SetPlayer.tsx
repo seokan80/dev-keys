@@ -22,6 +22,8 @@ type Props = {
   outputMark?: string;
   /** 해설 문서 위치 (결과 화면의 "해설 읽기") */
   guideHref?: string;
+  /** 도전 모드 주소 (뜻 보고 치기 문제가 있는 세트) */
+  challengeHref?: string;
 };
 
 type Phase =
@@ -29,7 +31,17 @@ type Phase =
   | { kind: 'result'; run: number; stats: TypingStats; improved: boolean; previous: Best | null };
 
 /** 기본 모드 한 세트: 설정 · 최고 기록 · 따라치기 · 결과 */
-export default function SetPlayer({ setId, href, lines, next, commentMark, prompt, outputMark, guideHref }: Props) {
+export default function SetPlayer({
+  setId,
+  href,
+  lines,
+  next,
+  commentMark,
+  prompt,
+  outputMark,
+  guideHref,
+  challengeHref,
+}: Props) {
   const save = useSave();
   const [phase, setPhase] = useState<Phase>({ kind: 'typing', run: 0 });
   const key = bestKey(setId, 'copy');
@@ -107,6 +119,7 @@ export default function SetPlayer({ setId, href, lines, next, commentMark, promp
           previous={phase.previous}
           next={next}
           guideHref={guideHref}
+          challengeHref={challengeHref}
           onRetry={() => setPhase({ kind: 'typing', run: phase.run + 1 })}
         />
       ) : (

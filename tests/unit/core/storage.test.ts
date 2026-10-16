@@ -113,6 +113,15 @@ describe('recordBest', () => {
     expect(higher).toMatchObject({ improved: true, previous: best(120) });
     expect(higher.save.bests[key]).toEqual(best(130, 0.9));
   });
+
+  it('점수가 있는 기록(도전 모드)은 점수로 비교하고, 저장값을 다시 읽어도 점수가 남는다', () => {
+    const recall = bestKey('git-basic-commit', 'recall');
+    const first = recordBest(DEFAULT_SAVE, recall, { ...best(60), score: 800 }).save;
+    expect(recordBest(first, recall, { ...best(200), score: 700 }).improved).toBe(false);
+    const r = recordBest(first, recall, { ...best(40), score: 900 });
+    expect(r.improved).toBe(true);
+    expect(parseSave(JSON.stringify(r.save)).save.bests[recall]).toEqual({ ...best(40), score: 900 });
+  });
 });
 
 describe('설정 · 마지막 세트', () => {
