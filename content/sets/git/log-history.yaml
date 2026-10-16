@@ -1,0 +1,247 @@
+id: git-log-history
+category: git
+order: 3
+title: 기록 살펴보기
+description: log 옵션(--stat · --name-status · --diff-filter · --author · --since · -S) · show · diff · blame · last-modified 로 누가 언제 무엇을 바꿨는지 찾기
+level: 2
+# 이야기: ~/devkeys 에 Kim Dev 와 동료 Lee Dev 의 커밋이 일주일 동안 쌓였다. 누가 언제 무엇을 바꿨는지 찾아본다.
+# 출력은 실제 git 2.53 으로 뽑았다: scripts/git-story.sh content/stories/git/log-history.sh
+items:
+  - id: log-oneline
+    type: copy
+    text: git log --oneline
+    note: (Kim Dev 와 동료 Lee Dev 가 일주일 동안 커밋했다) 한 줄씩, 최신부터. 앞 7자리는 커밋 해시의 앞부분
+    output: |-
+      5f85cbb (HEAD -> main) docs: describe login
+      0bc975c fix: skip empty token
+      dc8ecf9 feat: add login page
+      69adf2d chore: ignore .env
+      8b225f0 feat: add api client
+      c7bba81 docs: add README
+  - id: log-stat
+    type: copy
+    text: git log --stat -1
+    note: 마지막 커밋 하나(-1)를 자세히 — 누가 · 언제 · 어떤 파일을 몇 줄 바꿨는지
+    output: |-
+      commit 5f85cbbb4093b3de57c8661257311d29a568e219 (HEAD -> main)
+      Author: Lee Dev <lee@example.com>
+      Date:   Fri Oct 16 18:10:00 2026 +0900
+
+          docs: describe login
+
+       README.md | 2 ++
+       1 file changed, 2 insertions(+)
+  - id: name-status
+    type: copy
+    text: git log --oneline --name-status -2
+    note: 커밋마다 바뀐 파일과 상태. M 고침 · A 추가 · D 삭제
+    output: |-
+      5f85cbb (HEAD -> main) docs: describe login
+      M       README.md
+      0bc975c fix: skip empty token
+      M       api.js
+  - id: diff-filter
+    type: copy
+    text: git log --oneline --diff-filter=A --name-only
+    note: 파일을 새로 추가한(A) 커밋만, 파일 이름과 함께. 지운 파일을 찾을 때는 --diff-filter=D
+    output: |-
+      dc8ecf9 feat: add login page
+      login.html
+      69adf2d chore: ignore .env
+      .gitignore
+      8b225f0 feat: add api client
+      api.js
+      c7bba81 docs: add README
+      README.md
+  - id: author
+    type: copy
+    text: git log --oneline --author=Lee
+    note: 작성자로 거르기. 이름 일부만 써도 된다
+    output: |-
+      5f85cbb (HEAD -> main) docs: describe login
+      dc8ecf9 feat: add login page
+  - id: since
+    type: copy
+    text: git log --oneline --since=2026-10-14
+    note: 날짜로 거르기. "2 weeks ago" 같은 말도 되고, --until 은 그 날까지
+    output: |-
+      5f85cbb (HEAD -> main) docs: describe login
+      0bc975c fix: skip empty token
+      dc8ecf9 feat: add login page
+  - id: pickaxe
+    type: copy
+    text: git log --oneline -S token
+    note: 코드에 token 이 생기거나 사라진 커밋 — 이 코드가 언제 들어왔는지 찾을 때
+    output: |-
+      0bc975c fix: skip empty token
+      dc8ecf9 feat: add login page
+  - id: file-log
+    type: copy
+    text: git log --oneline -- README.md
+    note: 파일 하나의 기록. -- 뒤는 파일 이름이라는 표시 (이름이 바뀐 파일은 --follow 를 더한다)
+    output: |-
+      5f85cbb (HEAD -> main) docs: describe login
+      c7bba81 docs: add README
+  - id: format
+    type: copy
+    text: 'git log --format="%h %an %ad %s" --date=short -3'
+    note: 원하는 모양으로. %h 해시 · %an 작성자 · %ad 날짜 · %s 제목
+    output: |-
+      5f85cbb Lee Dev 2026-10-16 docs: describe login
+      0bc975c Kim Dev 2026-10-15 fix: skip empty token
+      dc8ecf9 Lee Dev 2026-10-14 feat: add login page
+  - id: shortlog
+    type: copy
+    text: git shortlog -sn
+    note: 작성자별 커밋 수. -s 는 수만, -n 은 많은 순
+    output: |2-
+           4  Kim Dev
+           2  Lee Dev
+  - id: show
+    type: copy
+    text: git show HEAD~1
+    note: 커밋 하나의 정보와 바뀐 내용. HEAD~1 은 HEAD 바로 앞 커밋 — 해시(0bc975c)를 써도 된다
+    output: |-
+      commit 0bc975ca4eda96007866158b663842dfd37144ca
+      Author: Kim Dev <dev@example.com>
+      Date:   Thu Oct 15 11:30:00 2026 +0900
+
+          fix: skip empty token
+
+      diff --git a/api.js b/api.js
+      index b0705e4..988b68b 100644
+      --- a/api.js
+      +++ b/api.js
+      @@ -1,3 +1,4 @@
+       export function request(url, token) {
+      -  return fetch(url, { headers: { Authorization: token } })
+      +  const headers = token ? { Authorization: token } : {}
+      +  return fetch(url, { headers })
+       }
+  - id: show-file
+    type: copy
+    text: git show HEAD~2:api.js
+    note: 그 커밋 때의 파일 내용 — 고치기 전 코드를 볼 때
+    output: |-
+      export function request(url, token) {
+        return fetch(url, { headers: { Authorization: token } })
+      }
+  - id: diff-commits
+    type: copy
+    text: git diff HEAD~3 HEAD --stat
+    note: 두 커밋 사이에 바뀐 것. --stat 을 빼면 내용까지
+    output: |2-
+       README.md  | 2 ++
+       api.js     | 5 +++--
+       login.html | 1 +
+       3 files changed, 6 insertions(+), 2 deletions(-)
+  - id: blame
+    type: copy
+    text: git blame --date=short -L 2,3 api.js
+    note: 줄마다 마지막으로 고친 커밋 · 사람 · 날짜. -L 2,3 은 2~3번째 줄만
+    output: |-
+      0bc975ca (Kim Dev 2026-10-15 2)   const headers = token ? { Authorization: token } : {}
+      0bc975ca (Kim Dev 2026-10-15 3)   return fetch(url, { headers })
+  - id: last-modified
+    type: copy
+    text: git last-modified
+    note: 파일마다 마지막으로 바꾼 커밋 — Git 2.52 에 생겼다. GitHub 파일 목록의 "마지막 커밋" 칸과 같은 것
+    output: |-
+      5f85cbbb4093b3de57c8661257311d29a568e219        README.md
+      0bc975ca4eda96007866158b663842dfd37144ca        api.js
+      dc8ecf9329aa90f33f89b4d19bf4f5a08aaa5597        login.html
+      69adf2ddfb3bb862d0eb67cad9d1e889bf377670        .gitignore
+
+  # ── 도전 모드(뜻 보고 치기). 옵션 순서만 다른 것은 정답 목록에 함께 둔다
+  - id: recall-log-n
+    type: recall
+    prompt: 최근 커밋 <n>개를 한 줄씩 본다
+    answers:
+      - git log --oneline -<n>
+      - git log -<n> --oneline
+      - git log --oneline -n <n>
+      - git log --oneline -n<n>
+      - git log --oneline --max-count=<n>
+    placeholder: { n: '3' }
+  - id: recall-stat
+    type: recall
+    prompt: 마지막 커밋 하나를 바뀐 파일 · 줄 수와 함께 본다
+    answers: [git log --stat -1, git log -1 --stat, git log --stat -n 1, git show --stat, git show --stat HEAD]
+  - id: recall-name-status
+    type: recall
+    prompt: 커밋마다 바뀐 파일 이름과 상태(A · M · D)를 함께 본다
+    answers: [git log --name-status, git log --oneline --name-status, git log --name-status --oneline]
+  - id: recall-diff-filter
+    type: recall
+    prompt: 파일을 새로 추가한(A) 커밋만 골라 본다
+    answers:
+      - git log --diff-filter=A
+      - git log --oneline --diff-filter=A
+      - git log --diff-filter=A --oneline
+      - git log --oneline --diff-filter=A --name-only
+  - id: recall-author
+    type: recall
+    prompt: 작성자 이름으로 걸러 본다 — 이름에 들어간 글자는 <name>
+    answers: [git log --author=<name>, git log --author <name>, git log --oneline --author=<name>]
+    placeholder: { name: Lee }
+  - id: recall-since
+    type: recall
+    prompt: <date> 부터 쌓인 커밋만 본다
+    answers:
+      - git log --since=<date>
+      - git log --since <date>
+      - git log --after=<date>
+      - git log --after <date>
+      - git log --oneline --since=<date>
+    placeholder: { date: 2026-10-14 }
+  - id: recall-pickaxe
+    type: recall
+    prompt: 코드에 어떤 글자가 생기거나 사라진 커밋을 찾는다 — 글자는 <word>
+    answers: [git log -S <word>, git log -S<word>, git log --oneline -S <word>, git log -S <word> --oneline]
+    placeholder: { word: token }
+  - id: recall-file-log
+    type: recall
+    prompt: <file> 파일의 기록만 본다
+    answers:
+      [
+        git log -- <file>,
+        git log <file>,
+        git log --oneline -- <file>,
+        git log --follow -- <file>,
+        git log --follow <file>,
+      ]
+    placeholder: { file: README.md }
+  - id: recall-shortlog
+    type: recall
+    prompt: 작성자별 커밋 수를 많은 순으로 본다
+    answers: [git shortlog -sn, git shortlog -ns, git shortlog -s -n, git shortlog -n -s]
+  - id: recall-show
+    type: recall
+    prompt: HEAD 바로 앞 커밋의 정보와 바뀐 내용을 본다
+    answers: [git show HEAD~1, git show HEAD~, git show HEAD^, git show HEAD^1]
+  - id: recall-show-file
+    type: recall
+    prompt: <rev> 커밋 때의 <file> 파일 내용을 본다
+    answers: ['git show <rev>:<file>']
+    placeholder: { rev: HEAD~2, file: api.js }
+  - id: recall-diff-stat
+    type: recall
+    prompt: 두 커밋 사이에 바뀐 파일과 줄 수를 본다 — <a> 부터 <b> 까지
+    answers:
+      - git diff <a> <b> --stat
+      - git diff --stat <a> <b>
+      - git diff <a>..<b> --stat
+      - git diff --stat <a>..<b>
+    placeholder: { a: HEAD~3, b: HEAD }
+  - id: recall-blame
+    type: recall
+    prompt: <file> 파일의 <from>~<to> 번째 줄을 누가 언제 고쳤는지 본다
+    answers:
+      - git blame -L <from>,<to> <file>
+      - git blame <file> -L <from>,<to>
+      - git blame --date=short -L <from>,<to> <file>
+    placeholder: { file: api.js, from: '2', to: '3' }
+  - id: recall-last-modified
+    type: recall
+    prompt: 파일마다 마지막으로 바꾼 커밋을 본다 (Git 2.52+)
+    answers: [git last-modified]
