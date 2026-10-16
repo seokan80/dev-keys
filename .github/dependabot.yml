@@ -1,0 +1,15 @@
+# 계획서 9장: 월 1회 의존성 업데이트
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      npm-minor-patch:
+        update-types: [minor, patch]
+    open-pull-requests-limit: 5
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
