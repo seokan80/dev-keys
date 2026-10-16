@@ -9,10 +9,12 @@ export const copyItemSchema = z
     id: slugLike,
     type: z.literal('copy'),
     text: z.string().min(1),
-    /** 이 문제의 모든 줄에 보이는 설명 */
+    /** 문제 설명 — 첫 줄 위에 주석처럼 보인다 */
     note: z.string().min(1).optional(),
-    /** 줄별 해설. at 은 그 줄에만 있는 글자 조각 */
+    /** 줄별 해설 — 그 줄 위에 주석처럼 보인다. at 은 그 줄에만 있는 글자 조각 */
     notes: z.array(z.object({ at: z.string().min(1), note: z.string().min(1) }).strict()).optional(),
+    /** 명령을 치고 Enter 를 누르면 그 아래에 보여 줄 출력 (터미널 화면) */
+    output: z.string().min(1).optional(),
     /** 치지 않는 앞뒤 코드 — 컴파일 검증용 (M6) */
     hidden: z.object({ before: z.string().optional(), after: z.string().optional() }).strict().optional(),
   })

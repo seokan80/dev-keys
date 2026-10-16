@@ -7,6 +7,8 @@ type Props = {
   improved: boolean;
   previous: Best | null;
   next: NextSet | null;
+  /** 해설 문서 위치 */
+  guideHref?: string;
   onRetry: () => void;
 };
 
@@ -18,7 +20,7 @@ const formatTime = (ms: number) => {
 };
 
 /** 세트를 끝냈을 때: 기록 · 최고 기록 비교 · 다시 하기 · 다음 세트 */
-export default function ResultScreen({ stats, improved, previous, next, onRetry }: Props) {
+export default function ResultScreen({ stats, improved, previous, next, guideHref, onRetry }: Props) {
   return (
     <section className="flex flex-col gap-6 rounded-lg border border-slate-700 bg-slate-900 p-6" data-testid="result">
       <div className="flex flex-col gap-1">
@@ -47,13 +49,23 @@ export default function ResultScreen({ stats, improved, previous, next, onRetry 
       </dl>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
-        <button
-          type="button"
-          className="rounded-lg border border-slate-600 px-4 py-2 text-sm hover:bg-slate-800"
-          onClick={onRetry}
-        >
-          다시 하기
-        </button>
+        <div className="flex gap-3 sm:flex-col">
+          <button
+            type="button"
+            className="flex-1 rounded-lg border border-slate-600 px-4 py-2 text-sm hover:bg-slate-800"
+            onClick={onRetry}
+          >
+            다시 하기
+          </button>
+          {guideHref && (
+            <a
+              href={guideHref}
+              className="flex flex-1 items-center justify-center rounded-lg border border-sky-700 px-4 py-2 text-sm text-sky-300 hover:bg-sky-500/10"
+            >
+              해설 읽기
+            </a>
+          )}
+        </div>
         <div className="flex-1">
           <NextSetCard next={next} autoFocus />
         </div>

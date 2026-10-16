@@ -34,11 +34,11 @@ describe('정상 세트', () => {
     expect(errors(r)).toEqual([]);
     const set = r.sets[0]!;
     expect(set).toMatchObject({ slug: 'basic-commit', href: '/git/basic-commit', id: 'git-basic-commit' });
-    expect(set.lines[0]).toEqual({ text: 'git status', note: '상태를 본다', itemId: 'status' });
+    expect(set.lines[0]).toEqual({ text: 'git status', comments: ['상태를 본다'], output: null, itemId: 'status' });
     expect(set.lines).toHaveLength(19);
   });
 
-  it('코드 블록은 줄로 나누고, 줄별 해설은 at 으로 찾고, 문제 전체 설명보다 우선한다', () => {
+  it('코드 블록은 줄로 나누고, 문제 설명은 첫 줄 위에, 줄별 해설은 at 으로 찾은 줄 위에 단다', () => {
     const items = [
       '  - id: stream',
       '    type: copy',
@@ -61,10 +61,43 @@ describe('정상 세트', () => {
     );
     expect(errors(r)).toEqual([]);
     expect(r.sets[0]!.lines.slice(0, 3)).toEqual([
-      { text: 'List<String> names = users.stream()', note: '전체 설명', itemId: 'stream' },
-      { text: '    .map(User::name)', note: '전체 설명', itemId: 'stream' },
-      { text: '    .toList();', note: '수정할 수 없는 List', itemId: 'stream' },
+      { text: 'List<String> names = users.stream()', comments: ['전체 설명'], output: null, itemId: 'stream' },
+      { text: '    .map(User::name)', comments: [], output: null, itemId: 'stream' },
+      { text: '    .toList();', comments: ['수정할 수 없는 List'], output: null, itemId: 'stream' },
     ]);
+  });
+});
+
+describe('명령 출력(output)', () => {
+  const withOutput = (output: string) =>
+    buildContent(
+      [
+        file(
+          'content/sets/git/basic-commit.yaml',
+          setYaml(
+            {},
+            `  - id: init\n    type: copy\n    text: git init\n    output: ${JSON.stringify(output)}\n${filler}`,
+          ),
+        ),
+      ],
+      GUIDES,
+    );
+
+  it('문제의 마지막 줄 뒤에 보여 줄 출력으로 붙는다', () => {
+    const r = withOutput('Initialized empty Git repository in /home/kim/devkeys/.git/\n');
+    expect(errors(r)).toEqual([]);
+    expect(r.sets[0]!.lines[0]!.output).toBe('Initialized empty Git repository in /home/kim/devkeys/.git/');
+  });
+
+  it('출력도 ASCII · 탭 없음 · 줄 끝 공백 없음 · 100자 이하', () => {
+    expect(errors(withOutput('완료'))[0]).toMatch(/output.*ASCII/);
+    expect(errors(withOutput('a\tb'))[0]).toMatch(/output.*탭/);
+    expect(errors(withOutput('ok '))[0]).toMatch(/output.*줄 끝 공백/);
+    expect(errors(withOutput('x'.repeat(101)))[0]).toMatch(/output.*100자/);
+  });
+
+  it('출력은 앞 공백(들여쓰기)을 그대로 둔다', () => {
+    expect(withOutput(' M README.md').sets[0]!.lines[0]!.output).toBe(' M README.md');
   });
 });
 

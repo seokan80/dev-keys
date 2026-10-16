@@ -5,8 +5,8 @@ import { setSchema, type CopyItem, type RecallItem, type SetData } from '../../s
 export type RawFile = { path: string; text: string };
 export type Problem = { path: string; message: string; level: 'error' | 'warning' };
 
-/** 따라칠 한 줄과 그 줄에 보여 줄 해설 */
-export type CodeLine = { text: string; note: string | null; itemId: string };
+/** 따라칠 한 줄. comments 는 그 줄 위에 주석처럼, output 은 줄을 다 치면 아래에 보인다 (둘 다 치지 않는다) */
+export type CodeLine = { text: string; comments: string[]; output: string | null; itemId: string };
 
 export type ContentSet = SetData & {
   slug: string;
@@ -20,6 +20,7 @@ export type ContentSet = SetData & {
 const RESERVED_SLUGS = new Set(['challenge', 'tree', 'index']);
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const MAX_LINE = 80;
+const MAX_OUTPUT_LINE = 100;
 /** 예상 시간 계산 기준 (분당 타수) */
 const CPM = 200;
 const PLACEHOLDER = /<([a-z][a-z0-9_]*)>/g;
@@ -49,6 +50,19 @@ function checkCopyItem(item: CopyItem, report: (msg: string) => void): CodeLine[
     if (bad) report(`문제 ${item.id} hidden.${name}: ASCII 밖 글자 ${charLabel(bad)}`);
   }
 
+  if (item.output !== undefined) {
+    linesOf(item.output).forEach((line, i) => {
+      const at = `문제 ${item.id} output ${i + 1}번째 줄`;
+      if (line.includes('\t')) report(`${at}: 탭은 쓰지 않는다 (공백으로)`);
+      else {
+        const bad = [...line].find((ch) => ch < ' ' || ch > '~');
+        if (bad) report(`${at}: ASCII 밖 글자 ${charLabel(bad)}`);
+      }
+      if (/ $/.test(line)) report(`${at}: 줄 끝 공백`);
+      if (line.length > MAX_OUTPUT_LINE) report(`${at}: ${line.length}자 — ${MAX_OUTPUT_LINE}자 이하로`);
+    });
+  }
+
   const lineNotes = new Map<number, string>();
   for (const { at, note } of item.notes ?? []) {
     const hits = lines.flatMap((line, i) => (line.includes(at) ? [i] : []));
@@ -59,7 +73,13 @@ function checkCopyItem(item: CopyItem, report: (msg: string) => void): CodeLine[
     else lineNotes.set(hits[0]!, note);
   }
 
-  return lines.map((text, i) => ({ text, note: lineNotes.get(i) ?? item.note ?? null, itemId: item.id }));
+  const output = item.output === undefined ? null : item.output.replace(/\n$/, '');
+  return lines.map((text, i) => ({
+    text,
+    comments: [...(i === 0 && item.note ? [item.note] : []), ...(lineNotes.has(i) ? [lineNotes.get(i)!] : [])],
+    output: i === lines.length - 1 ? output : null,
+    itemId: item.id,
+  }));
 }
 
 function checkRecallItem(item: RecallItem, category: CategoryId, report: (msg: string) => void) {

@@ -12,6 +12,12 @@ type Props = {
   href: string;
   lines: readonly CodeLine[];
   next: NextSet | null;
+  /** 줄 위 해설의 주석 표시 (# 또는 //) */
+  commentMark?: string;
+  /** 줄 앞 표시 (터미널의 $) */
+  prompt?: string;
+  /** 해설 문서 위치 (결과 화면의 "해설 읽기") */
+  guideHref?: string;
 };
 
 type Phase =
@@ -19,7 +25,7 @@ type Phase =
   | { kind: 'result'; run: number; stats: TypingStats; improved: boolean; previous: Best | null };
 
 /** 기본 모드 한 세트: 설정 · 최고 기록 · 따라치기 · 결과 */
-export default function SetPlayer({ setId, href, lines, next }: Props) {
+export default function SetPlayer({ setId, href, lines, next, commentMark, prompt, guideHref }: Props) {
   const save = useSave();
   const [phase, setPhase] = useState<Phase>({ kind: 'typing', run: 0 });
   const key = bestKey(setId, 'copy');
@@ -81,6 +87,7 @@ export default function SetPlayer({ setId, href, lines, next }: Props) {
           improved={phase.improved}
           previous={phase.previous}
           next={next}
+          guideHref={guideHref}
           onRetry={() => setPhase({ kind: 'typing', run: phase.run + 1 })}
         />
       ) : (
@@ -88,7 +95,10 @@ export default function SetPlayer({ setId, href, lines, next }: Props) {
           // 설정을 바꾸면 처음부터 다시 시작한다
           key={`${phase.run}-${settings.autoIndent}-${settings.sixFinger}`}
           lines={lines.map((l) => l.text)}
-          notes={lines.map((l) => l.note)}
+          comments={lines.map((l) => l.comments)}
+          outputs={lines.map((l) => l.output)}
+          commentMark={commentMark}
+          prompt={prompt}
           typingOptions={{ autoIndent: settings.autoIndent }}
           keyboardOptions={{ sixFinger: settings.sixFinger }}
           showKeyboard={settings.showKeyboard}
