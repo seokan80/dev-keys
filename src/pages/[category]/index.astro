@@ -1,0 +1,43 @@
+---
+import Base from '../../layouts/Base.astro';
+import Breadcrumb from '../../components/Breadcrumb.astro';
+import { getSets } from '../../lib/content/load';
+import { CATEGORIES } from '../../schemas/categories';
+
+export function getStaticPaths() {
+  return CATEGORIES.map((category) => ({ params: { category: category.id }, props: { category } }));
+}
+
+const { category } = Astro.props;
+const sets = getSets().filter((s) => s.category === category.id);
+---
+
+<Base
+  title={`${category.title} 타자 연습 — DevKeys`}
+  description={`${category.description}. 따라 치며 손에 익히는 개발자 타자 연습.`}
+>
+  <main class="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-10">
+    <Breadcrumb items={[{ label: 'DevKeys', href: '/' }, { label: category.title }]} />
+    <header class="flex flex-col gap-1">
+      <h1 class="text-3xl font-bold">{category.title} 타자 연습</h1>
+      <p class="text-slate-400">{category.description}</p>
+    </header>
+    {sets.length === 0 ? (
+      <p class="text-slate-500">준비 중입니다.</p>
+    ) : (
+      <ol class="flex flex-col gap-3">
+        {sets.map((set) => (
+          <li>
+            <a href={set.href} class="flex flex-col gap-1 rounded-lg border border-slate-700 p-4 hover:bg-slate-900">
+              <strong class="text-lg">{set.title}</strong>
+              <span class="text-sm text-slate-400">{set.description}</span>
+              <span class="text-xs text-slate-500">
+                {set.lines.length}줄 · 난이도 {set.level}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ol>
+    )}
+  </main>
+</Base>

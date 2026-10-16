@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { describeStrokes, keyStroke, strokesFor, type KeyboardOptions, type Strokes } from '@core/keyboard';
 import {
   apply,
@@ -17,6 +17,8 @@ import Line from './Line';
 
 type Props = {
   lines: readonly string[];
+  /** 줄마다 보여 줄 해설 (lines 와 같은 길이) */
+  notes?: readonly (string | null)[];
   typingOptions?: Partial<TypingOptions>;
   keyboardOptions?: KeyboardOptions;
   showKeyboard?: boolean;
@@ -33,6 +35,15 @@ const formatTime = (ms: number) => {
 
 type Hint = { label: string; strokes: Strokes | null; note?: string };
 
+const subscribeNothing = () => () => {};
+/** 서버에서 그린 HTML 에 React 가 붙었는지. 붙기 전에는 입력을 받을 수 없다 */
+const useHydrated = () =>
+  useSyncExternalStore(
+    subscribeNothing,
+    () => true,
+    () => false,
+  );
+
 function hintFor(state: TypingState, keyboardOptions: KeyboardOptions): Hint | null {
   const expected = cursor(state).expected;
   if (!expected) return null;
@@ -47,6 +58,7 @@ function hintFor(state: TypingState, keyboardOptions: KeyboardOptions): Hint | n
 /** 따라치기 영역: 줄 표시 + 숨긴 입력 칸 + 다음 키 안내 + 손가락 키보드 */
 export default function TypingArea({
   lines,
+  notes,
   typingOptions,
   keyboardOptions = {},
   showKeyboard = true,
@@ -58,6 +70,7 @@ export default function TypingArea({
   const [tick, setTick] = useState(0);
   const [focused, setFocused] = useState(false);
   const [ime, setIme] = useState(false);
+  const hydrated = useHydrated();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const currentLineRef = useRef<HTMLDivElement>(null);
 
@@ -181,7 +194,7 @@ export default function TypingArea({
         ))}
         {!focused && !finished && (
           <div className="absolute inset-0 flex items-center justify-center bg-slate-950/70 text-sm text-slate-300">
-            여기를 눌러 {state.startedAt === null ? '시작' : '계속'}
+            {!hydrated ? '불러오는 중…' : `여기를 눌러 ${state.startedAt === null ? '시작' : '계속'}`}
           </div>
         )}
         <textarea
@@ -203,6 +216,16 @@ export default function TypingArea({
           }}
         />
       </div>
+
+      {notes && !finished && (
+        <p
+          aria-live="polite"
+          className="min-h-12 rounded-md border-l-4 border-sky-400/60 bg-slate-800/60 px-3 py-2 text-sm leading-relaxed text-slate-200"
+          data-testid="line-note"
+        >
+          {notes[c.lineIndex] ?? ''}
+        </p>
+      )}
 
       {finished ? (
         <div className="flex items-center gap-4 rounded-lg bg-emerald-500/10 p-4" data-testid="finished">

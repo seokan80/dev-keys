@@ -1,0 +1,46 @@
+---
+import { getEntry, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Breadcrumb from '../../components/Breadcrumb.astro';
+import SetPlayer from '../../components/sets/SetPlayer';
+import type { ContentSet } from '../../lib/content/check';
+import { getSets } from '../../lib/content/load';
+import { nextSetOf } from '../../lib/content/next';
+import { categoryOf } from '../../schemas/categories';
+
+export function getStaticPaths() {
+  return getSets().map((set) => ({ params: { category: set.category, set: set.slug }, props: { set } }));
+}
+
+const { set } = Astro.props as { set: ContentSet };
+const category = categoryOf(set.category);
+const nextSet = nextSetOf(getSets(), set);
+const next = nextSet ? { href: nextSet.href, title: nextSet.title, description: nextSet.description } : null;
+
+const guide = await getEntry('guides', `${set.category}/${set.slug}`);
+if (!guide) throw new Error(`해설이 없다: ${set.category}/${set.slug}`);
+const { Content } = await render(guide);
+---
+
+<Base title={`${set.title} — ${category.title} 타자 연습 · DevKeys`} description={set.description}>
+  <main class="mx-auto flex max-w-4xl flex-col gap-6 px-6 py-10">
+    <Breadcrumb
+      items={[
+        { label: 'DevKeys', href: '/' },
+        { label: category.title, href: `/${set.category}` },
+        { label: set.title },
+      ]}
+    />
+    <header class="flex flex-col gap-1">
+      <h1 class="text-3xl font-bold">{set.title}</h1>
+      <p class="text-slate-400">{set.description}</p>
+    </header>
+
+    <SetPlayer client:load setId={set.id} href={set.href} lines={set.lines} next={next} />
+
+    <article class="guide border-t border-slate-800 pt-6">
+      <p class="mb-2 text-xs font-bold tracking-widest text-sky-300 uppercase">해설</p>
+      <Content />
+    </article>
+  </main>
+</Base>

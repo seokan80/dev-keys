@@ -1,0 +1,101 @@
+import { useState } from 'react';
+import { bestKey, recordBest, setLastPlayed, updateSettings, type Best, type Settings } from '@core/storage';
+import type { TypingStats } from '@core/typing';
+import type { CodeLine } from '../../lib/content/check';
+import { updateSave, useSave } from '../../lib/save';
+import TypingArea from '../typing/TypingArea';
+import type { NextSet } from './NextSetCard';
+import ResultScreen from './ResultScreen';
+
+type Props = {
+  setId: string;
+  href: string;
+  lines: readonly CodeLine[];
+  next: NextSet | null;
+};
+
+type Phase =
+  | { kind: 'typing'; run: number }
+  | { kind: 'result'; run: number; stats: TypingStats; improved: boolean; previous: Best | null };
+
+/** 기본 모드 한 세트: 설정 · 최고 기록 · 따라치기 · 결과 */
+export default function SetPlayer({ setId, href, lines, next }: Props) {
+  const save = useSave();
+  const [phase, setPhase] = useState<Phase>({ kind: 'typing', run: 0 });
+  const key = bestKey(setId, 'copy');
+  const best = save.bests[key];
+  const { settings } = save;
+
+  const change = (patch: Partial<Settings>) => updateSave((s) => updateSettings(s, patch));
+
+  const onFinish = (stats: TypingStats) => {
+    const at = new Date().toISOString();
+    let outcome: { improved: boolean; previous: Best | null } = { improved: false, previous: null };
+    updateSave((s) => {
+      const r = recordBest(s, key, { cpm: stats.cpm, accuracy: stats.accuracy ?? 0, at });
+      outcome = r;
+      return setLastPlayed(r.save, href, at);
+    });
+    setPhase({ kind: 'result', run: phase.run, stats, ...outcome });
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+        <p className="text-slate-400" data-testid="best">
+          {best
+            ? `최고 기록 ${Math.round(best.cpm)}타 · 정확도 ${Math.round(best.accuracy * 100)}%`
+            : '아직 기록이 없어요'}
+        </p>
+        <div className="flex flex-wrap gap-4 text-slate-300">
+          <label className="flex items-center gap-1">
+            <input
+              type="checkbox"
+              checked={settings.autoIndent}
+              onChange={(e) => change({ autoIndent: e.target.checked })}
+            />
+            들여쓰기 자동 입력
+          </label>
+          <label className="flex items-center gap-1">
+            <input
+              type="checkbox"
+              checked={settings.showKeyboard}
+              onChange={(e) => change({ showKeyboard: e.target.checked })}
+            />
+            키보드 보기
+          </label>
+          <label className="flex items-center gap-1">
+            <input
+              type="checkbox"
+              checked={settings.sixFinger === 'left'}
+              onChange={(e) => change({ sixFinger: e.target.checked ? 'left' : 'right' })}
+            />
+            숫자 6을 왼손 검지로
+          </label>
+        </div>
+      </div>
+
+      {phase.kind === 'result' ? (
+        <ResultScreen
+          stats={phase.stats}
+          improved={phase.improved}
+          previous={phase.previous}
+          next={next}
+          onRetry={() => setPhase({ kind: 'typing', run: phase.run + 1 })}
+        />
+      ) : (
+        <TypingArea
+          // 설정을 바꾸면 처음부터 다시 시작한다
+          key={`${phase.run}-${settings.autoIndent}-${settings.sixFinger}`}
+          lines={lines.map((l) => l.text)}
+          notes={lines.map((l) => l.note)}
+          typingOptions={{ autoIndent: settings.autoIndent }}
+          keyboardOptions={{ sixFinger: settings.sixFinger }}
+          showKeyboard={settings.showKeyboard}
+          autoFocus={phase.run > 0}
+          onFinish={onFinish}
+        />
+      )}
+    </div>
+  );
+}
