@@ -8,7 +8,7 @@
 
 - 로직은 `src/core`, UI는 `src/components`. core는 React · Astro · 브라우저 API에 의존하지 않는다 — ESLint가 막는다
 - core 함수는 현재 시각 · 난수 · 저장소를 인자로 받는다 (`Date.now()`, `Math.random()`, `localStorage` 직접 호출 금지)
-- core를 바꾸면 단위 테스트 필수, 테스트를 먼저 쓴다. Git 엔진은 명령별 테스트 + 결과 비교 테스트 (+ 실제 git 대조 테스트)
+- core를 바꾸면 단위 테스트 필수, 테스트를 먼저 쓴다. Git 엔진은 명령별 테스트 + 결과 비교 테스트 + 실제 git 대조 테스트(`tests/unit/git-real` — 동작을 바꾸면 시나리오도 더한다)
 - Git 엔진은 실제 git 기본 동작을 따른다. 다르게 하려면 docs에 이유를 남긴다
 - 콘텐츠: 세트는 `content/sets/<카테고리>/<슬러그>.yaml`, 해설은 `content/guides/<카테고리>/<슬러그>.md` (형식은 구현계획 5.3). 추가하면 `npm run validate:content` 통과 필수. 미션은 권장 풀이 테스트를 함께 추가
 - 해설은 줄 위 주석(`note`·`notes`)으로 보인다. Git 세트는 명령마다 실제 출력(`output`, git 2.4x 기준)을 붙이고, 출력이 앞뒤로 맞는 이야기로 쓴다
