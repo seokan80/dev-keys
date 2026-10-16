@@ -1,0 +1,17 @@
+# 의존성·빌드 산출물
+node_modules/
+dist/
+.astro/
+.wrangler/
+
+# 시험 결과
+coverage/
+test-results/
+playwright-report/
+
+# 비밀 값
+.env
+.env.*
+!.env.example
+
+.DS_Store
