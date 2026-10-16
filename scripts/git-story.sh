@@ -31,7 +31,11 @@ tick() {
 run() {
   tick
   printf '\n$ %s\n' "$1"
-  script -qec "$1" /dev/null 2>&1 | sed -e 's/\x1b\[[0-9;]*[mK]//g' -e 's/\r$//' -e "s#$root##g" | expand -t 8 || true
+  # revert · cherry-pick 은 작성 시각이 지금과 다르면 " Date:" 줄을 더 찍는다. 시각을 고정해서 생기는 줄이라 뺀다
+  # (amend 는 실제로도 원래 작성 시각을 찍으니 그대로 둔다)
+  local drop='^$^'
+  [[ $1 =~ ^git\ (revert|cherry-pick) ]] && drop='^ Date: '
+  script -qec "$1" /dev/null 2>&1 | sed -e 's/\x1b\[[0-9;]*[mK]//g' -e 's/\r$//' -e "s#$root##g" -e "/$drop/d" | expand -t 8 || true
 }
 
 quiet() {

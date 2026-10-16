@@ -1,0 +1,221 @@
+id: git-undo
+category: git
+order: 4
+title: 되돌리기
+description: restore --source · commit --amend · reset 세 모드(--soft · --mixed · --hard) · clean · reflog · revert 로 어디에 있는 변경이든 되돌리기
+level: 2
+# 이야기: ~/devkeys 에서 파일 하나를 예전 버전으로 꺼내 보고, 마지막 커밋에 빠뜨린 파일을 넣고,
+#   reset 세 모드를 차례로 써 본 뒤 reflog 로 잃은 커밋을 되살린다. 이미 push 한 커밋은 revert 로 되돌린다.
+# 출력은 실제 git 2.53 으로 뽑았다: scripts/git-story.sh content/stories/git/undo.sh
+items:
+  - id: log
+    type: copy
+    text: git log --oneline
+    note: 지금 기록부터. 마지막 커밋은 빈 토큰을 건너뛰게 고친 것
+    output: |-
+      25c3d06 (HEAD -> main) fix: skip empty token
+      a19a786 feat: add login page
+      a32752b feat: add api client
+      c7bba81 docs: add README
+  - id: restore-source
+    type: copy
+    text: git restore --source=HEAD~2 api.js
+    note: 파일 하나만 두 커밋 전 내용으로 꺼낸다. 커밋 · 다른 파일은 그대로 (옛 방식은 git checkout HEAD~2 -- api.js)
+    scene:
+      workdir: [api.js (두 커밋 전 내용)]
+      repo: ['25c3d06 fix: skip empty token', 'a19a786 feat: add login page', 'a32752b feat: add api client']
+      arrow: { from: repo, to: workdir, label: restore --source }
+      caption: 예전 커밋에서 api.js 만 작업 트리로 꺼냈다 — 커밋은 그대로
+  - id: diff-stat
+    type: copy
+    text: git diff --stat
+    note: 꺼낸 내용과 마지막 커밋의 차이
+    output: |2-
+       api.js | 3 +--
+       1 file changed, 1 insertion(+), 2 deletions(-)
+  - id: restore
+    type: copy
+    text: git restore api.js
+    note: 확인했으니 다시 마지막 커밋 내용으로
+  - id: add-test
+    type: copy
+    text: git add api.test.js
+    note: (마지막 커밋에 테스트 파일을 빠뜨렸다) 빠뜨린 파일을 스테이징하고
+  - id: amend
+    type: copy
+    text: git commit --amend --no-edit
+    note: 마지막 커밋에 합친다. --no-edit 는 메시지를 그대로. 커밋이 새로 만들어져 해시가 바뀐다
+    output: |-
+      [main bc99051] fix: skip empty token
+       Date: Thu Oct 15 11:30:00 2026 +0900
+       2 files changed, 3 insertions(+), 1 deletion(-)
+       create mode 100644 api.test.js
+    scene:
+      repo: ['bc99051 fix: skip empty token', '~25c3d06 fix: skip empty token', 'a19a786 feat: add login page']
+      arrow: { from: staged, to: repo, label: commit --amend }
+      caption: 고친 게 아니라 새 커밋으로 바꿔 끼웠다 — 이미 push 한 커밋에는 쓰지 않는다
+  - id: log-amend
+    type: copy
+    text: git log --oneline -2
+    note: 마지막 커밋의 해시가 25c3d06 에서 bc99051 로 바뀌었다
+    output: |-
+      bc99051 (HEAD -> main) fix: skip empty token
+      a19a786 feat: add login page
+  - id: reset-soft
+    type: copy
+    text: git reset --soft HEAD~1
+    note: 이제 reset 세 모드를 차례로. --soft 는 커밋만 취소한다
+    scene:
+      staged: [api.js (고침), api.test.js (새 파일)]
+      repo: ['~bc99051 fix: skip empty token', 'a19a786 feat: add login page']
+      arrow: { from: repo, to: staged, label: reset --soft }
+      caption: 커밋만 취소 — 변경은 스테이징에 그대로 있다
+  - id: status-soft
+    type: copy
+    text: git status --short
+    note: 왼쪽 칸 — 스테이징돼 있다
+    output: |-
+      M  api.js
+      A  api.test.js
+  - id: reset-mixed
+    type: copy
+    text: git reset
+    note: 옵션이 없으면 --mixed. 스테이징을 비운다 (커밋을 주면 그 커밋으로 옮긴 뒤 비운다)
+    output: |-
+      Unstaged changes after reset:
+      M       api.js
+    scene:
+      workdir: [api.js (고침), api.test.js (새 파일)]
+      repo: ['a19a786 feat: add login page']
+      arrow: { from: staged, to: workdir, label: reset }
+      caption: 스테이징도 비웠다 — 변경은 작업 트리에 남았다
+  - id: status-mixed
+    type: copy
+    text: git status --short
+    note: 오른쪽 칸 — 고쳤지만 스테이징하지 않음. 새 파일은 다시 추적하지 않는 파일(??)
+    output: |2-
+       M api.js
+      ?? api.test.js
+  - id: reset-hard
+    type: copy
+    text: git reset --hard
+    note: 추적하는 파일의 변경까지 버린다 — 되돌릴 수 없다
+    output: 'HEAD is now at a19a786 feat: add login page'
+    scene:
+      workdir: [~api.js (고침), api.test.js (새 파일)]
+      repo: ['a19a786 feat: add login page']
+      caption: 고친 내용을 버렸다 — 추적하지 않는 새 파일은 --hard 로도 남는다
+  - id: status-hard
+    type: copy
+    text: git status --short
+    output: '?? api.test.js'
+  - id: clean-dry
+    type: copy
+    text: git clean -n
+    note: 추적하지 않는 파일을 지우기 전에 무엇을 지울지 먼저 본다 (-n 은 시험 삼아)
+    output: Would remove api.test.js
+  - id: clean
+    type: copy
+    text: git clean -f
+    note: 정말 지운다. 폴더까지는 -fd, .gitignore 로 무시한 것까지는 -fdx
+    output: Removing api.test.js
+  - id: reflog
+    type: copy
+    text: git reflog -5
+    note: (앗, 테스트를 넣은 커밋까지 버렸다) HEAD 가 거쳐 간 기록. 버린 커밋도 여기 남아 있다
+    output: |-
+      a19a786 (HEAD -> main) HEAD@{0}: reset: moving to HEAD
+      a19a786 (HEAD -> main) HEAD@{1}: reset: moving to HEAD
+      a19a786 (HEAD -> main) HEAD@{2}: reset: moving to HEAD~1
+      bc99051 HEAD@{3}: commit (amend): fix: skip empty token
+      25c3d06 HEAD@{4}: commit: fix: skip empty token
+  - id: reset-back
+    type: copy
+    text: git reset --hard bc99051
+    note: reflog 에서 찾은 해시로 되돌아간다 (git reset --hard HEAD@{3} 도 같다)
+    output: 'HEAD is now at bc99051 fix: skip empty token'
+    scene:
+      repo: ['bc99051 fix: skip empty token', 'a19a786 feat: add login page']
+      caption: 버린 커밋이 돌아왔다 — Git 은 버린 커밋을 30일쯤 지나서야 정리한다
+  - id: log-back
+    type: copy
+    text: git log --oneline -3
+    output: |-
+      bc99051 (HEAD -> main) fix: skip empty token
+      a19a786 feat: add login page
+      a32752b feat: add api client
+  - id: revert
+    type: copy
+    text: git revert --no-edit HEAD~1
+    note: (로그인 페이지에 문제가 있다. 이미 push 했다) 그 커밋을 되돌리는 새 커밋을 만든다
+    output: |-
+      [main 714db12] Revert "feat: add login page"
+       1 file changed, 1 deletion(-)
+       delete mode 100644 login.html
+    scene:
+      repo: ['714db12 Revert "feat: add login page"', 'bc99051 fix: skip empty token', 'a19a786 feat: add login page']
+      caption: 되돌리는 커밋을 더했다 — 기록을 바꾸지 않아 이미 push 한 커밋에도 안전하다
+  - id: log-revert
+    type: copy
+    text: git log --oneline -3
+    output: |-
+      714db12 (HEAD -> main) Revert "feat: add login page"
+      bc99051 fix: skip empty token
+      a19a786 feat: add login page
+
+  # ── 도전 모드(뜻 보고 치기). reset 은 엔진으로 판정한다 — 결과 트리가 같아도 모드가 다르면 오답
+  - id: recall-restore-source
+    type: recall
+    prompt: <file> 파일만 <rev> 커밋 때 내용으로 꺼낸다 — 커밋은 그대로
+    answers:
+      - git restore --source=<rev> <file>
+      - git restore --source <rev> <file>
+      - git restore -s <rev> <file>
+      - git restore -s<rev> <file>
+      - git checkout <rev> -- <file>
+    placeholder: { file: api.js, rev: HEAD~2 }
+  - id: recall-amend-no-edit
+    type: recall
+    prompt: 스테이징한 변경을 마지막 커밋에 합친다 — 메시지는 그대로
+    answers: [git commit --amend --no-edit]
+  - id: recall-reset-mixed
+    type: recall
+    prompt: 마지막 커밋을 취소하고, 변경은 스테이징하지 않은 채 작업 트리에 남긴다
+    answers: [git reset HEAD~1, git reset --mixed HEAD~1, git reset HEAD^, git reset --mixed HEAD^]
+    context: { setup: [git commit, git commit] }
+  - id: recall-reset-hard
+    type: recall
+    prompt: 마지막 커밋 하나를 고친 내용까지 완전히 버린다
+    answers: [git reset --hard HEAD~1, git reset --hard HEAD^]
+    context: { setup: [git commit, git commit] }
+  - id: recall-unstage-all
+    type: recall
+    prompt: 스테이징한 것을 모두 내린다 — 고친 내용은 작업 트리에 그대로
+    answers: [git reset, git reset HEAD, git reset --mixed, git restore --staged .]
+  - id: recall-discard-all
+    type: recall
+    prompt: 추적하는 파일의 고친 내용을 스테이징까지 모두 버린다
+    answers: [git reset --hard, git reset --hard HEAD]
+  - id: recall-clean-dry
+    type: recall
+    prompt: 추적하지 않는 파일 중 무엇이 지워질지 먼저 본다
+    answers: [git clean -n, git clean --dry-run]
+  - id: recall-clean-dirs
+    type: recall
+    prompt: 추적하지 않는 파일과 폴더를 지운다
+    answers: [git clean -fd, git clean -df, git clean -f -d, git clean -d -f]
+  - id: recall-reflog
+    type: recall
+    prompt: HEAD 가 거쳐 간 기록을 최근 <n>개 본다
+    answers: [git reflog -<n>, git reflog -n <n>, git reflog -n<n>, git reflog show -<n>]
+    placeholder: { n: '5' }
+  - id: recall-reset-to
+    type: recall
+    prompt: reflog 에서 찾은 커밋으로 브랜치와 파일을 완전히 되돌린다 — 해시는 <hash>
+    answers: [git reset --hard <hash>]
+    placeholder: { hash: bc99051 }
+  - id: recall-revert
+    type: recall
+    prompt: 이미 push 한 커밋을 되돌리는 새 커밋을 만든다 — 대상은 <rev>, 메시지 편집 없이
+    answers: [git revert --no-edit <rev>, git revert <rev> --no-edit]
+    placeholder: { rev: HEAD~1 }
