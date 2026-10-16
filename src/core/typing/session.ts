@@ -126,6 +126,19 @@ export function apply(state: TypingState, input: TypingInput, now: number): Typi
   }
 }
 
+/**
+ * 검수 모드: 지금 줄을 정답으로 채운다 — 오타(잘못 친 Enter 포함)는 지우고 남은 글자를 친다. Enter 는 치지 않는다.
+ * 실제 입력과 같은 길(apply)로 채워 이후 동작(출력 · 그림)이 평소와 같다
+ */
+export function completeLine(state: TypingState, now: number): TypingState {
+  if (state.finishedAt !== null) return state;
+  const target = state.lines[state.lineIndex]!;
+  let s = state;
+  while (firstError(s.typed, target) !== -1 && s.typed.length > s.locked) s = apply(s, { kind: 'backspace' }, now);
+  for (const ch of target.slice(s.typed.length)) s = apply(s, { kind: 'char', char: ch }, now);
+  return s;
+}
+
 /** 탭 이탈 등: 다음 입력까지의 구간을 경과 시간에 넣지 않는다 */
 export function pause(state: TypingState): TypingState {
   return state.finishedAt !== null || state.lastInputAt === null ? state : { ...state, lastInputAt: null };

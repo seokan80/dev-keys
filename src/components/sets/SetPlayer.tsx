@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { bestKey, recordBest, setLastPlayed, type Best } from '@core/storage';
 import type { TypingStats } from '@core/typing';
 import type { CodeLine } from '../../lib/content/check';
+import { useReview } from '../../lib/review';
 import { updateSave, useSave } from '../../lib/save';
 import GitScene from '../scenes/GitScene';
 import TreeSceneView from '../scenes/TreeSceneView';
@@ -29,7 +30,7 @@ type Props = {
 
 type Phase =
   | { kind: 'typing'; run: number }
-  | { kind: 'result'; run: number; stats: TypingStats; improved: boolean; previous: Best | null };
+  | { kind: 'result'; run: number; stats: TypingStats; improved: boolean; previous: Best | null; reviewed?: boolean };
 
 /** 기본 모드 한 세트: 설정 · 최고 기록 · 따라치기 · 결과 */
 export default function SetPlayer({
@@ -44,6 +45,7 @@ export default function SetPlayer({
   challengeHref,
 }: Props) {
   const save = useSave();
+  const review = useReview();
   const [phase, setPhase] = useState<Phase>({ kind: 'typing', run: 0 });
   const key = bestKey(setId, 'copy');
   const best = save.bests[key];
@@ -56,6 +58,11 @@ export default function SetPlayer({
   };
 
   const onFinish = (stats: TypingStats) => {
+    if (review) {
+      // 검수 모드: 기록하지 않는다
+      setPhase({ kind: 'result', run: phase.run, stats, improved: false, previous: best ?? null, reviewed: true });
+      return;
+    }
     const at = new Date().toISOString();
     let outcome: { improved: boolean; previous: Best | null } = { improved: false, previous: null };
     updateSave((s) => {
@@ -85,6 +92,7 @@ export default function SetPlayer({
           next={next}
           guideHref={guideHref}
           challengeHref={challengeHref}
+          reviewed={phase.reviewed}
           onRetry={() => setPhase({ kind: 'typing', run: phase.run + 1 })}
         />
       ) : (
