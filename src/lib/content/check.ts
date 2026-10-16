@@ -8,27 +8,30 @@ import { setSchema, type CopyItem, type RecallItem, type Scene, type SetData } f
 export type RawFile = { path: string; text: string };
 export type Problem = { path: string; message: string; level: 'error' | 'warning' };
 
-/** Enter 뒤에 보여 줄 커밋 트리: 이 명령 전 · 후 상태와 배치, 커밋 설명(해시 + 메시지) */
-export type TreeScene = {
-  before: RepoState;
-  after: RepoState;
-  layoutBefore: TreeLayout;
-  layoutAfter: TreeLayout;
-  /** 커밋 id → 그림에 보일 설명 */
+/**
+ * engine 세트의 커밋 그래프 (타자 영역 옆에 늘 보인다). steps 는 상태가 바뀔 때마다 하나씩.
+ * 배치는 한 번 정한 자리를 바꾸지 않으므로 마지막 배치 하나로 모든 단계를 그린다 (그 단계에 없는 커밋은 그리지 않는다)
+ */
+export type SetGraph = {
+  steps: RepoState[];
+  layout: TreeLayout;
+  /** 커밋 id → 그래프에 보일 설명 (해시 + 메시지) */
   names: Record<string, string>;
-  caption: string;
 };
+
+/** 이 줄을 치는 동안 · 끝낸 뒤 보여 줄 그래프 단계, 끝낸 뒤 그래프 아래 설명 (tree.caption) */
+export type LineGraph = { during: number; after: number; caption: string | null };
 
 /**
  * 따라칠 한 줄. 모두 치지 않는 것:
- * comments 는 그 줄 위에 주석처럼, output 은 줄을 다 치면 아래에, scene · tree 는 Enter 뒤에 그림으로
+ * comments 는 그 줄 위에 주석처럼, output 은 줄을 다 치면 아래에, scene 은 Enter 뒤에 그림으로, graph 는 옆 그래프의 단계
  */
 export type CodeLine = {
   text: string;
   comments: string[];
   output: string | null;
   scene: Scene | null;
-  tree: TreeScene | null;
+  graph: LineGraph | null;
   itemId: string;
 };
 
@@ -54,6 +57,8 @@ export type ContentSet = SetData & {
   lines: CodeLine[];
   /** 도전 모드 문제 (없으면 도전 모드가 없다) */
   recalls: RecallLine[];
+  /** engine 세트의 커밋 그래프 */
+  graph: SetGraph | null;
 };
 
 const RESERVED_SLUGS = new Set(['challenge', 'tree', 'index']);
@@ -125,7 +130,7 @@ function checkCopyItem(item: CopyItem, report: (msg: string) => void): CodeLine[
       comments: [...(i === 0 && item.note ? [item.note] : []), ...(lineNotes.has(i) ? [lineNotes.get(i)!] : [])],
       output: outputs.length > 0 ? outputs.join('\n') : null,
       scene: i === last ? (item.scene ?? null) : null,
-      tree: null,
+      graph: null,
       itemId: item.id,
     };
   });
@@ -208,21 +213,25 @@ function checkContext(id: string, setup: readonly string[], answers: readonly st
 }
 
 /**
- * engine 세트: 따라치기 명령을 Git 엔진으로 차례로 돌려 tree 가 있는 줄의 전 · 후 트리를 만든다.
+ * engine 세트: 따라치기 명령을 Git 엔진으로 차례로 돌려 커밋 그래프 단계를 쌓는다.
+ * 숨은 명령(before)은 그 줄을 시작할 때, 그 줄의 명령은 끝낼 때 반영한다. 엔진에서 뺀 줄(skipEngine)은 그래프가 그대로다.
  * 엔진에서 실패하면 콘텐츠 오류 — 세트의 Git 흐름(명령 순서 · 숨은 커밋)이 맞는지 엔진이 검사하는 셈이다.
  */
-function simulate(data: SetData, report: (msg: string) => void): Map<string, TreeScene> {
-  const scenes = new Map<string, TreeScene>();
+function simulate(
+  data: SetData,
+  report: (msg: string) => void,
+): { graph: SetGraph; lines: Map<string, LineGraph> } | null {
   let state = initialRepo();
   let layout = layoutTree(state);
+  const steps: RepoState[] = [state];
+  const lines = new Map<string, LineGraph>();
   const names: Record<string, string> = { c1: data.engine!.root };
-  const nameNew = (
-    before: RepoState,
-    after: RepoState,
-    describe: (message: string | undefined, label: string) => string,
-  ) => {
-    for (const [id, c] of Object.entries(after.commits))
-      if (!before.commits[id]) names[id] = describe(c.message, c.label);
+  const advance = (next: RepoState, describe: (message: string | undefined, label: string) => string) => {
+    for (const [id, c] of Object.entries(next.commits))
+      if (!state.commits[id]) names[id] = describe(c.message, c.label);
+    state = next;
+    layout = layoutTree(state, layout);
+    steps.push(state);
   };
   for (const item of data.items) {
     if (item.type !== 'copy') continue;
@@ -230,38 +239,28 @@ function simulate(data: SetData, report: (msg: string) => void): Map<string, Tre
       const r = execute(state, command);
       if (r.error) {
         report(`문제 ${item.id} before "${command}": 엔진에서 실패 — ${r.error.message}`);
-        return scenes;
+        return null;
       }
-      nameNew(state, r.state, (message, label) => message ?? label);
-      state = r.state;
-      layout = layoutTree(state, layout);
+      advance(r.state, (message, label) => message ?? label);
     }
-    if (item.skipEngine) continue;
-    const before = state;
-    const layoutBefore = layout;
+    const during = steps.length - 1;
+    const caption = item.tree?.caption ?? null;
+    if (item.skipEngine) {
+      lines.set(item.id, { during, after: during, caption });
+      continue;
+    }
     const r = execute(state, item.text.trim());
     if (r.error) {
       report(`문제 ${item.id}: 엔진에서 실패 — ${r.error.message}`);
-      return scenes;
+      return null;
     }
     // hash 를 주면 "새 해시 + 메시지". 복사한 커밋(cherry-pick · rebase)은 원본 메시지 앞의 해시를 떼고 붙인다
-    nameNew(state, r.state, (message, label) =>
+    advance(r.state, (message, label) =>
       item.hash ? `${item.hash} ${(message ?? '').replace(/^[0-9a-f]{7} /, '')}`.trim() : (message ?? label),
     );
-    state = r.state;
-    layout = layoutTree(state, layout);
-    if (item.tree) {
-      scenes.set(item.id, {
-        before,
-        after: state,
-        layoutBefore,
-        layoutAfter: layout,
-        names: { ...names },
-        caption: item.tree.caption,
-      });
-    }
+    lines.set(item.id, { during, after: steps.length - 1, caption });
   }
-  return scenes;
+  return { graph: { steps, layout, names }, lines };
 }
 
 /**
@@ -323,9 +322,13 @@ export function buildContent(setFiles: RawFile[], guidePaths: string[]): { sets:
         lines.push(...itemLines);
       } else recalls.push(checkRecallItem(item, data.id, data.category, report));
     }
+    let graph: SetGraph | null = null;
     if (data.engine) {
-      const scenes = simulate(data, report);
-      for (const line of lines) line.tree = scenes.get(line.itemId) ?? null;
+      const simulated = simulate(data, report);
+      if (simulated) {
+        graph = simulated.graph;
+        for (const line of lines) line.graph = simulated.lines.get(line.itemId) ?? null;
+      }
     }
 
     if (lines.length === 0) report('따라치기 문제(type: copy)가 하나도 없다');
@@ -338,7 +341,7 @@ export function buildContent(setFiles: RawFile[], guidePaths: string[]): { sets:
       }
     }
 
-    sets.push({ ...data, slug, href: `/${folder}/${slug}`, file: file.path, lines, recalls });
+    sets.push({ ...data, slug, href: `/${folder}/${slug}`, file: file.path, lines, recalls, graph });
   }
 
   // 카테고리 안 order 중복

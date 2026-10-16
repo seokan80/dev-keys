@@ -10,7 +10,7 @@ export async function hydrated(page: Page) {
   await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
 }
 
-type TypedLine = { text: string; scene?: unknown; tree?: unknown };
+type TypedLine = { text: string; scene?: unknown };
 
 /**
  * 따라치기 영역을 눌러 줄들을 친다. 들여쓰기 자동 입력(기본 켬)이라 줄 앞 공백은 치지 않는다.
@@ -21,7 +21,7 @@ export async function typeLines(page: Page, lines: readonly TypedLine[], { scene
   for (const line of lines) {
     await page.keyboard.type(line.text.trimStart());
     await page.keyboard.press('Enter');
-    if (scenes && (line.scene || line.tree)) {
+    if (scenes && line.scene) {
       await expect(page.getByTestId('scene')).toBeVisible();
       await page.keyboard.press('Enter');
     }

@@ -61,7 +61,7 @@ export const copyItemSchema = z
     before: z.array(z.string().min(1)).optional(),
     /** (engine 세트) 트리와 상관없는 명령(stash · log …)은 엔진에서 뺀다 */
     skipEngine: z.boolean().optional(),
-    /** (engine 세트) Enter 를 치면 이 명령 전 · 후 커밋 트리를 그림으로 */
+    /** (engine 세트) 이 줄을 끝냈을 때 옆 커밋 그래프 아래에 보일 설명 */
     tree: z
       .object({ caption: z.string().min(1).max(80) })
       .strict()

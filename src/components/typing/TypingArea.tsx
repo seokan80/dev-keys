@@ -37,6 +37,8 @@ type Props = {
   keyboardOptions?: KeyboardOptions;
   showKeyboard?: boolean;
   autoFocus?: boolean;
+  /** 지금 치는 줄이 바뀔 때 (다 치면 lines.length) — 옆 그래프를 그 줄에 맞춘다 */
+  onLine?: (lineIndex: number) => void;
   onFinish?: (stats: TypingStats) => void;
 };
 
@@ -83,6 +85,7 @@ export default function TypingArea({
   keyboardOptions = {},
   showKeyboard = true,
   autoFocus = false,
+  onLine,
   onFinish,
 }: Props) {
   const [state, setState] = useState(() => createSession(lines, typingOptions));
@@ -109,6 +112,11 @@ export default function TypingArea({
   useEffect(() => {
     if (autoFocus) inputRef.current?.focus({ preventScroll: true });
   }, [autoFocus]);
+
+  const lineAt = state.finishedAt !== null ? lines.length : state.lineIndex;
+  useEffect(() => {
+    onLine?.(lineAt);
+  }, [lineAt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 진행 중에는 경과 시간·타수를 0.5초마다 갱신
   const running = state.startedAt !== null && state.finishedAt === null && focused;
