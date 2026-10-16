@@ -1,0 +1,138 @@
+import { z } from 'zod';
+
+/** 브라우저 저장소(localStorage)와 같은 모양. core 는 이 인터페이스만 받는다. */
+export interface KeyValueStore {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+}
+
+export const STORAGE_KEY = 'devkeys:save';
+/** 읽을 수 없던 저장값을 지우지 않고 남겨 두는 곳 */
+export const BROKEN_KEY = 'devkeys:save:broken';
+
+const bestSchema = z.object({ cpm: z.number().nonnegative(), accuracy: z.number().min(0).max(1), at: z.string() });
+const srsSchema = z.object({
+  step: z.number().int(),
+  wrong: z.number().int(),
+  lastCorrect: z.string().optional(),
+  due: z.string(),
+});
+const settingsSchema = z.object({
+  autoIndent: z.boolean(),
+  showKeyboard: z.boolean(),
+  sixFinger: z.enum(['right', 'left']),
+});
+
+export type Best = z.infer<typeof bestSchema>;
+export type SrsEntry = z.infer<typeof srsSchema>;
+export type Settings = z.infer<typeof settingsSchema>;
+export type SaveV1 = {
+  version: 1;
+  /** 키: `${setId}:${mode}` */
+  bests: Record<string, Best>;
+  /** 키: `${setId}/${itemId}` (M5) */
+  srs: Record<string, SrsEntry>;
+  settings: Settings;
+  lastPlayed?: { path: string; at: string };
+};
+
+export const DEFAULT_SETTINGS: Settings = { autoIndent: true, showKeyboard: true, sixFinger: 'right' };
+export const DEFAULT_SAVE: SaveV1 = { version: 1, bests: {}, srs: {}, settings: DEFAULT_SETTINGS };
+
+/** 잘못된 항목 하나 때문에 전부 잃지 않도록, 항목마다 따로 검사한다 */
+function validRecord<T>(value: unknown, schema: z.ZodType<T>): Record<string, T> {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return {};
+  const out: Record<string, T> = {};
+  for (const [k, v] of Object.entries(value)) {
+    const r = schema.safeParse(v);
+    if (r.success) out[k] = r.data;
+  }
+  return out;
+}
+
+function toV1(raw: Record<string, unknown>): SaveV1 {
+  const settings = settingsSchema.partial().safeParse(raw.settings);
+  const lastPlayed = z.object({ path: z.string(), at: z.string() }).safeParse(raw.lastPlayed);
+  return {
+    version: 1,
+    bests: validRecord(raw.bests, bestSchema),
+    srs: validRecord(raw.srs, srsSchema),
+    settings: { ...DEFAULT_SETTINGS, ...(settings.success ? settings.data : {}) },
+    ...(lastPlayed.success ? { lastPlayed: lastPlayed.data } : {}),
+  };
+}
+
+export type ParseStatus = 'empty' | 'ok' | 'migrated' | 'broken';
+
+export function parseSave(raw: string | null): { save: SaveV1; status: ParseStatus } {
+  if (raw === null) return { save: DEFAULT_SAVE, status: 'empty' };
+  let data: unknown;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    return { save: DEFAULT_SAVE, status: 'broken' };
+  }
+  if (data === null || typeof data !== 'object' || Array.isArray(data)) return { save: DEFAULT_SAVE, status: 'broken' };
+
+  const obj = data as Record<string, unknown>;
+  // v0: 판 표시가 생기기 전 모양. 알아볼 수 있는 칸만 옮긴다.
+  if (obj.version === undefined) return { save: toV1(obj), status: 'migrated' };
+  if (obj.version === 1) return { save: toV1(obj), status: 'ok' };
+  return { save: DEFAULT_SAVE, status: 'broken' };
+}
+
+export function loadSave(kv: KeyValueStore): SaveV1 {
+  let raw: string | null;
+  try {
+    raw = kv.getItem(STORAGE_KEY);
+  } catch {
+    return DEFAULT_SAVE;
+  }
+  const { save, status } = parseSave(raw);
+  if (status === 'broken' && raw !== null) {
+    try {
+      kv.setItem(BROKEN_KEY, raw);
+    } catch {
+      // 백업도 못 하면 그대로 기본값으로 진행한다
+    }
+  }
+  return save;
+}
+
+export function saveSave(kv: KeyValueStore, save: SaveV1): void {
+  try {
+    kv.setItem(STORAGE_KEY, JSON.stringify(save));
+  } catch {
+    // 저장소를 쓸 수 없으면(사생활 보호 모드·용량 초과) 이번 방문에서만 기억한다
+  }
+}
+
+export const bestKey = (setId: string, mode: 'copy' | 'recall' | 'mission') => `${setId}:${mode}`;
+
+/** 타수가 더 높을 때만 최고 기록을 바꾼다 */
+export function recordBest(
+  save: SaveV1,
+  key: string,
+  result: Best,
+): { save: SaveV1; improved: boolean; previous: Best | null } {
+  const previous = save.bests[key] ?? null;
+  if (previous && previous.cpm >= result.cpm) return { save, improved: false, previous };
+  return { save: { ...save, bests: { ...save.bests, [key]: result } }, improved: true, previous };
+}
+
+export function updateSettings(save: SaveV1, patch: Partial<Settings>): SaveV1 {
+  return { ...save, settings: { ...save.settings, ...patch } };
+}
+
+export function setLastPlayed(save: SaveV1, path: string, at: string): SaveV1 {
+  return { ...save, lastPlayed: { path, at } };
+}
+
+/** 시험·저장소를 못 쓰는 환경용 */
+export function memoryStore(initial: Record<string, string> = {}): KeyValueStore {
+  const data = new Map(Object.entries(initial));
+  return {
+    getItem: (key) => data.get(key) ?? null,
+    setItem: (key, value) => void data.set(key, value),
+  };
+}

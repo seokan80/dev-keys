@@ -18,6 +18,65 @@
   --finger-rp: #f472b6;
 }
 
+/* 세트 해설 (Markdown) */
+.guide {
+  line-height: 1.8;
+  color: #cbd5e1;
+}
+.guide h2 {
+  margin: 2rem 0 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+.guide > h2:first-child {
+  margin-top: 0;
+}
+.guide p,
+.guide ul,
+.guide ol,
+.guide table,
+.guide pre {
+  margin: 0.75rem 0;
+}
+.guide ul {
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+.guide a {
+  color: #34d399;
+  text-decoration: underline;
+}
+.guide strong {
+  color: #f1f5f9;
+}
+.guide code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+.guide :not(pre) > code {
+  padding: 0.1em 0.35em;
+  border-radius: 0.25rem;
+  background: rgb(255 255 255 / 0.08);
+}
+.guide pre {
+  padding: 1rem;
+  overflow-x: auto;
+  border-radius: 0.5rem;
+}
+.guide table {
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.guide th,
+.guide td {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  text-align: left;
+}
+
 /* 따라치기 화면에서 `=>`, `!==` 가 한 글자처럼 보이지 않게 (구현계획 2.3 #14) */
 code,
 pre,

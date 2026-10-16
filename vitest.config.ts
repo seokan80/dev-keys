@@ -12,7 +12,7 @@ export default defineConfig({
     include: ['tests/unit/**/*.test.ts', 'src/**/*.test.ts'],
     coverage: {
       provider: 'v8',
-      include: ['src/core/**', 'src/schemas/**', 'scripts/lib/**'],
+      include: ['src/core/**', 'src/schemas/**', 'src/lib/content/**'],
       reporter: ['text-summary', 'html'],
       thresholds: {
         // core 는 90% 이상. Git 엔진은 M3 완료 기준이기도 하다.

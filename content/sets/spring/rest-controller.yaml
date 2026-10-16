@@ -1,0 +1,91 @@
+id: spring-rest-controller
+category: spring
+order: 1
+title: REST 컨트롤러
+description: '@RestController · @GetMapping · @PostMapping · ResponseEntity 로 만드는 CRUD API 컨트롤러'
+level: 1
+items:
+  - id: post-controller
+    type: copy
+    text: |-
+      @RestController
+      @RequestMapping("/api/posts")
+      public class PostController {
+
+          private final PostService postService;
+
+          public PostController(PostService postService) {
+              this.postService = postService;
+          }
+
+          @GetMapping
+          public List<PostResponse> list() {
+              return postService.findAll();
+          }
+
+          @GetMapping("/{id}")
+          public PostResponse get(@PathVariable Long id) {
+              return postService.find(id);
+          }
+
+          @PostMapping
+          public ResponseEntity<PostResponse> create(
+                  @Valid @RequestBody PostRequest request) {
+              PostResponse created = postService.create(request);
+              URI location = URI.create("/api/posts/" + created.id());
+              return ResponseEntity.created(location).body(created);
+          }
+
+          @DeleteMapping("/{id}")
+          @ResponseStatus(HttpStatus.NO_CONTENT)
+          public void delete(@PathVariable Long id) {
+              postService.delete(id);
+          }
+      }
+    notes:
+      - at: '@RestController'
+        note: '@Controller + @ResponseBody — 반환값을 JSON 으로 바꿔 응답 본문에 쓴다'
+      - at: '@RequestMapping('
+        note: 이 컨트롤러의 모든 주소 앞에 붙는 경로
+      - at: private final PostService
+        note: 'final 필드 + 생성자 주입: 바뀌지 않고, 시험할 때 가짜 서비스를 넣기 쉽다'
+      - at: public PostController(
+        note: 생성자가 하나뿐이면 @Autowired 를 붙이지 않아도 주입된다
+      - at: public List<PostResponse> list()
+        note: 'GET /api/posts — List 는 JSON 배열이 된다'
+      - at: '@GetMapping("/{id}")'
+        note: 'GET /api/posts/{id} — 주소의 {id} 부분'
+      - at: public PostResponse get(
+        note: '@PathVariable: 주소의 {id} 를 Long 으로 바꿔 받는다'
+      - at: '@Valid @RequestBody'
+        note: '@RequestBody: JSON 본문 → 객체. @Valid: @NotBlank 같은 검증을 돌리고 실패하면 400'
+      - at: URI.create(
+        note: 새로 만든 자원의 주소
+      - at: ResponseEntity.created(
+        note: '201 Created + Location 헤더 + 본문'
+      - at: '@ResponseStatus('
+        note: 성공하면 204 No Content — 본문 없이 응답한다
+    hidden:
+      before: |-
+        import java.net.URI;
+        import java.util.List;
+
+        import jakarta.validation.Valid;
+        import jakarta.validation.constraints.NotBlank;
+        import org.springframework.http.HttpStatus;
+        import org.springframework.http.ResponseEntity;
+        import org.springframework.web.bind.annotation.*;
+      after: |-
+        record PostRequest(@NotBlank String title, String body) {}
+
+        record PostResponse(Long id, String title) {}
+
+        interface PostService {
+            List<PostResponse> findAll();
+
+            PostResponse find(Long id);
+
+            PostResponse create(PostRequest request);
+
+            void delete(Long id);
+        }

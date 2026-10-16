@@ -1,27 +1,18 @@
-// 콘텐츠 검증: 실패하면 빌드·배포를 막는다 (계획서 8장).
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join, relative } from 'node:path';
-import { checkContentFiles, type ContentFile } from './lib/content-check.ts';
+// 콘텐츠 검증: 오류가 있으면 빌드·배포를 막는다 (계획서 8장). 경고는 보여 주기만 한다.
+import { join } from 'node:path';
+import { loadContent } from '../src/lib/content/load.ts';
 
-const root = join(import.meta.dirname, '..');
-const contentDir = join(root, 'content');
+const { sets, problems } = loadContent(join(import.meta.dirname, '..'));
+const errors = problems.filter((p) => p.level === 'error');
+const warnings = problems.filter((p) => p.level === 'warning');
 
-const files: ContentFile[] = existsSync(contentDir)
-  ? readdirSync(contentDir, { recursive: true, encoding: 'utf8' })
-      .filter((name) => /\.ya?ml$/.test(name))
-      .sort()
-      .map((name) => {
-        const full = join(contentDir, name);
-        return { path: relative(root, full), text: readFileSync(full, 'utf8') };
-      })
-  : [];
+for (const p of warnings) console.warn(`⚠ ${p.path}: ${p.message}`);
+for (const p of errors) console.error(`✗ ${p.path}: ${p.message}`);
 
-const problems = checkContentFiles(files);
-
-if (problems.length > 0) {
-  for (const p of problems) console.error(`✗ ${p.path}: ${p.message}`);
-  console.error(`\n콘텐츠 검증 실패: ${problems.length}건`);
+if (errors.length > 0) {
+  console.error(`\n콘텐츠 검증 실패: 오류 ${errors.length}건`);
   process.exit(1);
 }
 
-console.log(`콘텐츠 검증 통과: YAML ${files.length}개`);
+const lineCount = sets.reduce((n, s) => n + s.lines.length, 0);
+console.log(`콘텐츠 검증 통과: 세트 ${sets.length}개 · 따라칠 줄 ${lineCount}줄 · 경고 ${warnings.length}건`);

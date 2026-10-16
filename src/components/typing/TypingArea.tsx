@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { describeStrokes, keyStroke, strokesFor, type KeyboardOptions, type Strokes } from '@core/keyboard';
 import {
   apply,
@@ -17,6 +17,14 @@ import Line from './Line';
 
 type Props = {
   lines: readonly string[];
+  /** 줄 위에 주석처럼 보여 줄 해설 (lines 와 같은 길이). 치지 않는다 */
+  comments?: readonly (readonly string[])[];
+  /** 줄을 다 치면 아래에 보여 줄 출력 (터미널 화면). 치지 않는다 */
+  outputs?: readonly (string | null)[];
+  /** 주석 표시 (# 또는 //) */
+  commentMark?: string;
+  /** 줄 앞 표시 (터미널의 $) */
+  prompt?: string;
   typingOptions?: Partial<TypingOptions>;
   keyboardOptions?: KeyboardOptions;
   showKeyboard?: boolean;
@@ -33,6 +41,15 @@ const formatTime = (ms: number) => {
 
 type Hint = { label: string; strokes: Strokes | null; note?: string };
 
+const subscribeNothing = () => () => {};
+/** 서버에서 그린 HTML 에 React 가 붙었는지. 붙기 전에는 입력을 받을 수 없다 */
+const useHydrated = () =>
+  useSyncExternalStore(
+    subscribeNothing,
+    () => true,
+    () => false,
+  );
+
 function hintFor(state: TypingState, keyboardOptions: KeyboardOptions): Hint | null {
   const expected = cursor(state).expected;
   if (!expected) return null;
@@ -47,6 +64,10 @@ function hintFor(state: TypingState, keyboardOptions: KeyboardOptions): Hint | n
 /** 따라치기 영역: 줄 표시 + 숨긴 입력 칸 + 다음 키 안내 + 손가락 키보드 */
 export default function TypingArea({
   lines,
+  comments,
+  outputs,
+  commentMark = '//',
+  prompt,
   typingOptions,
   keyboardOptions = {},
   showKeyboard = true,
@@ -58,6 +79,7 @@ export default function TypingArea({
   const [tick, setTick] = useState(0);
   const [focused, setFocused] = useState(false);
   const [ime, setIme] = useState(false);
+  const hydrated = useHydrated();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const currentLineRef = useRef<HTMLDivElement>(null);
 
@@ -67,7 +89,7 @@ export default function TypingArea({
   };
 
   useEffect(() => {
-    if (autoFocus) inputRef.current?.focus();
+    if (autoFocus) inputRef.current?.focus({ preventScroll: true });
   }, [autoFocus]);
 
   // 진행 중에는 경과 시간·타수를 0.5초마다 갱신
@@ -116,7 +138,7 @@ export default function TypingArea({
   const restart = () => {
     commit(createSession(lines, typingOptions));
     setTick(0);
-    inputRef.current?.focus();
+    inputRef.current?.focus({ preventScroll: true });
   };
 
   const c = cursor(state);
@@ -160,49 +182,70 @@ export default function TypingArea({
       )}
 
       <div
-        className={`relative max-h-80 cursor-text overflow-auto rounded-lg border bg-slate-900 p-4 font-mono text-lg leading-relaxed ${
+        className={`relative max-h-96 cursor-text overflow-auto rounded-lg border bg-slate-900 p-4 font-mono text-lg leading-relaxed ${
           focused ? 'border-emerald-500/60' : 'border-slate-700'
         }`}
-        onClick={() => inputRef.current?.focus()}
+        onClick={() => inputRef.current?.focus({ preventScroll: true })}
         data-testid="typing-area"
       >
-        {lines.map((target, i) => (
-          <div key={i} ref={i === c.lineIndex ? currentLineRef : undefined}>
-            <Line
-              target={target}
-              status={
-                i < c.lineIndex || (finished && i === c.lineIndex) ? 'done' : i === c.lineIndex ? 'current' : 'pending'
-              }
-              typed={state.typed}
-              errorAt={c.errorAt}
-              focused={focused}
-            />
-          </div>
-        ))}
+        {lines.map((target, i) => {
+          const current = i === c.lineIndex && !finished;
+          const done = i < c.lineIndex || finished;
+          const output = outputs?.[i];
+          return (
+            <div key={i} ref={i === c.lineIndex ? currentLineRef : undefined}>
+              {comments?.[i]?.map((text, k) => (
+                // 주석은 그 줄과 같은 깊이로 들여 쓴다. 해설이라 한국어가 들어가고, 치지 않는다
+                <div
+                  key={k}
+                  className={`whitespace-pre-wrap ${current ? 'text-sky-300' : 'text-slate-500'}`}
+                  style={{ paddingLeft: `${/^ */.exec(target)![0].length}ch` }}
+                  data-testid={current ? 'current-comment' : undefined}
+                >
+                  {commentMark} {text}
+                </div>
+              ))}
+              <Line
+                target={target}
+                status={done ? 'done' : current ? 'current' : 'pending'}
+                typed={state.typed}
+                errorAt={c.errorAt}
+                focused={focused}
+                prefix={prompt}
+              />
+              {output && done && (
+                <pre className="mb-2 text-sm whitespace-pre text-slate-400" data-testid="output">
+                  {output}
+                </pre>
+              )}
+            </div>
+          );
+        })}
         {!focused && !finished && (
           <div className="absolute inset-0 flex items-center justify-center bg-slate-950/70 text-sm text-slate-300">
-            여기를 눌러 {state.startedAt === null ? '시작' : '계속'}
+            {!hydrated ? '불러오는 중…' : `여기를 눌러 ${state.startedAt === null ? '시작' : '계속'}`}
           </div>
         )}
-        <textarea
-          ref={inputRef}
-          aria-label="따라치기 입력"
-          className="sr-only"
-          autoCapitalize="off"
-          autoComplete="off"
-          autoCorrect="off"
-          spellCheck={false}
-          onKeyDown={onKeyDown}
-          onCompositionStart={() => setIme(true)}
-          onCompositionEnd={(e) => (e.currentTarget.value = '')}
-          onInput={(e) => (e.currentTarget.value = '')}
-          onFocus={() => setFocused(true)}
-          onBlur={() => {
-            setFocused(false);
-            commit(pause(stateRef.current));
-          }}
-        />
       </div>
+      {/* 숨긴 입력 칸은 스크롤 영역 밖에 둔다. 안에 두면 포커스할 때 영역이 그 칸(맨 끝)으로 스크롤된다 */}
+      <textarea
+        ref={inputRef}
+        aria-label="따라치기 입력"
+        className="sr-only"
+        autoCapitalize="off"
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
+        onKeyDown={onKeyDown}
+        onCompositionStart={() => setIme(true)}
+        onCompositionEnd={(e) => (e.currentTarget.value = '')}
+        onInput={(e) => (e.currentTarget.value = '')}
+        onFocus={() => setFocused(true)}
+        onBlur={() => {
+          setFocused(false);
+          commit(pause(stateRef.current));
+        }}
+      />
 
       {finished ? (
         <div className="flex items-center gap-4 rounded-lg bg-emerald-500/10 p-4" data-testid="finished">
