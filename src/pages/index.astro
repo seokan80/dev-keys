@@ -12,6 +12,17 @@ const sets = getSets();
       <h1 class="font-mono text-4xl font-bold">DevKeys</h1>
       <p class="text-lg text-slate-300">Git 명령과 코드를 따라 치며 손에 익히는 개발자용 타자 연습.</p>
     </header>
+    <a
+      href="/warmup"
+      class="flex flex-col gap-1 rounded-lg border border-sky-700/70 bg-sky-500/5 p-4 hover:bg-sky-500/10"
+      data-testid="warmup-card"
+    >
+      <span class="text-xs text-sky-300">처음이라면 먼저</span>
+      <strong class="text-lg">손가락 풀기</strong>
+      <span class="text-sm text-slate-400">
+        왼손 새끼부터 오른손 새끼까지, 손가락마다 맡은 키와 기호를 차례로 (약 2분)
+      </span>
+    </a>
     <ul class="grid gap-3 sm:grid-cols-3">
       {CATEGORIES.map((category) => (
         <li>
