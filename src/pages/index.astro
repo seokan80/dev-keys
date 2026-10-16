@@ -1,6 +1,8 @@
 ---
 import Base from '../layouts/Base.astro';
+import HomeNext from '../components/home/HomeNext';
 import { getSets } from '../lib/content/load';
+import { toPlanSets } from '../lib/content/recommend';
 import { CATEGORIES } from '../schemas/categories';
 
 const sets = getSets();
@@ -9,9 +11,16 @@ const sets = getSets();
 <Base title="DevKeys — 개발자 타자 연습">
   <main class="mx-auto flex min-h-dvh max-w-3xl flex-col justify-center gap-8 px-6 py-10">
     <header class="flex flex-col gap-3">
-      <h1 class="font-mono text-4xl font-bold">DevKeys</h1>
+      <div class="flex items-baseline justify-between gap-4">
+        <h1 class="font-mono text-4xl font-bold">DevKeys</h1>
+        <a href="/me" class="text-sm text-slate-300 hover:underline">
+          내 기록
+        </a>
+      </div>
       <p class="text-lg text-slate-300">Git 명령과 코드를 따라 치며 손에 익히는 개발자용 타자 연습.</p>
     </header>
+    <!-- 이어하기 · 오늘의 추천: 브라우저 저장값으로 정한다 -->
+    <HomeNext client:only="react" sets={toPlanSets(sets)} />
     <a
       href="/warmup"
       class="flex flex-col gap-1 rounded-lg border border-sky-700/70 bg-sky-500/5 p-4 hover:bg-sky-500/10"

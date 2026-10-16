@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   BROKEN_KEY,
   DEFAULT_SAVE,
+  clearRecords,
   STORAGE_KEY,
   bestKey,
   loadSave,
@@ -149,5 +150,12 @@ describe('설정 · 마지막 세트', () => {
   it('그림 보기 설정이 없던 저장값은 켬으로 읽는다', () => {
     const old = { ...v1, settings: { autoIndent: false, showKeyboard: true, sixFinger: 'left' } };
     expect(parseSave(JSON.stringify(old)).save.settings.showScenes).toBe(true);
+  });
+});
+
+describe('clearRecords — 기록 초기화', () => {
+  it('최고 기록 · 오답 기록 · 마지막 세트는 지우고 설정은 남긴다', () => {
+    const save = { ...v1, srs: { 'git-basic-commit/recall-init': { step: 0, wrong: 1, due: '2026-10-18' } } };
+    expect(clearRecords(save)).toEqual({ version: 1, bests: {}, srs: {}, settings: v1.settings });
   });
 });
