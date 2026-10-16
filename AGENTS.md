@@ -39,3 +39,5 @@
 - GitHub: 저장소 주인 `seokan80`, Claude 작업 계정 `seokanai`. 세션을 시작하면 `gh api user --jq .login`과 `git var GIT_AUTHOR_IDENT`가 `seokanai`인지 확인하고, 다르면 멈추고 알린다
 - Cloudflare 자격 증명은 저장소에 두지 않는다. CI는 시크릿 `CLOUDFLARE_API_TOKEN`, 변수 `CLOUDFLARE_ACCOUNT_ID`를 쓴다
 - `astro preview`는 AI 에이전트 환경에서 백그라운드로 뜬다. 끌 때는 `npx astro preview stop`
+- 주소는 끝 슬래시 없이(`trailingSlash: 'never'`, `build.format: 'file'`). Workers 정적 자산이 리다이렉트하지 않는다
+- 서버에서 그린 React 아일랜드는 JS가 늦게 오는 배포 환경에서 하이드레이션 전에 입력을 받으면 덮어써진다. E2E는 하이드레이션(`astro-island:not([ssr])`)을 기다리고, 검색 노출이 필요 없는 화면은 `client:only`로 그린다

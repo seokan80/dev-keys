@@ -7,6 +7,11 @@ async function start(page: Page, text: string) {
   await expect(page.getByTestId('typing-area')).toBeVisible();
 }
 
+test('주소는 끝 슬래시 없이 바로 열린다 (리다이렉트 없음)', async ({ request }) => {
+  const res = await request.get('/playground', { maxRedirects: 0 });
+  expect(res.status()).toBe(200);
+});
+
 test('연습장은 검색에서 빠진다', async ({ page }) => {
   await page.goto('/playground');
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex');
