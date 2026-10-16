@@ -4,6 +4,20 @@
   --font-mono: 'JetBrains Mono', 'D2Coding', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
+/* 손가락 10색 — 왼손 새끼(lp) ~ 엄지(lt), 오른손 엄지(rt) ~ 새끼(rp). 색만으로 구분하지 않게 이름도 함께 표시한다. */
+:root {
+  --finger-lp: #fb7185;
+  --finger-lr: #fb923c;
+  --finger-lm: #facc15;
+  --finger-li: #4ade80;
+  --finger-lt: #94a3b8;
+  --finger-rt: #a8a29e;
+  --finger-ri: #2dd4bf;
+  --finger-rm: #60a5fa;
+  --finger-rr: #a78bfa;
+  --finger-rp: #f472b6;
+}
+
 /* 따라치기 화면에서 `=>`, `!==` 가 한 글자처럼 보이지 않게 (구현계획 2.3 #14) */
 code,
 pre,

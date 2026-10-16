@@ -9,6 +9,13 @@ updates:
       npm-minor-patch:
         update-types: [minor, patch]
     open-pull-requests-limit: 5
+    ignore:
+      # TypeScript 7 은 typescript-eslint · @astrojs/check 가 지원할 때까지 보류 (AGENTS.md 환경)
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
+      # 실행 환경이 Node 24(.nvmrc)라 타입도 24.x 에 맞춘다
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
   - package-ecosystem: github-actions
     directory: /
     schedule:
