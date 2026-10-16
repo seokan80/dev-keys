@@ -34,7 +34,13 @@ describe('정상 세트', () => {
     expect(errors(r)).toEqual([]);
     const set = r.sets[0]!;
     expect(set).toMatchObject({ slug: 'basic-commit', href: '/git/basic-commit', id: 'git-basic-commit' });
-    expect(set.lines[0]).toEqual({ text: 'git status', comments: ['상태를 본다'], output: null, itemId: 'status' });
+    expect(set.lines[0]).toEqual({
+      text: 'git status',
+      comments: ['상태를 본다'],
+      output: null,
+      scene: null,
+      itemId: 'status',
+    });
     expect(set.lines).toHaveLength(19);
   });
 
@@ -61,9 +67,15 @@ describe('정상 세트', () => {
     );
     expect(errors(r)).toEqual([]);
     expect(r.sets[0]!.lines.slice(0, 3)).toEqual([
-      { text: 'List<String> names = users.stream()', comments: ['전체 설명'], output: null, itemId: 'stream' },
-      { text: '    .map(User::name)', comments: [], output: null, itemId: 'stream' },
-      { text: '    .toList();', comments: ['수정할 수 없는 List'], output: null, itemId: 'stream' },
+      {
+        text: 'List<String> names = users.stream()',
+        comments: ['전체 설명'],
+        output: null,
+        scene: null,
+        itemId: 'stream',
+      },
+      { text: '    .map(User::name)', comments: [], output: null, scene: null, itemId: 'stream' },
+      { text: '    .toList();', comments: ['수정할 수 없는 List'], output: null, scene: null, itemId: 'stream' },
     ]);
   });
 });
@@ -98,6 +110,60 @@ describe('명령 출력(output)', () => {
 
   it('출력은 앞 공백(들여쓰기)을 그대로 둔다', () => {
     expect(withOutput(' M README.md').sets[0]!.lines[0]!.output).toBe(' M README.md');
+  });
+});
+
+describe('그림(scene) · 결과 값(result)', () => {
+  const build = (item: string) =>
+    buildContent([file('content/sets/git/basic-commit.yaml', setYaml({}, `${item}${filler}`))], GUIDES);
+
+  it('scene 은 문제의 마지막 줄에 붙는다 (빠진 칸은 비어 있음)', () => {
+    const r = build(
+      [
+        '  - id: add',
+        '    type: copy',
+        '    text: git add README.md',
+        '    scene:',
+        '      staged: [README.md (새 파일)]',
+        '      arrow: { from: workdir, to: staged, label: add }',
+        '      caption: 스테이징에 올렸다',
+        '',
+      ].join('\n'),
+    );
+    expect(errors(r)).toEqual([]);
+    expect(r.sets[0]!.lines[0]!.scene).toEqual({
+      workdir: [],
+      staged: ['README.md (새 파일)'],
+      repo: [],
+      arrow: { from: 'workdir', to: 'staged', label: 'add' },
+      caption: '스테이징에 올렸다',
+    });
+  });
+
+  it('scene 의 칸 이름·비교 대상이 틀리면 오류', () => {
+    const bad = (scene: string) =>
+      errors(build(`  - id: x\n    type: copy\n    text: git status\n    scene:\n${scene}`))[0];
+    expect(bad('      arrow: { from: desk, to: staged }\n      caption: x\n')).toMatch(/scene\.arrow\.from/);
+    expect(bad('      compare: [workdir, workdir]\n      caption: x\n')).toMatch(/compare/);
+    expect(bad('      staged: [a]\n')).toMatch(/caption/);
+  });
+
+  it('줄별 해설의 result 는 그 줄을 다 치면 아래에 보인다 (문제 출력과 같은 줄이면 이어 붙인다)', () => {
+    const r = build(
+      [
+        '  - id: s',
+        '    type: copy',
+        '    text: "int total = list.size();"',
+        '    output: done',
+        '    notes:',
+        '      - at: size()',
+        '        note: 개수',
+        "        result: 'total -> 3'",
+        '',
+      ].join('\n'),
+    );
+    expect(errors(r)).toEqual([]);
+    expect(r.sets[0]!.lines[0]!.output).toBe('total -> 3\ndone');
   });
 });
 
