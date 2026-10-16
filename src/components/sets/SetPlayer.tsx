@@ -4,6 +4,7 @@ import type { TypingStats } from '@core/typing';
 import type { CodeLine } from '../../lib/content/check';
 import { updateSave, useSave } from '../../lib/save';
 import GitScene from '../scenes/GitScene';
+import TreeSceneView from '../scenes/TreeSceneView';
 import TypingArea from '../typing/TypingArea';
 import type { NextSet } from './NextSetCard';
 import ResultScreen from './ResultScreen';
@@ -36,7 +37,7 @@ export default function SetPlayer({ setId, href, lines, next, commentMark, promp
   const { settings } = save;
 
   const change = (patch: Partial<Settings>) => updateSave((s) => updateSettings(s, patch));
-  const hasScenes = lines.some((l) => l.scene !== null);
+  const hasScenes = lines.some((l) => l.scene !== null || l.tree !== null);
   const previousScene = (i: number) => {
     for (let k = i - 1; k >= 0; k--) if (lines[k]!.scene) return lines[k]!.scene;
     return null;
@@ -118,8 +119,14 @@ export default function SetPlayer({ setId, href, lines, next, commentMark, promp
           commentMark={commentMark}
           prompt={prompt}
           outputMark={outputMark}
-          pauseAfter={lines.map((l) => settings.showScenes && l.scene !== null)}
-          renderScene={(i) => <GitScene scene={lines[i]!.scene!} previous={previousScene(i)} />}
+          pauseAfter={lines.map((l) => settings.showScenes && (l.scene !== null || l.tree !== null))}
+          renderScene={(i) =>
+            lines[i]!.tree ? (
+              <TreeSceneView tree={lines[i]!.tree!} />
+            ) : (
+              <GitScene scene={lines[i]!.scene!} previous={previousScene(i)} />
+            )
+          }
           typingOptions={{ autoIndent: settings.autoIndent }}
           keyboardOptions={{ sixFinger: settings.sixFinger }}
           showKeyboard={settings.showKeyboard}

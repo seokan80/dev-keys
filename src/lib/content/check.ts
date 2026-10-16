@@ -1,15 +1,34 @@
 import { parse } from 'yaml';
+import { execute, initialRepo, layoutTree, type RepoState, type TreeLayout } from '../../core/git';
 import { CATEGORY_IDS, type CategoryId } from '../../schemas/categories';
 import { setSchema, type CopyItem, type RecallItem, type Scene, type SetData } from '../../schemas/set';
 
 export type RawFile = { path: string; text: string };
 export type Problem = { path: string; message: string; level: 'error' | 'warning' };
 
+/** Enter 뒤에 보여 줄 커밋 트리: 이 명령 전 · 후 상태와 배치, 커밋 설명(해시 + 메시지) */
+export type TreeScene = {
+  before: RepoState;
+  after: RepoState;
+  layoutBefore: TreeLayout;
+  layoutAfter: TreeLayout;
+  /** 커밋 id → 그림에 보일 설명 */
+  names: Record<string, string>;
+  caption: string;
+};
+
 /**
  * 따라칠 한 줄. 모두 치지 않는 것:
- * comments 는 그 줄 위에 주석처럼, output 은 줄을 다 치면 아래에, scene 은 Enter 뒤에 그림으로
+ * comments 는 그 줄 위에 주석처럼, output 은 줄을 다 치면 아래에, scene · tree 는 Enter 뒤에 그림으로
  */
-export type CodeLine = { text: string; comments: string[]; output: string | null; scene: Scene | null; itemId: string };
+export type CodeLine = {
+  text: string;
+  comments: string[];
+  output: string | null;
+  scene: Scene | null;
+  tree: TreeScene | null;
+  itemId: string;
+};
 
 export type ContentSet = SetData & {
   slug: string;
@@ -89,6 +108,7 @@ function checkCopyItem(item: CopyItem, report: (msg: string) => void): CodeLine[
       comments: [...(i === 0 && item.note ? [item.note] : []), ...(lineNotes.has(i) ? [lineNotes.get(i)!] : [])],
       output: outputs.length > 0 ? outputs.join('\n') : null,
       scene: i === last ? (item.scene ?? null) : null,
+      tree: null,
       itemId: item.id,
     };
   });
@@ -111,6 +131,62 @@ function checkRecallItem(item: RecallItem, category: CategoryId, report: (msg: s
     if (category === 'git' && !answer.startsWith('git '))
       report(`문제 ${item.id} 정답 "${answer}": git 으로 시작해야 한다`);
   }
+}
+
+/**
+ * engine 세트: 따라치기 명령을 Git 엔진으로 차례로 돌려 tree 가 있는 줄의 전 · 후 트리를 만든다.
+ * 엔진에서 실패하면 콘텐츠 오류 — 세트의 Git 흐름(명령 순서 · 숨은 커밋)이 맞는지 엔진이 검사하는 셈이다.
+ */
+function simulate(data: SetData, report: (msg: string) => void): Map<string, TreeScene> {
+  const scenes = new Map<string, TreeScene>();
+  let state = initialRepo();
+  let layout = layoutTree(state);
+  const names: Record<string, string> = { c1: data.engine!.root };
+  const nameNew = (
+    before: RepoState,
+    after: RepoState,
+    describe: (message: string | undefined, label: string) => string,
+  ) => {
+    for (const [id, c] of Object.entries(after.commits))
+      if (!before.commits[id]) names[id] = describe(c.message, c.label);
+  };
+  for (const item of data.items) {
+    if (item.type !== 'copy') continue;
+    for (const command of item.before ?? []) {
+      const r = execute(state, command);
+      if (r.error) {
+        report(`문제 ${item.id} before "${command}": 엔진에서 실패 — ${r.error.message}`);
+        return scenes;
+      }
+      nameNew(state, r.state, (message, label) => message ?? label);
+      state = r.state;
+      layout = layoutTree(state, layout);
+    }
+    if (item.skipEngine) continue;
+    const before = state;
+    const layoutBefore = layout;
+    const r = execute(state, item.text.trim());
+    if (r.error) {
+      report(`문제 ${item.id}: 엔진에서 실패 — ${r.error.message}`);
+      return scenes;
+    }
+    nameNew(state, r.state, (message, label) =>
+      item.hash ? `${item.hash} ${message ?? ''}`.trim() : (message ?? label),
+    );
+    state = r.state;
+    layout = layoutTree(state, layout);
+    if (item.tree) {
+      scenes.set(item.id, {
+        before,
+        after: state,
+        layoutBefore,
+        layoutAfter: layout,
+        names: { ...names },
+        caption: item.tree.caption,
+      });
+    }
+  }
+  return scenes;
 }
 
 /**
@@ -160,8 +236,20 @@ export function buildContent(setFiles: RawFile[], guidePaths: string[]): { sets:
     for (const item of data.items) {
       if (itemIds.has(item.id)) report(`문제 id "${item.id}" 가 겹친다`);
       itemIds.add(item.id);
-      if (item.type === 'copy') lines.push(...checkCopyItem(item, report));
-      else checkRecallItem(item, data.category, report);
+      if (item.type === 'copy') {
+        const engineFields = item.before || item.skipEngine !== undefined || item.tree || item.hash;
+        if (!data.engine && engineFields)
+          report(`문제 ${item.id}: tree · before · skipEngine · hash 는 engine 세트에서만 쓴다`);
+        if (data.engine && item.tree && item.skipEngine)
+          report(`문제 ${item.id}: tree 는 엔진에서 도는 줄에만 — skipEngine 과 함께 쓸 수 없다`);
+        const itemLines = checkCopyItem(item, report);
+        if (data.engine && itemLines.length > 1) report(`문제 ${item.id}: engine 세트의 명령은 한 줄씩`);
+        lines.push(...itemLines);
+      } else checkRecallItem(item, data.category, report);
+    }
+    if (data.engine) {
+      const scenes = simulate(data, report);
+      for (const line of lines) line.tree = scenes.get(line.itemId) ?? null;
     }
 
     if (lines.length === 0) report('따라치기 문제(type: copy)가 하나도 없다');

@@ -6,6 +6,7 @@ const sets = getSets();
 const git = sets.find((s) => s.lines.some((l) => l.scene))!;
 const firstScene = git.lines.findIndex((l) => l.scene);
 const java = sets.find((s) => s.category === 'java')!;
+const branching = sets.find((s) => s.lines.some((l) => l.tree))!;
 
 test('그림이 있는 명령은 Enter 뒤에 그림을 보여 주고, Enter 를 한 번 더 치면 넘어간다', async ({ page }) => {
   await page.goto(git.href);
@@ -26,6 +27,28 @@ test('그림이 있는 명령은 Enter 뒤에 그림을 보여 주고, Enter 를
   await page.keyboard.press('Enter');
   await expect(scene).toHaveCount(0);
   await expect(page.getByTestId('next-key')).toContainText(git.lines[firstScene + 1]!.text[0]!);
+});
+
+test('브랜치 세트는 Enter 뒤에 엔진이 만든 커밋 트리를 보여 준다', async ({ page }) => {
+  const at = branching.lines.findIndex((l) => l.tree?.after.commits.c4);
+  const line = branching.lines[at]!;
+  await page.goto(branching.href);
+  await hydrated(page);
+  await typeLines(page, branching.lines.slice(0, at));
+  await page.keyboard.type(line.text);
+  await page.keyboard.press('Enter');
+
+  const scene = page.getByTestId('scene');
+  await expect(scene).toContainText(line.tree!.caption);
+  // 명령 전 트리를 잠깐 보여 준 뒤 명령 뒤 트리로 — 새 머지 커밋과 설명이 나타난다
+  const tree = scene.getByTestId('git-tree');
+  await expect(tree).toContainText(line.tree!.names.c4!);
+  await expect(tree.locator('[data-label="HEAD → main"]')).toBeVisible();
+  await expect(tree.locator('[data-commit]')).toHaveCount(4);
+
+  await page.keyboard.press('Enter');
+  await expect(scene).toHaveCount(0);
+  await expect(page.getByTestId('next-key')).toContainText(branching.lines[at + 1]!.text[0]!);
 });
 
 test('그림 보기를 끄면 멈추지 않는다', async ({ page }) => {
