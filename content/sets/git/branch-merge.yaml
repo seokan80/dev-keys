@@ -1,6 +1,6 @@
 id: git-branch-merge
 category: git
-order: 2
+order: 5
 title: 브랜치 만들고 합치기
 description: branch · switch · merge · stash 로 브랜치를 나누고 합치고 정리하는 명령
 level: 1

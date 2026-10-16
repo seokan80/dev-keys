@@ -1,0 +1,181 @@
+id: git-config-ignore
+category: git
+order: 2
+title: 설정과 .gitignore
+description: config list · get · set(2.46+) · includeIf · 권장 설정 · alias · .gitignore · rm --cached · check-ignore
+level: 1
+# 이야기: 1편을 마친 ~/devkeys. 설정을 살펴보고, 회사 저장소에서는 회사 이메일을 쓰게 나누고, 권장 설정을 켠다.
+#   그 사이 API 키가 든 .env 를 실수로 커밋해서 추적을 멈춘다.
+# 출력은 실제 git 2.53 으로 뽑았다: scripts/git-story.sh content/stories/git/config-ignore.sh
+items:
+  - id: config-list
+    type: copy
+    text: git config list --global
+    note: 이 PC 의 모든 저장소에 쓰는 설정. Git 2.46 부터 config 에 list · get · set 하위 명령이 생겼다
+    output: |-
+      user.name=Kim Dev
+      user.email=dev@example.com
+      init.defaultbranch=main
+  - id: config-origin
+    type: copy
+    text: git config list --show-origin
+    note: 값마다 어느 파일에서 왔는지. 전역은 ~/.gitconfig, 이 저장소에만 쓰는 값은 .git/config
+    output: |-
+      file:/home/kim/.gitconfig       user.name=Kim Dev
+      file:/home/kim/.gitconfig       user.email=dev@example.com
+      file:/home/kim/.gitconfig       init.defaultbranch=main
+      file:.git/config        core.repositoryformatversion=0
+      file:.git/config        core.filemode=true
+      file:.git/config        core.bare=false
+      file:.git/config        core.logallrefupdates=true
+  - id: include-if
+    type: copy
+    text: 'git config set --global includeIf.gitdir:~/work/.path ~/.gitconfig-work'
+    note: ~/work 아래 저장소에서는 ~/.gitconfig-work 도 읽는다 — 회사 · 개인 이메일 나누기
+  - id: work-email
+    type: copy
+    text: git config set --file ~/.gitconfig-work user.email kim@company.com
+    note: 회사용 설정 파일에 회사 이메일 (--file 은 그 파일에 쓴다)
+  - id: work-init
+    type: copy
+    text: git init ~/work/api
+    note: 회사 저장소를 하나 만들어 확인해 보자
+    output: Initialized empty Git repository in /home/kim/work/api/.git/
+  - id: work-check
+    type: copy
+    text: git -C ~/work/api config get user.email
+    note: -C 는 그 폴더에서 실행한 것처럼. 회사 저장소에서는 회사 이메일이 나온다
+    output: kim@company.com
+  - id: auto-setup-remote
+    type: copy
+    text: git config set --global push.autoSetupRemote true
+    note: 새 브랜치를 처음 push 할 때 -u origin <브랜치> 없이 git push 만으로
+  - id: fetch-prune
+    type: copy
+    text: git config set --global fetch.prune true
+    note: 원격에서 지워진 브랜치를 fetch 할 때 내 쪽 목록에서도 지운다
+  - id: zdiff3
+    type: copy
+    text: git config set --global merge.conflictStyle zdiff3
+    note: 충돌 표시에 원래 내용(공통 조상)도 함께 — 양쪽이 무엇을 바꿨는지 보인다
+  - id: rerere
+    type: copy
+    text: git config set --global rerere.enabled true
+    note: 한 번 푼 충돌을 기억했다가 같은 충돌이 다시 나면 그대로 푼다
+  - id: alias
+    type: copy
+    text: 'git config set --global alias.lg "log --oneline --graph --all"'
+    note: 자주 치는 명령에 별명. 이제 git lg
+  - id: lg
+    type: copy
+    text: git lg
+    output: |-
+      * a9bd905 (HEAD -> main) feat: add api client
+      * a8b0829 docs: add README
+  - id: ignore-env
+    type: copy
+    text: 'echo ".env" >> .gitignore'
+    note: (API 키가 든 .env 를 실수로 커밋했다) 앞으로 무시하게 .gitignore 에 적는다
+  - id: status-tracked
+    type: copy
+    text: git status --short
+    note: .gitignore 는 아직 추적하지 않는 파일에만 듣는다. .env 는 이미 커밋돼서 계속 추적된다
+    output: '?? .gitignore'
+  - id: rm-cached
+    type: copy
+    text: git rm --cached .env
+    note: 파일은 두고 추적만 멈춘다. --cached 를 빼면 파일까지 지운다
+    output: rm '.env'
+  - id: status-untracked
+    type: copy
+    text: git status --short
+    note: D 는 다음 커밋에서 저장소에서 빠진다는 뜻. 내 폴더의 .env 는 그대로 있다
+    output: |-
+      D  .env
+      ?? .gitignore
+  - id: check-ignore
+    type: copy
+    text: git check-ignore -v .env
+    note: 왜 무시되는지 — 어느 파일 몇 번째 줄 규칙인지
+    output: .gitignore:1:.env       .env
+  - id: add-gitignore
+    type: copy
+    text: git add .gitignore
+  - id: commit
+    type: copy
+    text: 'git commit -m "chore: stop tracking .env"'
+    note: 이미 push 했다면 키는 기록에 남아 있다 — 키를 새로 발급받아야 한다
+    output: |-
+      [main 593a58a] chore: stop tracking .env
+       2 files changed, 1 insertion(+), 1 deletion(-)
+       delete mode 100644 .env
+       create mode 100644 .gitignore
+  - id: global-ignore
+    type: copy
+    text: 'echo ".DS_Store" >> ~/.config/git/ignore'
+    note: (~/.config/git 폴더를 만든 뒤) 모든 저장소에 쓰는 무시 목록. 설정하지 않아도 Git 이 읽는다
+  - id: check-global
+    type: copy
+    text: git check-ignore -v .DS_Store
+    output: /home/kim/.config/git/ignore:1:.DS_Store        .DS_Store
+
+  # ── 도전 모드(뜻 보고 치기). 옛 문법(git config --global 키 값)도 정답이다
+  - id: recall-config-list
+    type: recall
+    prompt: 이 PC 의 모든 저장소에 쓰는 설정 목록을 본다
+    answers: [git config list --global, git config --global --list, git config --global -l]
+  - id: recall-config-origin
+    type: recall
+    prompt: 설정 값마다 어느 파일에서 왔는지 함께 본다
+    answers:
+      - git config list --show-origin
+      - git config --list --show-origin
+      - git config --show-origin --list
+      - git config -l --show-origin
+  - id: recall-config-email
+    type: recall
+    prompt: 이 PC 의 모든 저장소에서 쓸 이메일을 정한다 — 이메일은 <email>
+    answers: [git config set --global user.email <email>, git config --global user.email <email>]
+    placeholder: { email: dev@example.com }
+  - id: recall-include-if
+    type: recall
+    prompt: <dir> 아래 저장소에서는 <file> 설정도 읽게 한다
+    answers:
+      - git config set --global includeIf.gitdir:<dir>.path <file>
+      - git config --global includeIf.gitdir:<dir>.path <file>
+    placeholder: { dir: ~/work/, file: ~/.gitconfig-work }
+    note: gitdir 끝의 / 는 그 아래 모든 폴더라는 뜻
+  - id: recall-dash-c
+    type: recall
+    prompt: <dir> 폴더에서 실행한 것처럼, 그 저장소의 user.email 값을 본다
+    answers: [git -C <dir> config get user.email, git -C <dir> config user.email]
+    placeholder: { dir: ~/work/api }
+  - id: recall-auto-setup-remote
+    type: recall
+    prompt: 새 브랜치를 처음 push 할 때 -u 없이도 원격 브랜치를 만들게 한다
+    answers: [git config set --global push.autoSetupRemote true, git config --global push.autoSetupRemote true]
+  - id: recall-zdiff3
+    type: recall
+    prompt: 충돌 표시에 원래 내용(공통 조상)도 보이게 한다
+    answers: [git config set --global merge.conflictStyle zdiff3, git config --global merge.conflictStyle zdiff3]
+  - id: recall-rerere
+    type: recall
+    prompt: 한 번 푼 충돌을 기억했다가 같은 충돌에서 다시 쓰게 한다
+    answers: [git config set --global rerere.enabled true, git config --global rerere.enabled true]
+  - id: recall-alias
+    type: recall
+    prompt: git lg 로 모든 브랜치의 기록을 한 줄 그래프로 보게 별명을 만든다
+    answers:
+      - 'git config set --global alias.lg "log --oneline --graph --all"'
+      - 'git config --global alias.lg "log --oneline --graph --all"'
+  - id: recall-rm-cached
+    type: recall
+    prompt: <file> 파일은 그대로 두고 Git 추적만 멈춘다
+    answers: [git rm --cached <file>]
+    placeholder: { file: .env }
+    note: 추적을 멈춘 뒤 .gitignore 에 적어야 다시 add 되지 않는다
+  - id: recall-check-ignore
+    type: recall
+    prompt: <file> 파일이 왜 무시되는지 — 어느 파일 몇 번째 줄 규칙인지 본다
+    answers: [git check-ignore -v <file>, git check-ignore --verbose <file>]
+    placeholder: { file: .env }
