@@ -1,0 +1,18 @@
+# Git 목록을 부로 묶는다 (구현계획 5.7). 세트는 order 순서대로, 아직 없는 세트는 planned 에 제목만 — "준비 중"으로 보인다.
+# 새 세트를 만들면 여기 부에 넣어야 화면에 보인다 (validate:content 가 막는다).
+parts:
+  - title: 로컬
+    description: 혼자 쓰는 Git — 기록하고, 살펴보고, 되돌리고, 브랜치로 나눈다
+    sets: [basic-commit, config-ignore, log-history, undo, branch-merge, branch-practice]
+  - title: 원격
+    description: GitHub 에 올리고 동료와 주고받는다 — push · fetch · pull · 충돌 · 서브모듈
+    sets: [remote-connect, fetch-pull, conflict, remote-compare, submodule]
+  - title: 기록 다듬기
+    description: 올리기 전에 커밋을 정리하고, 올린 뒤에도 안전하게 고치고, 태그로 릴리스한다
+    planned: [커밋 정리, 올린 커밋 고치기, 작성자 바꾸기, 태그와 릴리스]
+  - title: 협업과 브랜치 전략
+    description: 팀이 일하는 방식 세 가지 — GitHub Flow · 트렁크 기반 · 환경 브랜치 — 와 Fork
+    planned: [GitHub Flow, 트렁크 기반과 기능 플래그, 환경 브랜치 (main · stage · dev), Fork 와 upstream]
+  - title: AI 에이전트와 Git
+    description: 에이전트에게 맡기고, 검토하고, 기록에 남기고, 함께 일한다
+    sets: [agent-worktree, review-changes, commit-trailers, find-bug, large-repo, agent-team]

@@ -2,6 +2,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildContent, type ContentSet } from './check';
+import { buildCurricula, type Curriculum } from './curriculum';
 import { buildMissions, type ContentMission } from './missions';
 import { orderedSets } from './next';
 
@@ -26,10 +27,20 @@ export function loadContent(root = process.cwd()) {
     listFiles(root, 'missions', /\.ya?ml$/).map((p) => read(root, p)),
     guides,
   );
-  return { sets: sets.sets, missions: missions.missions, problems: [...sets.problems, ...missions.problems] };
+  const curricula = buildCurricula(
+    listFiles(root, 'curriculum', /\.ya?ml$/).map((p) => read(root, p)),
+    sets.sets,
+  );
+  return {
+    sets: sets.sets,
+    missions: missions.missions,
+    curricula: curricula.curricula,
+    problems: [...sets.problems, ...missions.problems, ...curricula.problems],
+  };
 }
 
 let cached: ContentSet[] | null = null;
+let cachedCurricula: Curriculum[] | null = null;
 let cachedMissions: ContentMission[] | null = null;
 
 function errorsOf(problems: { path: string; message: string; level: string }[]) {
@@ -55,4 +66,14 @@ export function getSets(): ContentSet[] {
   errorsOf(problems);
   cached = orderedSets(sets);
   return cached;
+}
+
+/** 페이지용: 카테고리 목록을 부로 묶은 것 (content/curriculum/<카테고리>.yaml 이 없으면 null) */
+export function getCurriculum(category: string): Curriculum | null {
+  if (!cachedCurricula) {
+    const { curricula, problems } = loadContent();
+    errorsOf(problems);
+    cachedCurricula = curricula;
+  }
+  return cachedCurricula.find((c) => c.category === category) ?? null;
 }

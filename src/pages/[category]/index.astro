@@ -1,8 +1,8 @@
 ---
 import Base from '../../layouts/Base.astro';
 import Breadcrumb from '../../components/Breadcrumb.astro';
-import { getSets } from '../../lib/content/load';
-import { challengeHref } from '../../lib/content/next';
+import SetCard from '../../components/sets/SetCard.astro';
+import { getCurriculum, getSets } from '../../lib/content/load';
 import { CATEGORIES } from '../../schemas/categories';
 
 export function getStaticPaths() {
@@ -11,6 +11,8 @@ export function getStaticPaths() {
 
 const { category } = Astro.props;
 const sets = getSets().filter((s) => s.category === category.id);
+// 목록 파일(content/curriculum/<카테고리>.yaml)이 있으면 부로 묶어 보인다
+const curriculum = getCurriculum(category.id);
 ---
 
 <Base
@@ -23,6 +25,23 @@ const sets = getSets().filter((s) => s.category === category.id);
       <h1 class="text-3xl font-bold">{category.title} 타자 연습</h1>
       <p class="text-slate-400">{category.description}</p>
     </header>
+    {curriculum && (
+      <nav aria-label="목차" class="rounded-lg border border-slate-700 p-4">
+        <ol class="flex flex-col gap-2" data-testid="part-index">
+          {curriculum.parts.map((part) => (
+            <li class="flex flex-wrap items-baseline gap-x-2">
+              <a href={`#part-${part.no}`} class="font-medium text-sky-300 hover:underline">
+                {part.no}부 {part.title}
+              </a>
+              <span class="text-sm text-slate-500">
+                {part.sets.length > 0 ? `${part.sets.length}세트` : '준비 중'}
+                {part.sets.length > 0 && part.planned.length > 0 && ` · ${part.planned.length}세트 준비 중`}
+              </span>
+            </li>
+          ))}
+        </ol>
+      </nav>
+    )}
     {category.id === 'git' && (
       <a
         href="/git/tree"
@@ -34,29 +53,40 @@ const sets = getSets().filter((s) => s.category === category.id);
         <span class="text-sm text-slate-400">명령을 쳐서 커밋 트리를 목표 모양으로 — merge · rebase · cherry-pick</span>
       </a>
     )}
-    {sets.length === 0 ? (
+    {curriculum ? (
+      curriculum.parts.map((part) => (
+        <section id={`part-${part.no}`} class="flex scroll-mt-6 flex-col gap-3" data-testid="part">
+          <header class="flex flex-col gap-1">
+            <h2 class="text-xl font-bold">
+              <span class="text-slate-500">{part.no}부</span> {part.title}
+            </h2>
+            <p class="text-sm text-slate-400">{part.description}</p>
+          </header>
+          {part.sets.length > 0 && (
+            <ol class="flex flex-col gap-3">
+              {part.sets.map((set) => (
+                <SetCard set={set} />
+              ))}
+            </ol>
+          )}
+          {part.planned.length > 0 && (
+            <ul class="flex flex-col gap-2" data-testid="planned">
+              {part.planned.map((title) => (
+                <li class="flex items-center justify-between rounded-lg border border-dashed border-slate-700 px-4 py-3 text-slate-500">
+                  <span>{title}</span>
+                  <span class="text-xs">준비 중</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ))
+    ) : sets.length === 0 ? (
       <p class="text-slate-500">준비 중입니다.</p>
     ) : (
       <ol class="flex flex-col gap-3">
         {sets.map((set) => (
-          <li class="flex rounded-lg border border-slate-700">
-            <a href={set.href} class="flex flex-1 flex-col gap-1 rounded-l-lg p-4 hover:bg-slate-900">
-              <strong class="text-lg">{set.title}</strong>
-              <span class="text-sm text-slate-400">{set.description}</span>
-              <span class="text-xs text-slate-500">
-                {set.lines.length}줄{set.recalls.length > 0 && ` · 도전 ${set.recalls.length}문제`} · 난이도 {set.level}
-              </span>
-            </a>
-            {set.recalls.length > 0 && (
-              <a
-                href={challengeHref(set)}
-                class="flex items-center rounded-r-lg border-l border-slate-700 px-4 text-sm text-amber-300 hover:bg-amber-500/10"
-                aria-label={`도전 모드: ${set.title}`}
-              >
-                도전 →
-              </a>
-            )}
-          </li>
+          <SetCard set={set} />
         ))}
       </ol>
     )}
