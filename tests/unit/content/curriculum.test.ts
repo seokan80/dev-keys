@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { buildCurricula } from '../../../src/lib/content/curriculum';
+import type { CategoryId } from '../../../src/schemas/categories';
 
-const set = (slug: string, order: number, category = 'git') => ({ category, slug, order, id: `${category}-${slug}` });
+const set = (slug: string, order: number, category: CategoryId = 'git') => ({
+  category,
+  slug,
+  order,
+  id: `${category}-${slug}`,
+});
 const sets = [set('a', 1), set('b', 2), set('c', 3), set('j', 1, 'java')];
 const file = (text: string, path = 'content/curriculum/git.yaml') => [{ path, text }];
 
