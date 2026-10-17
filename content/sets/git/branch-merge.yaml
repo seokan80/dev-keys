@@ -4,13 +4,13 @@ order: 5
 title: 브랜치 만들고 합치기
 description: branch · switch · merge · stash 로 브랜치를 나누고 합치고 정리하는 명령
 level: 1
-# 이야기: main(3f2a9c1)에서 로그인·회원가입 기능 브랜치를 만들어 합치고 정리한다.
-# 출력은 git 2.4x 기준. 해시는 이야기 안에서 서로 맞게 정했다.
+# 이야기: ~/devkeys 의 main(a8b0829)에서 로그인·회원가입 기능 브랜치를 만들어 합치고 정리한다.
+# 출력은 실제 git 2.53 으로 뽑았다: scripts/git-story.sh content/stories/git/branch-merge.sh
 # rebase · cherry-pick 은 트리 미션(/git/tree)에서 다룬다.
 # engine: 명령을 Git 엔진으로 차례로 돌려 tree 가 있는 줄에 커밋 트리 그림을 만든다.
 #   before 는 치지 않고 엔진에서만 실행하는 명령(이야기 속 "커밋한 뒤"), stash · log 처럼 트리와 상관없는 줄은 skipEngine.
 engine:
-  root: '3f2a9c1 docs: add README'
+  root: 'a8b0829 docs: add README'
 items:
   - id: branch-list
     type: copy
@@ -33,19 +33,19 @@ items:
   - id: switch-main
     type: copy
     text: git switch main
-    note: (login.html 을 만들어 커밋한 뒤 — a1b2c3d) main 으로 돌아간다
+    note: (login.html 을 만들어 커밋한 뒤 — c61b968) main 으로 돌아간다
     tree:
-      caption: a1b2c3d 는 feature/login 에만 있다. HEAD 는 main 으로 돌아왔다
-    before: ['git commit -m "a1b2c3d feat: add login page"']
+      caption: c61b968 는 feature/login 에만 있다. HEAD 는 main 으로 돌아왔다
+    before: ['git commit -m "c61b968 feat: add login page"']
     output: Switched to branch 'main'
   - id: merge-ff
     type: copy
     text: git merge feature/login
     note: main 에 합친다. main 이 갈라진 적 없이 뒤처져 있을 뿐이라 포인터만 앞으로 — fast-forward
     tree:
-      caption: main 이름표가 a1b2c3d 로 앞으로 — 새 커밋 없이 fast-forward
+      caption: main 이름표가 c61b968 로 앞으로 — 새 커밋 없이 fast-forward
     output: |-
-      Updating 3f2a9c1..a1b2c3d
+      Updating a8b0829..c61b968
       Fast-forward
        login.html | 12 ++++++++++++
        1 file changed, 12 insertions(+)
@@ -60,10 +60,10 @@ items:
   - id: switch-back
     type: copy
     text: git switch -
-    note: (signup.html 을 만들어 커밋한 뒤 — c7d8e9f) 바로 전에 있던 브랜치(main)로 돌아간다
+    note: (signup.html 을 만들어 커밋한 뒤 — 9982c66) 바로 전에 있던 브랜치(main)로 돌아간다
     tree:
-      caption: c7d8e9f 는 feature/signup 에만 있다. HEAD 는 main 으로
-    before: ['git commit -m "c7d8e9f feat: add signup page"']
+      caption: 9982c66 는 feature/signup 에만 있다. HEAD 는 main 으로
+    before: ['git commit -m "9982c66 feat: add signup page"']
     output: Switched to branch 'main'
   - id: merge-no-ff
     type: copy
@@ -71,7 +71,7 @@ items:
     note: fast-forward 가 되더라도 머지 커밋을 만든다. 편집기가 열리면 기본 메시지를 저장하고 닫는다
     tree:
       caption: 부모가 둘인 머지 커밋 — 갈라졌다 합쳐진 흔적이 남는다
-    hash: e4f5a6b
+    hash: '4533575'
     output: |-
       Merge made by the 'ort' strategy.
        signup.html | 15 +++++++++++++++
@@ -83,12 +83,12 @@ items:
     note: 합쳐진 모양을 그래프로. login 은 한 줄로 이어지고, signup 은 갈라졌다 합쳐진 흔적이 남았다
     skipEngine: true
     output: |-
-      *   e4f5a6b (HEAD -> main) Merge branch 'feature/signup'
+      *   4533575 (HEAD -> main) Merge branch 'feature/signup'
       |\
-      | * c7d8e9f (feature/signup) feat: add signup page
+      | * 9982c66 (feature/signup) feat: add signup page
       |/
-      * a1b2c3d (feature/login) feat: add login page
-      * 3f2a9c1 docs: add README
+      * c61b968 (feature/login) feat: add login page
+      * a8b0829 docs: add README
   - id: branch-merged
     type: copy
     text: git branch --merged
@@ -101,7 +101,7 @@ items:
     note: 합쳐진 브랜치를 지운다. 합쳐지지 않은 브랜치는 거부해서 커밋을 잃지 않게 막아 준다
     tree:
       caption: feature/login 이름표만 사라진다. 커밋은 main 에 남아 있다
-    output: Deleted branch feature/login (was a1b2c3d).
+    output: Deleted branch feature/login (was c61b968).
   - id: branch-rename
     type: copy
     text: git branch -m feature/signup feature/join
@@ -124,7 +124,7 @@ items:
     note: 합쳐졌는지 따지지 않고 지운다. 그 브랜치에만 있던 커밋이 있었다면 찾기 어려워진다
     tree:
       caption: hotfix/typo 이름표가 사라졌다. 이 브랜치에만 있던 커밋이 없어 잃은 것도 없다
-    output: Deleted branch hotfix/typo (was e4f5a6b).
+    output: Deleted branch hotfix/typo (was 4533575).
   - id: branch-list-after
     type: copy
     text: git branch
@@ -135,13 +135,13 @@ items:
     text: git stash
     note: (README.md 를 고치던 중 급한 일이 생기면) 커밋하지 않은 변경을 잠시 치워 둔다
     skipEngine: true
-    output: "Saved working directory and index state WIP on main: e4f5a6b Merge branch 'feature/signup'"
+    output: "Saved working directory and index state WIP on main: 4533575 Merge branch 'feature/signup'"
   - id: stash-list
     type: copy
     text: git stash list
     note: 치워 둔 목록. stash@{0} 이 가장 최근 것
     skipEngine: true
-    output: "stash@{0}: WIP on main: e4f5a6b Merge branch 'feature/signup'"
+    output: "stash@{0}: WIP on main: 4533575 Merge branch 'feature/signup'"
   - id: stash-pop
     type: copy
     text: git stash pop
@@ -155,7 +155,7 @@ items:
               modified:   README.md
 
       no changes added to commit (use "git add" and/or "git commit -a")
-      Dropped refs/stash@{0} (4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b)
+      Dropped refs/stash@{0} (f154c24a42cb0b45f920011a5642439979014310)
 
   # ── 도전 모드(뜻 보고 치기): 위에서 따라 친 명령을 설명만 보고 떠올려 친다.
   #    context 가 있는 문제는 정답 목록에 없는 동의어도 엔진으로 실행해 결과가 같으면 정답이다.
