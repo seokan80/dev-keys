@@ -4,12 +4,11 @@ import type { TypingStats } from '@core/typing';
 import type { CodeLine, SetGraph } from '../../lib/content/check';
 import { useReview } from '../../lib/review';
 import { updateSave, useSave } from '../../lib/save';
-import LiveGraph from '../git/LiveGraph';
-import GitScene from '../scenes/GitScene';
 import SettingsControls from '../settings/SettingsControls';
 import TypingArea from '../typing/TypingArea';
 import type { NextSet } from './NextSetCard';
 import ResultScreen from './ResultScreen';
+import SidePanel from './SidePanel';
 
 type Props = {
   setId: string;
@@ -26,7 +25,7 @@ type Props = {
   guideHref?: string;
   /** 도전 모드 주소 (뜻 보고 치기 문제가 있는 세트) */
   challengeHref?: string;
-  /** engine 세트의 커밋 그래프 — 타자 영역 옆에 늘 보인다 */
+  /** engine 세트의 커밋 그래프 — 상태 그림과 함께 타자 영역 옆에 늘 보인다 */
   graph?: SetGraph | null;
 };
 
@@ -54,8 +53,9 @@ export default function SetPlayer({
   const best = save.bests[key];
   const { settings } = save;
 
+  // 그림(상태 그림 · 커밋 그래프)은 타자 영역 옆 칸에 늘 보인다. 그림 보기를 끄면 칸을 숨긴다
   const hasScenes = graph !== null || lines.some((l) => l.scene !== null);
-  const showGraph = graph !== null && settings.showScenes;
+  const showPanel = hasScenes && settings.showScenes;
   /** 지금 치는 줄 (다 치면 lines.length) */
   const [lineAt, setLineAt] = useState(0);
   const graphStep = lineAt < lines.length ? (lines[lineAt]?.graph?.during ?? 0) : (lines.at(-1)?.graph?.after ?? 0);
@@ -65,10 +65,11 @@ export default function SetPlayer({
     for (let k = lineAt - 1; k >= 0; k--) if (!lines[k]!.prompt) return lines[k]!.text;
     return null;
   })();
-  const previousScene = (i: number) => {
-    for (let k = i - 1; k >= 0; k--) if (lines[k]!.scene) return lines[k]!.scene;
-    return null;
-  };
+  // 지금 상태 그림 = 끝낸 줄 중 마지막 그림, 그 앞 그림은 새로 생긴 표를 강조하는 데 쓴다
+  const scenesDone = lines.slice(0, lineAt).flatMap((l) => (l.scene ? [l.scene] : []));
+  const scene = scenesDone.at(-1) ?? null;
+  const previousScene = scenesDone.at(-2) ?? null;
+  const captions = [lastLine?.scene?.caption, lastLine?.graph?.caption].filter((c): c is string => !!c);
 
   const onFinish = (stats: TypingStats) => {
     if (review) {
@@ -97,13 +98,15 @@ export default function SetPlayer({
         <SettingsControls settings={settings} showScenes={hasScenes} />
       </div>
 
-      <div className={showGraph ? 'grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_400px]' : 'contents'}>
-        {showGraph && (
+      <div className={showPanel ? 'grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_400px]' : 'contents'}>
+        {showPanel && (
           <div className="lg:sticky lg:top-4 lg:order-2">
-            <LiveGraph
+            <SidePanel
+              scene={scene}
+              previousScene={previousScene}
               graph={graph}
               step={graphStep}
-              last={lastLine && lastCommand ? { command: lastCommand, caption: lastLine.graph?.caption ?? null } : null}
+              last={lastCommand ? { command: lastCommand, captions } : null}
             />
           </div>
         )}
@@ -133,9 +136,6 @@ export default function SetPlayer({
               prompt={prompt}
               prompts={lines.map((l) => l.prompt)}
               outputMark={outputMark}
-              // 세 칸 그림만 Enter 로 멈춘다. 커밋 그래프는 옆에서 늘 바뀐다
-              pauseAfter={lines.map((l) => settings.showScenes && l.scene !== null)}
-              renderScene={(i) => <GitScene scene={lines[i]!.scene!} previous={previousScene(i)} />}
               typingOptions={{ autoIndent: settings.autoIndent }}
               keyboardOptions={{ sixFinger: settings.sixFinger }}
               showKeyboard={settings.showKeyboard}

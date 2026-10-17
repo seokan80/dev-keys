@@ -29,13 +29,9 @@ test('따라치기: ↓ 로 줄을 채우고 Enter 로 그림까지 넘겨 끝�
   await hydrated(page);
   await reviewOn(page);
   await page.getByTestId('typing-area').click();
-  for (const line of branch.lines) {
+  for (let i = 0; i < branch.lines.length; i++) {
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
-    if (line.scene) {
-      await expect(page.getByTestId('scene')).toBeVisible();
-      await page.keyboard.press('Enter');
-    }
   }
   await expect(page.getByTestId('reviewed')).toBeVisible();
   await page.goto('/me');

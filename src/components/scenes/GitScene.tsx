@@ -5,20 +5,18 @@ const ZONES: { id: SceneZone; title: string; hint: string }[] = [
   { id: 'staged', title: '스테이징', hint: '커밋할 것' },
   { id: 'repo', title: '저장소', hint: '커밋 기록' },
 ];
-const indexOf = (zone: SceneZone) => ZONES.findIndex((z) => z.id === zone);
-
 type Props = {
   scene: Scene;
   /** 바로 앞 그림 — 새로 생긴 표를 강조하려고 */
   previous: Scene | null;
   /** HEAD 가 가리키는 브랜치 */
   branch?: string;
+  /** 보여 줄 칸 (커밋 그래프가 있으면 저장소 칸은 그래프가 대신한다) */
+  zones?: readonly SceneZone[];
 };
 
-/** 칸 사이 화살표. 칸 가운데에서 가운데로 그린다 */
-function Arrow({ from, to, label, both }: { from: SceneZone; to: SceneZone; label?: string; both?: boolean }) {
-  const a = indexOf(from);
-  const b = indexOf(to);
+/** 칸 사이 화살표. 칸 가운데에서 가운데로 그린다 (n 칸 중 a 번째 → b 번째) */
+function Arrow({ a, b, n, label, both }: { a: number; b: number; n: number; label?: string; both?: boolean }) {
   const left = Math.min(a, b);
   const span = Math.abs(b - a);
   const toRight = b > a;
@@ -36,7 +34,7 @@ function Arrow({ from, to, label, both }: { from: SceneZone; to: SceneZone; labe
     <div className="relative h-10" aria-hidden="true">
       <div
         className={`absolute top-6 h-0.5 ${color} ${toRight ? 'scene-grow-right' : 'scene-grow-left'}`}
-        style={{ left: `${((2 * left + 1) / 6) * 100}%`, width: `${((2 * span) / 6) * 100}%` }}
+        style={{ left: `${((2 * left + 1) / (2 * n)) * 100}%`, width: `${((2 * span) / (2 * n)) * 100}%` }}
       >
         {(both || toRight) && head('right')}
         {(both || !toRight) && head('left')}
@@ -44,7 +42,7 @@ function Arrow({ from, to, label, both }: { from: SceneZone; to: SceneZone; labe
       {label && (
         <span
           className={`absolute top-0 -translate-x-1/2 font-mono text-xs ${both ? 'text-amber-300' : 'text-sky-300'}`}
-          style={{ left: `${((2 * left + 1 + span) / 6) * 100}%` }}
+          style={{ left: `${((2 * left + 1 + span) / (2 * n)) * 100}%` }}
         >
           {label}
         </span>
@@ -53,8 +51,35 @@ function Arrow({ from, to, label, both }: { from: SceneZone; to: SceneZone; labe
   );
 }
 
-/** Git 세 칸 그림: 작업 트리 · 스테이징 · 저장소와, 무엇이 어디로 옮겨 갔는지 */
-export default function GitScene({ scene, previous, branch = 'main' }: Props) {
+/** 칸 사이 움직임: 두 칸이 모두 보이면 화살표, 한쪽이 숨은 칸(그래프가 대신하는 저장소)이면 글로 */
+function Move({
+  from,
+  to,
+  label,
+  both,
+  shown,
+}: {
+  from: SceneZone;
+  to: SceneZone;
+  label?: string;
+  both?: boolean;
+  shown: readonly SceneZone[];
+}) {
+  const a = shown.indexOf(from);
+  const b = shown.indexOf(to);
+  if (a !== -1 && b !== -1) return <Arrow a={a} b={b} n={shown.length} label={label} both={both} />;
+  const name = (z: SceneZone) => (shown.includes(z) ? ZONES.find((x) => x.id === z)!.title : '커밋 그래프');
+  return (
+    <p className="mt-2 font-mono text-xs text-sky-300">
+      {label ? `${label}: ` : ''}
+      {name(from)} → {name(to)}
+    </p>
+  );
+}
+
+/** Git 세 칸 그림: 작업 트리 · 스테이징 · 저장소와, 무엇이 어디로 옮겨 갔는지 (오른쪽 칸에 늘 보인다) */
+export default function GitScene({ scene, previous, branch = 'main', zones = ['workdir', 'staged', 'repo'] }: Props) {
+  const shown = ZONES.filter((z) => zones.includes(z.id));
   const active = new Set<SceneZone>([
     ...(scene.arrow ? [scene.arrow.from, scene.arrow.to] : []),
     ...(scene.compare ?? []),
@@ -62,9 +87,9 @@ export default function GitScene({ scene, previous, branch = 'main' }: Props) {
   const firstLiveCommit = scene.repo.find((c) => !c.startsWith('~'));
 
   return (
-    <figure className="my-3 rounded-lg border border-sky-900 bg-slate-950/70 p-4 font-sans text-sm" data-testid="scene">
-      <div className="grid grid-cols-3 gap-3">
-        {ZONES.map((zone) => {
+    <div className="font-sans text-sm" data-testid="scene">
+      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${shown.length}, minmax(0, 1fr))` }}>
+        {shown.map((zone) => {
           const chips = scene[zone.id];
           const before = previous?.[zone.id] ?? [];
           const border = scene.compare?.includes(zone.id)
@@ -73,10 +98,10 @@ export default function GitScene({ scene, previous, branch = 'main' }: Props) {
               ? 'border-sky-500/70'
               : 'border-slate-700';
           return (
-            <div key={zone.id} className={`flex min-h-24 flex-col gap-2 rounded-md border p-2 ${border}`}>
+            <div key={zone.id} className={`flex min-h-20 flex-col gap-2 rounded-md border p-2 ${border}`}>
               <div className="flex items-baseline justify-between text-xs">
                 <span className="font-bold text-slate-200">{zone.title}</span>
-                <span className="text-slate-500">{zone.hint}</span>
+                {shown.length < 3 && <span className="text-slate-500">{zone.hint}</span>}
               </div>
               {chips.length === 0 ? (
                 <span className="text-xs text-slate-600">비어 있음</span>
@@ -106,14 +131,12 @@ export default function GitScene({ scene, previous, branch = 'main' }: Props) {
           );
         })}
       </div>
-      {scene.arrow && <Arrow from={scene.arrow.from} to={scene.arrow.to} label={scene.arrow.label} />}
-      {scene.compare && <Arrow from={scene.compare[0]} to={scene.compare[1]} label="비교" both />}
-      <figcaption className="mt-2 flex flex-wrap items-baseline justify-between gap-2">
-        <span className="text-sky-200">{scene.caption}</span>
-        <span className="text-xs text-slate-500">
-          <kbd className="font-mono">Enter</kbd> 계속
-        </span>
-      </figcaption>
-    </figure>
+      {scene.arrow && (
+        <Move from={scene.arrow.from} to={scene.arrow.to} label={scene.arrow.label} shown={shown.map((z) => z.id)} />
+      )}
+      {scene.compare && (
+        <Move from={scene.compare[0]} to={scene.compare[1]} label="비교" both shown={shown.map((z) => z.id)} />
+      )}
+    </div>
   );
 }

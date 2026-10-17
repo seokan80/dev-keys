@@ -8,25 +8,27 @@ const firstScene = git.lines.findIndex((l) => l.scene);
 const java = sets.find((s) => s.category === 'java')!;
 const branching = sets.find((s) => s.graph && s.lines.some((l) => l.graph?.caption))!;
 
-test('그림이 있는 명령은 Enter 뒤에 그림을 보여 주고, Enter 를 한 번 더 치면 넘어간다', async ({ page }) => {
+test('그림이 있는 세트는 옆 칸에 상태 그림이 늘 있고, 그림이 있는 줄을 끝내면 멈추지 않고 그 상태로 바뀐다', async ({
+  page,
+}) => {
+  const line = git.lines[firstScene]!;
   await page.goto(git.href);
   await hydrated(page);
-  await typeLines(page, git.lines.slice(0, firstScene), { scenes: false });
-  await page.keyboard.type(git.lines[firstScene]!.text);
-  await page.keyboard.press('Enter');
+  const panel = page.getByTestId('side-panel');
+  await expect(panel).toBeVisible();
+  await expect(panel.getByTestId('scene')).toHaveCount(0); // 아직 그림이 있는 줄을 치지 않았다
 
-  const scene = page.getByTestId('scene');
-  await expect(scene).toContainText(git.lines[firstScene]!.scene!.caption);
-  await expect(page.getByTestId('next-key')).toContainText('그림을 보고 계속');
-
-  // 그림을 보는 동안 다른 키는 받지 않는다
-  await page.keyboard.type('xyz');
-  await expect(page.getByTestId('typo')).toHaveCount(0);
-  await expect(scene).toBeVisible();
-
-  await page.keyboard.press('Enter');
-  await expect(scene).toHaveCount(0);
+  await typeLines(page, git.lines.slice(0, firstScene + 1));
   await expect(page.getByTestId('next-key')).toContainText(git.lines[firstScene + 1]!.text[0]!);
+  await expect(panel.getByTestId('scene')).toBeVisible();
+  await expect(page.getByTestId('graph-caption')).toContainText(`$ ${line.text}`);
+  await expect(page.getByTestId('graph-caption')).toContainText(line.scene!.caption);
+
+  // 다음 그림이 있는 줄까지 쳐도 그림은 계속 있고, 그 줄의 상태로 바뀐다
+  const second = git.lines.findIndex((l, i) => i > firstScene && l.scene);
+  await typeLines(page, git.lines.slice(firstScene + 1, second + 1));
+  await expect(page.getByTestId('graph-caption')).toContainText(git.lines[second]!.scene!.caption);
+  await expect(panel.getByTestId('scene')).toBeVisible();
 });
 
 test('브랜치 세트는 커밋 그래프를 늘 보여 주고, 줄을 끝낼 때마다 바꾼다 (멈추지 않는다)', async ({ page }) => {
@@ -44,7 +46,6 @@ test('브랜치 세트는 커밋 그래프를 늘 보여 주고, 줄을 끝낼 �
 
   await typeLines(page, branching.lines.slice(0, at + 1));
   // 멈추지 않고 다음 줄로 — 그래프는 머지 뒤 상태, 아래에 방금 친 명령과 설명
-  await expect(page.getByTestId('scene')).toHaveCount(0);
   await expect(page.getByTestId('next-key')).toContainText(branching.lines[at + 1]!.text[0]!);
   await expect(page.getByTestId('graph-caption')).toContainText(`$ ${line.text}`);
   await expect(page.getByTestId('graph-caption')).toContainText(line.graph!.caption!);
@@ -62,13 +63,12 @@ test('그림 보기를 끄면 커밋 그래프도 숨긴다', async ({ page }) =
   await expect(page.getByTestId('live-graph')).toHaveCount(0);
 });
 
-test('그림 보기를 끄면 멈추지 않는다', async ({ page }) => {
+test('그림 보기를 끄면 옆 칸을 숨긴다', async ({ page }) => {
   await page.goto(git.href);
   await hydrated(page);
+  await expect(page.getByTestId('side-panel')).toBeVisible();
   await page.getByLabel('그림 보기').uncheck();
-  await typeLines(page, git.lines.slice(0, firstScene + 1), { scenes: false });
-  await expect(page.getByTestId('scene')).toHaveCount(0);
-  await expect(page.getByTestId('next-key')).toContainText(git.lines[firstScene + 1]!.text[0]!);
+  await expect(page.getByTestId('side-panel')).toHaveCount(0);
 });
 
 test('그림을 보면서 세트를 끝까지 치면 결과가 나온다', async ({ page }) => {
