@@ -288,7 +288,7 @@ export default function TypingArea({
               />
               {output && done && (
                 <pre
-                  className={`mb-2 text-sm whitespace-pre ${outputMark ? 'text-emerald-300/80' : 'text-slate-400'}`}
+                  className={`mb-2 text-sm whitespace-pre-wrap [overflow-wrap:anywhere] ${outputMark ? 'text-emerald-300/80' : 'text-slate-400'}`}
                   data-testid="output"
                 >
                   {outputMark

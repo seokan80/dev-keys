@@ -13,20 +13,24 @@ type Props = {
   prefix?: string;
 };
 
+/** 긴 줄은 옆으로 밀리지 않게 다음 줄로 잇는다 — 공백에서 먼저 끊고, 안 되면 아무 데서나. 들여쓰기는 그대로 */
+const WRAP = 'min-w-0 whitespace-pre-wrap [overflow-wrap:anywhere]';
+
 /** 오타로 친 글자를 보이게: 공백은 ·, 잘못 누른 Enter 는 ↵ */
 const visible = (ch: string) => (ch === ' ' ? '·' : ch === '\n' ? '↵' : ch);
 
 export default function Line({ target, status, typed = '', errorAt = -1, focused = false, prefix }: Props) {
+  // 줄 앞 표시($ · 질문)는 왼쪽에 두고, 이어지는 줄은 표시 뒤에 맞춰 들여 쓴다
   const mark = prefix && (
-    <span aria-hidden="true" className="text-slate-500 select-none">
+    <span aria-hidden="true" className="shrink-0 whitespace-pre text-slate-500 select-none">
       {prefix}{' '}
     </span>
   );
   if (status !== 'current') {
     return (
-      <div className={`whitespace-pre ${status === 'done' ? 'text-emerald-400/60' : 'text-slate-500'}`}>
+      <div className={`flex ${status === 'done' ? 'text-emerald-400/60' : 'text-slate-500'}`}>
         {mark}
-        {target || ' '}
+        <span className={WRAP}>{target || ' '}</span>
       </div>
     );
   }
@@ -37,17 +41,19 @@ export default function Line({ target, status, typed = '', errorAt = -1, focused
   const atEnd = errorAt === -1 && typed.length >= target.length;
 
   return (
-    <div className="whitespace-pre text-slate-200" data-testid="current-line">
+    <div className="flex text-slate-200" data-testid="current-line">
       {mark}
-      <span className="text-emerald-300">{ok}</span>
-      {wrong && (
-        <span className="rounded-sm bg-rose-600 text-white" data-testid="typo">
-          {[...wrong].map(visible).join('')}
-        </span>
-      )}
-      <Caret blink={focused} />
-      <span>{rest}</span>
-      {atEnd && <span className="text-slate-500">↵</span>}
+      <span className={WRAP}>
+        <span className="text-emerald-300">{ok}</span>
+        {wrong && (
+          <span className="rounded-sm bg-rose-600 text-white" data-testid="typo">
+            {[...wrong].map(visible).join('')}
+          </span>
+        )}
+        <Caret blink={focused} />
+        <span>{rest}</span>
+        {atEnd && <span className="text-slate-500">↵</span>}
+      </span>
     </div>
   );
 }

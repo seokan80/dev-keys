@@ -103,3 +103,16 @@ test('대화형 질문에 답하는 줄은 $ 대신 그 질문이 앞에 보인�
   // 그래프 아래에는 답(y)이 아니라 질문을 띄운 명령이 보인다
   if (review.graph) await expect(page.getByTestId('graph-caption')).toContainText(`$ ${review.lines[at - 1]!.text}`);
 });
+
+test('한 줄에 다 들어가지 않는 긴 줄은 옆으로 밀리지 않고 다음 줄로 이어진다', async ({ page }) => {
+  const set = sets.find((s) => s.lines.some((l) => l.text.length > 90))!;
+  const at = set.lines.findIndex((l) => l.text.length > 90);
+  await page.setViewportSize({ width: 1100, height: 900 });
+  await page.goto(set.href);
+  await hydrated(page);
+  await typeSet(page, set.lines.slice(0, at));
+  const area = page.getByTestId('typing-area');
+  await expect(page.getByTestId('current-line')).toContainText(set.lines[at]!.text.slice(-20));
+  const overflow = await area.evaluate((el) => el.scrollWidth - el.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(1);
+});
