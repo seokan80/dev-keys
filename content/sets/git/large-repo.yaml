@@ -1,0 +1,158 @@
+id: git-large-repo
+category: git
+order: 25
+title: 큰 저장소 빠르게
+description: 기록이 무거운 저장소를 필요한 만큼만 받기 — partial clone(--filter=blob:none) · shallow clone(--depth 1) · sparse-checkout · maintenance
+level: 3
+# 이야기: 큰 데모 파일을 여러 번 바꿔 기록이 무거워진 저장소를, 필요한 만큼만 받아 쓴다.
+#   원격은 연습용 서버 저장소이고, https://github.com/kim/ 주소가 그쪽을 가리키게 했다(insteadOf).
+# 출력은 실제 git 2.53 으로 뽑았다: scripts/git-story.sh content/stories/git/large-repo.sh
+#   내려받기 속도(… | 1.00 MiB/s)는 실행할 때마다 달라서 고정 값으로 바꿨다.
+# engine: 받은 저장소(devkeys)의 커밋 그래프가 옆에 늘 보인다.
+engine:
+  root: 'b22032f feat: demo v1'
+items:
+  - id: clone-full
+    type: copy
+    text: git clone https://github.com/kim/devkeys.git devkeys-full
+    note: (데모 파일을 다섯 번 바꾼 저장소) 먼저 보통 clone — 모든 커밋의 모든 파일 내용을 받는다
+    before:
+      - 'git commit -m "fbfd808 feat: demo v2"'
+      - 'git commit -m "b383ddd feat: demo v3"'
+      - 'git commit -m "0fcb2a5 feat: demo v4"'
+      - 'git commit -m "e9b670d feat: demo v5"'
+    skipEngine: true
+    output: |-
+      Cloning into 'devkeys-full'...
+      remote: Enumerating objects: 33, done.
+      remote: Counting objects: 100% (33/33), done.
+      remote: Compressing objects: 100% (15/15), done.
+      remote: Total 33 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+      Receiving objects: 100% (33/33), 621.13 KiB | 1.00 MiB/s, done.
+  - id: size-full
+    type: copy
+    text: git -C devkeys-full count-objects -vH | grep size-pack
+    note: 받은 크기
+    skipEngine: true
+    output: 'size-pack: 623.08 KiB'
+  - id: clone-partial
+    type: copy
+    text: git clone --filter=blob:none https://github.com/kim/devkeys.git
+    note: partial clone — 커밋 · 폴더 구조는 다 받고, 파일 내용은 지금 필요한 것만. 나머지는 쓸 때 받아 온다
+    skipEngine: true
+    output: |-
+      Cloning into 'devkeys'...
+      remote: Enumerating objects: 21, done.
+      remote: Counting objects: 100% (21/21), done.
+      remote: Compressing objects: 100% (10/10), done.
+      remote: Total 21 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+      Receiving objects: 100% (21/21), done.
+      remote: Enumerating objects: 4, done.
+      remote: Counting objects: 100% (4/4), done.
+      remote: Total 4 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+      Receiving objects: 100% (4/4), 123.86 KiB | 1.00 MiB/s, done.
+  - id: size-partial
+    type: copy
+    text: git -C devkeys count-objects -vH | grep size-pack
+    note: 지난 버전의 데모 파일을 받지 않아 5분의 1 정도
+    skipEngine: true
+    output: 'size-pack: 128.53 KiB'
+  - id: clone-shallow
+    type: copy
+    text: git clone --depth 1 https://github.com/kim/devkeys.git devkeys-shallow
+    note: shallow clone — 최근 커밋 하나만. CI 처럼 한 번 빌드하고 버릴 때
+    skipEngine: true
+    output: |-
+      Cloning into 'devkeys-shallow'...
+      remote: Enumerating objects: 9, done.
+      remote: Counting objects: 100% (9/9), done.
+      remote: Compressing objects: 100% (3/3), done.
+      remote: Total 9 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+      Receiving objects: 100% (9/9), 124.27 KiB | 1.00 MiB/s, done.
+  - id: shallow-log
+    type: copy
+    text: git -C devkeys-shallow log --oneline
+    note: 기록이 하나뿐이다 (grafted). log · blame · bisect 를 하려면 partial clone 이 낫다
+    skipEngine: true
+    output: 'e9b670d (grafted, HEAD -> main, origin/main, origin/HEAD) feat: demo v5'
+  - id: cd
+    type: copy
+    text: cd devkeys
+    note: partial clone 한 저장소로 들어간다
+    skipEngine: true
+  - id: log
+    type: copy
+    text: git log --oneline -3
+    note: 기록은 다 있다 — 옆 그래프가 이 저장소
+    skipEngine: true
+    output: |-
+      e9b670d (HEAD -> main, origin/main, origin/HEAD) feat: demo v5
+      0fcb2a5 feat: demo v4
+      b383ddd feat: demo v3
+  - id: sparse-set
+    type: copy
+    text: git sparse-checkout set src docs
+    note: 작업 폴더에는 src · docs 만 (맨 위 파일은 늘 있다). 커다란 assets 는 내려놓는다
+    skipEngine: true
+  - id: ls
+    type: copy
+    text: ls
+    skipEngine: true
+    output: README.md  docs  src
+  - id: sparse-list
+    type: copy
+    text: git sparse-checkout list
+    note: 지금 꺼내 둔 폴더. 다 되돌리려면 git sparse-checkout disable
+    skipEngine: true
+    output: |-
+      docs
+      src
+  - id: maintenance-run
+    type: copy
+    text: git maintenance run --task=commit-graph --task=incremental-repack
+    note: 정리 작업을 지금 돌린다 — commit-graph 는 log 를 빠르게, incremental-repack 은 팩 파일을 조금씩 합친다
+    skipEngine: true
+  - id: maintenance-register
+    type: copy
+    text: git maintenance register
+    note: 이 저장소를 정리 대상으로 등록한다. git maintenance start 는 등록에 더해 시간마다 돌도록 예약까지
+    skipEngine: true
+  - id: maintenance-repo
+    type: copy
+    text: git config get --global maintenance.repo
+    note: 등록된 저장소 목록은 전역 설정에 있다
+    skipEngine: true
+    output: /home/kim/devkeys
+
+  # ── 도전 모드(뜻 보고 치기)
+  - id: recall-partial
+    type: recall
+    prompt: 파일 내용은 필요할 때 받는 partial clone 으로 받는다 — 주소는 <url>
+    answers: [git clone --filter=blob:none <url>]
+    placeholder: { url: 'https://github.com/kim/devkeys.git' }
+  - id: recall-shallow
+    type: recall
+    prompt: 최근 커밋 하나만 받는다 — 주소는 <url>
+    answers: [git clone --depth 1 <url>, git clone --depth=1 <url>]
+    placeholder: { url: 'https://github.com/kim/devkeys.git' }
+  - id: recall-sparse-set
+    type: recall
+    prompt: 작업 폴더에 두 폴더만 꺼내 둔다 — <a>, <b>
+    answers: [git sparse-checkout set <a> <b>]
+    placeholder: { a: src, b: docs }
+  - id: recall-sparse-list
+    type: recall
+    prompt: 지금 꺼내 둔 폴더 목록을 본다
+    answers: [git sparse-checkout list]
+  - id: recall-sparse-disable
+    type: recall
+    prompt: 일부만 꺼내 두기를 끄고 모든 파일을 다시 꺼낸다
+    answers: [git sparse-checkout disable]
+  - id: recall-maintenance-start
+    type: recall
+    prompt: 이 저장소를 등록하고 정리 작업이 시간마다 돌도록 예약한다
+    answers: [git maintenance start]
+  - id: recall-count-objects
+    type: recall
+    prompt: 저장소가 받은 객체 수와 크기를 사람이 읽기 좋은 단위로 본다
+    answers: [git count-objects -vH, git count-objects -v -H, git count-objects -Hv]
