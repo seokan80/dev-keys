@@ -43,7 +43,7 @@ test('처음 온 사람: 메인은 첫 세트를 추천하고, 내 기록은 비
   await expect(pick).toHaveAttribute('href', first!.href);
   await expect(page.getByTestId('resume')).toHaveCount(0);
 
-  await page.getByRole('link', { name: '내 기록' }).click();
+  await page.getByRole('navigation', { name: '사이트' }).getByRole('link', { name: '내 기록' }).click();
   await expect(page.getByText('아직 기록이 없어요')).toBeVisible();
   await expect(page.getByText('복습할 문제가 없어요')).toBeVisible();
 });
@@ -57,6 +57,16 @@ test('메인: 복습할 문제가 있으면 그 세트의 도전 모드를 추�
   const resume = page.getByTestId('resume');
   await expect(resume).toContainText('도전 모드');
   await expect(resume).toContainText(basic.title);
+});
+
+test('메인 Git 지도: 따라치기를 끝낸 세트에 체크와 최고 타수, 진도가 오른다', async ({ page }) => {
+  await seed(page, { ...played, srs: {}, bests: { [`${basic.id}:copy`]: { cpm: 150, accuracy: 0.9, at: AT } } });
+  await page.goto('/');
+  const map = page.getByTestId('season-map');
+  const done = map.locator(`[data-testid="map-set"][href="${basic.href}"]`);
+  await expect(done).toHaveAttribute('data-done', 'true');
+  await expect(done).toContainText('150타');
+  await expect(map.getByTestId('map-progress')).toContainText('1개');
 });
 
 test('복습이 없으면 따라치기를 끝내지 않은 다음 세트를 추천한다', async ({ page }) => {

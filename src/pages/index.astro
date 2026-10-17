@@ -1,50 +1,194 @@
 ---
 import Base from '../layouts/Base.astro';
+import HeroDemo from '../components/home/HeroDemo';
 import HomeNext from '../components/home/HomeNext';
-import { getSets } from '../lib/content/load';
+import SeasonMap, { type MapPart } from '../components/home/SeasonMap';
+import { getCurriculum, getSets } from '../lib/content/load';
 import { toPlanSets } from '../lib/content/recommend';
-import { CATEGORIES } from '../schemas/categories';
+import { DEMO_LINES, demoGraph } from '../lib/home/demo';
 
 const sets = getSets();
+const git = getCurriculum('git')!;
+const parts: MapPart[] = git.parts.map((p) => ({
+  no: p.no,
+  title: p.title,
+  description: p.description,
+  sets: p.sets.map((s) => ({ id: s.id, title: s.title, href: s.href })),
+}));
+const gitCount = parts.reduce((n, p) => n + p.sets.length, 0);
+const startHref = parts[0]!.sets[0]!.href;
+const demo = demoGraph(
+  'docs: add README',
+  DEMO_LINES.map((l) => l.text),
+);
+const count = (category: string) => sets.filter((s) => s.category === category).length;
+
+const WHY = [
+  {
+    title: '진짜 git 출력',
+    text: '치고 Enter 를 누르면 실제 git 이 내놓는 출력이 그대로 나온다. 해시까지 앞뒤가 맞는 이야기로.',
+  },
+  {
+    title: '움직이는 커밋 그래프',
+    text: '브랜치 · merge · rebase · push 가 옆 그래프에서 바로 움직인다. 명령과 결과가 손끝에서 이어진다.',
+  },
+  {
+    title: '떠올려 치기와 복습',
+    text: '뜻만 보고 명령을 떠올리는 도전 모드. 틀린 문제는 1 · 3 · 7 · 14일 뒤에 다시 나온다.',
+  },
+];
 ---
 
-<Base title="DevKeys — 개발자 타자 연습">
-  <main class="mx-auto flex min-h-dvh max-w-3xl flex-col justify-center gap-8 px-6 py-10">
-    <header class="flex flex-col gap-3">
-      <div class="flex items-baseline justify-between gap-4">
-        <h1 class="font-mono text-4xl font-bold">DevKeys</h1>
-        <a href="/me" class="text-sm text-slate-300 hover:underline">
+<Base
+  title="DevKeys — Git, 읽지 말고 손으로 익히는 개발자 타자 연습"
+  description={`명령을 치면 커밋 그래프가 바로 움직이는 Git 타자 연습. 혼자 쓰는 Git 부터 동료 · AI 에이전트와 함께 쓰는 Git 까지 ${gitCount}세트, 실제 git 출력으로.`}
+>
+  <main class="mx-auto flex max-w-5xl flex-col gap-14 px-6 py-8">
+    <nav class="flex flex-wrap items-baseline justify-between gap-4" aria-label="사이트">
+      <a href="/" class="font-mono text-2xl font-bold">
+        DevKeys
+      </a>
+      <div class="flex gap-4 text-sm text-slate-300">
+        <a href="#season-1" class="hover:underline">
+          Git 지도
+        </a>
+        <a href="/warmup" class="hover:underline">
+          손가락 풀기
+        </a>
+        <a href="/me" class="hover:underline">
           내 기록
         </a>
       </div>
-      <p class="text-lg text-slate-300">Git 명령과 코드를 따라 치며 손에 익히는 개발자용 타자 연습.</p>
-    </header>
+    </nav>
+
+    <section class="flex flex-col gap-6" aria-labelledby="hero-title">
+      <div class="flex flex-col gap-3">
+        <p class="text-sm font-bold text-emerald-300">시즌 1 · Git</p>
+        <h1 id="hero-title" class="text-4xl font-bold leading-tight break-keep sm:text-5xl">
+          Git, 읽지 말고 손으로.
+        </h1>
+        <p class="max-w-2xl text-lg break-keep text-slate-300">
+          명령을 치면 커밋 그래프가 바로 움직입니다. 혼자 쓰는 Git 부터 동료 · AI 에이전트와 함께 쓰는 Git 까지{' '}
+          {gitCount}세트. <span class="text-slate-400">아래에서 아무 키나 눌러 바로 쳐 보세요.</span>
+        </p>
+      </div>
+      <HeroDemo client:only="react" lines={DEMO_LINES} graph={demo} startHref={startHref} setCount={gitCount}>
+        <pre
+          slot="fallback"
+          class="rounded-lg border border-slate-700 bg-slate-900 p-4 font-mono text-sm text-slate-400"
+        >{DEMO_LINES.map((l) => `$ ${l.text}`).join('\n')}</pre>
+      </HeroDemo>
+      <div class="flex flex-wrap gap-3">
+        <a
+          href={startHref}
+          class="rounded-lg bg-emerald-500 px-5 py-2.5 font-bold text-slate-950 hover:bg-emerald-400"
+          data-testid="start"
+        >
+          1부부터 시작 →
+        </a>
+        <a href="#season-1" class="rounded-lg border border-slate-600 px-5 py-2.5 text-slate-200 hover:bg-slate-900">
+          Git 지도 보기
+        </a>
+      </div>
+    </section>
+
     <!-- 이어하기 · 오늘의 추천: 브라우저 저장값으로 정한다 -->
     <HomeNext client:only="react" sets={toPlanSets(sets)} />
+
+    <section id="season-1" class="flex scroll-mt-6 flex-col gap-4" aria-labelledby="map-title">
+      <div class="flex flex-col gap-1">
+        <h2 id="map-title" class="text-2xl font-bold">
+          시즌 1 · Git 지도
+        </h2>
+        <p class="text-slate-400">1부 로컬에서 5부 AI 에이전트까지 — 끝낸 세트에는 체크와 최고 타수가 남는다.</p>
+      </div>
+      <SeasonMap client:load parts={parts} />
+    </section>
+
+    <section class="flex flex-col gap-4" aria-labelledby="why-title">
+      <h2 id="why-title" class="text-2xl font-bold">
+        왜 치면서 익히나
+      </h2>
+      <ul class="grid gap-3 sm:grid-cols-3">
+        {WHY.map((w) => (
+          <li class="flex flex-col gap-2 rounded-lg border border-slate-700 p-4">
+            <strong class="text-sky-200">{w.title}</strong>
+            <span class="text-sm text-slate-400">{w.text}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section class="flex flex-col gap-4" aria-labelledby="seasons-title">
+      <h2 id="seasons-title" class="text-2xl font-bold">
+        시즌
+      </h2>
+      <ul class="grid gap-3 sm:grid-cols-3">
+        <li>
+          <a
+            href="/git"
+            class="flex h-full flex-col gap-2 rounded-lg border border-emerald-600/70 bg-emerald-500/5 p-4 hover:bg-emerald-500/10"
+            data-testid="season-git"
+          >
+            <span class="text-xs font-bold text-emerald-300">시즌 1 · 지금</span>
+            <strong class="text-lg">Git</strong>
+            <span class="text-sm text-slate-400">
+              로컬 · 원격 · 기록 다듬기 · 브랜치 전략 · AI 에이전트 — {gitCount}세트
+            </span>
+          </a>
+        </li>
+        <li class="flex flex-col gap-2 rounded-lg border border-dashed border-slate-600 p-4" data-testid="season-2">
+          <span class="text-xs font-bold text-amber-300">시즌 2 · 준비 중</span>
+          <strong class="text-lg">터미널 · 쉘</strong>
+          <span class="text-sm text-slate-400">
+            ls · cd · grep · find · 파이프 · ssh — 서버에 들어가 로그를 찾고, 쉘 한 줄로 일을 줄인다
+          </span>
+        </li>
+        <li class="flex flex-col gap-2 rounded-lg border border-dashed border-slate-600 p-4" data-testid="season-3">
+          <span class="text-xs font-bold text-amber-300">시즌 3 · 준비 중</span>
+          <strong class="text-lg">Java · Spring</strong>
+          <span class="text-sm text-slate-400">
+            Java 21 · Spring Boot 4 · Security 7 의 실전 코드를 레퍼런스처럼 따라 친다
+          </span>
+          <span class="mt-auto text-sm">
+            미리 맛보기{' '}
+            <a href="/java" class="text-sky-300 hover:underline">
+              Java {count('java')}세트
+            </a>{' '}
+            ·{' '}
+            <a href="/spring" class="text-sky-300 hover:underline">
+              Spring {count('spring')}세트
+            </a>
+          </span>
+        </li>
+      </ul>
+    </section>
+
     <a
       href="/warmup"
       class="flex flex-col gap-1 rounded-lg border border-sky-700/70 bg-sky-500/5 p-4 hover:bg-sky-500/10"
       data-testid="warmup-card"
     >
-      <span class="text-xs text-sky-300">처음이라면 먼저</span>
+      <span class="text-xs text-sky-300">타자가 처음이라면 먼저</span>
       <strong class="text-lg">손가락 풀기</strong>
       <span class="text-sm text-slate-400">
         왼손 새끼부터 오른손 새끼까지, 손가락마다 맡은 키와 기호를 차례로 (약 2분)
       </span>
     </a>
-    <ul class="grid gap-3 sm:grid-cols-3">
-      {CATEGORIES.map((category) => (
-        <li>
-          <a
-            href={`/${category.id}`}
-            class="flex h-full flex-col gap-1 rounded-lg border border-slate-700 p-4 hover:bg-slate-900"
-          >
-            <strong class="font-mono text-lg">{category.title}</strong>
-            <span class="text-sm text-slate-400">{category.description}</span>
-            <span class="text-xs text-slate-500">세트 {sets.filter((s) => s.category === category.id).length}개</span>
-          </a>
-        </li>
-      ))}
-    </ul>
+
+    <footer class="flex flex-wrap gap-4 border-t border-slate-800 pt-6 text-sm text-slate-500">
+      <a href="/git" class="hover:underline">
+        Git 세트 목록
+      </a>
+      <a href="/git/tree" class="hover:underline">
+        트리 미션
+      </a>
+      <a href="/playground" class="hover:underline">
+        연습장
+      </a>
+      <a href="/me" class="hover:underline">
+        내 기록
+      </a>
+    </footer>
   </main>
 </Base>

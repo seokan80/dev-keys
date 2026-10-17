@@ -12,7 +12,7 @@ const escapeHtml = (text: string) =>
 
 test('메인 → 카테고리 → 세트로 들어간다', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('link', { name: /Git/ }).first().click();
+  await page.getByTestId('season-git').click();
   await expect(page).toHaveURL('/git');
   await page.getByRole('link', { name: new RegExp(`^${first!.title}`) }).click();
   await expect(page).toHaveURL(first!.href);
