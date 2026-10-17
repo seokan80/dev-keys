@@ -1,0 +1,176 @@
+id: git-remote-compare
+category: git
+order: 10
+title: 원격과 비교하고 정리하기
+description: 원격보다 앞섰는지 뒤처졌는지 읽고, 파일 하나만 원격과 비교하고, 합쳐진 브랜치와 오래된 원격 브랜치를 정리하기
+level: 2
+# 이야기: 내 main 과 원격 main 이 서로 앞서고 뒤처진 상태를 읽고, 파일 하나만 원격과 비교한 뒤 맞추고,
+#   합쳐져 원격에서 지워진 브랜치와 오래된 브랜치를 정리한다.
+# 출력은 실제 git 2.53 으로 뽑았다: scripts/git-story.sh content/stories/git/remote-compare.sh
+# 원격은 연습용 서버 저장소이고, https://github.com/kim/ 주소가 그쪽을 가리키게 했다(insteadOf).
+# 원격은 커밋 그래프 엔진 범위 밖이라 따라치기와 출력만 둔다.
+items:
+  - id: fetch
+    type: copy
+    text: git fetch
+    note: (lee 가 내 검색 브랜치를 PR 로 합치고 원격 브랜치를 지운 뒤 footer 를 올렸다. 나는 README 를 고쳐 커밋해 두었다) 먼저 받아 온다
+    output: |-
+      remote: Enumerating objects: 6, done.
+      remote: Counting objects: 100% (6/6), done.
+      remote: Compressing objects: 100% (3/3), done.
+      remote: Total 4 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+      Unpacking objects: 100% (4/4), 504 bytes | 1.00 MiB/s, done.
+      From https://github.com/kim/devkeys
+         d51a197..fb74a73  main       -> origin/main
+  - id: status-sb
+    type: copy
+    text: git status -sb
+    note: 짧게 보기 — 1개 앞서고 3개 뒤처졌다. 앞선 것은 올릴 것, 뒤처진 것은 받을 것
+    output: '## main...origin/main [ahead 1, behind 3]'
+  - id: log-outgoing
+    type: copy
+    text: git log --oneline origin/main..
+    note: 원격에 없는 내 커밋 — 올릴 것. 오른쪽을 비우면 HEAD
+    output: 'cf2e7af (HEAD -> main) docs: describe the project'
+  - id: log-incoming
+    type: copy
+    text: git log --oneline ..origin/main
+    note: 내게 없는 원격 커밋 — 받을 것
+    output: |-
+      fb74a73 (origin/main, origin/HEAD) feat: add footer
+      eb18d70 Merge pull request #7 from kim/feature/search
+      be5966e (origin/feature/search, feature/search) feat: add search box
+  - id: log-left-right
+    type: copy
+    text: git log --oneline --left-right main...origin/main
+    note: 양쪽을 한 번에 — < 는 내 쪽(왼쪽)에만, > 는 원격 쪽(오른쪽)에만 있는 커밋
+    output: |-
+      < cf2e7af (HEAD -> main) docs: describe the project
+      > fb74a73 (origin/main, origin/HEAD) feat: add footer
+      > eb18d70 Merge pull request #7 from kim/feature/search
+      > be5966e (origin/feature/search, feature/search) feat: add search box
+  - id: diff-three-dot
+    type: copy
+    text: git diff --stat main...origin/main
+    note: 점 셋은 갈라진 뒤 원격 쪽에서 바뀐 것만. 점 둘(main..origin/main)이면 내 쪽 변경까지 섞여 보인다
+    output: |2-
+       footer.html | 1 +
+       search.html | 1 +
+       2 files changed, 2 insertions(+)
+  - id: diff-file
+    type: copy
+    text: git diff origin/main -- README.md
+    note: 파일 하나만 원격과 비교한다. -- 뒤에 경로를 적는다
+    output: |-
+      diff --git a/README.md b/README.md
+      index b90ddb5..2df0f8d 100644
+      --- a/README.md
+      +++ b/README.md
+      @@ -1 +1,3 @@
+       # DevKeys
+      +
+      +Typing practice for developers
+  - id: pull
+    type: copy
+    text: git pull
+    note: 받아서 합친다 (pull.rebase true 로 설정해 두었다 — 내 커밋을 뒤로 옮겨 쌓는다)
+    output: Successfully rebased and updated refs/heads/main.
+  - id: push
+    type: copy
+    text: git push
+    note: 올린다. 이제 앞서지도 뒤처지지도 않는다
+    output: |-
+      Enumerating objects: 5, done.
+      Counting objects: 100% (5/5), done.
+      Delta compression using up to 8 threads
+      Compressing objects: 100% (2/2), done.
+      Writing objects: 100% (3/3), 364 bytes | 1.00 MiB/s, done.
+      Total 3 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+      To https://github.com/kim/devkeys.git
+         fb74a73..2e7d2ef  main -> main
+  - id: branch-vv
+    type: copy
+    text: git branch -vv
+    note: 원격에서 지운 feature/search 가 아직 짝으로 남아 있다 — fetch 는 기본으로 지운 원격 브랜치를 정리하지 않는다
+    output: |2-
+        feature/search be5966e [origin/feature/search] feat: add search box
+      * main           2e7d2ef [origin/main] docs: describe the project
+  - id: fetch-prune
+    type: copy
+    text: git fetch --prune
+    note: 원격에서 사라진 브랜치의 origin/ 이름표를 지운다
+    output: |-
+      From https://github.com/kim/devkeys
+       - [deleted]         (none)     -> origin/feature/search
+  - id: branch-vv-gone
+    type: copy
+    text: git branch -vv
+    note: 짝이 사라진 로컬 브랜치는 gone 으로 나온다 — 지워도 되는 후보
+    output: |2-
+        feature/search be5966e [origin/feature/search: gone] feat: add search box
+      * main           2e7d2ef [origin/main] docs: describe the project
+  - id: branch-d
+    type: copy
+    text: git branch -d feature/search
+    note: main 에 합쳐졌으니 -d 로 지운다. 합쳐지지 않았다면 거절해 준다
+    output: Deleted branch feature/search (was be5966e).
+  - id: ls-remote
+    type: copy
+    text: git ls-remote --heads origin
+    note: 원격에 지금 있는 브랜치를 서버에 직접 물어본다. branch -r 은 마지막으로 받아 온 기억이다
+    output: |-
+      e9d0acf48b5690702fe48def8a3b7e350f7e4cf7        refs/heads/feature/old
+      2e7d2ef424ce0002cad7ac1934c1a016c3e8293b        refs/heads/main
+  - id: push-delete
+    type: copy
+    text: git push origin --delete feature/old
+    note: 원격의 오래된 브랜치를 지운다. 되돌리기 어려우니 이름을 확인하고 지운다
+    output: |-
+      To https://github.com/kim/devkeys.git
+       - [deleted]         feature/old
+  - id: config-prune
+    type: copy
+    text: git config --global fetch.prune true
+    note: 앞으로 fetch · pull 할 때마다 사라진 원격 브랜치를 정리한다
+  - id: branch-a
+    type: copy
+    text: git branch -a
+    note: 정리된 모습 — 로컬 main 과 원격 main 만 남았다
+    output: |-
+      * main
+        remotes/origin/HEAD -> origin/main
+        remotes/origin/main
+  - id: recall-status-sb
+    type: recall
+    prompt: 지금 브랜치와 원격 짝의 앞섬 · 뒤처짐을 짧게 본다
+    answers: [git status -sb, git status --short --branch, git status -s -b]
+  - id: recall-log-outgoing
+    type: recall
+    prompt: 원격 origin/main 에 없는 내 커밋을 한 줄씩 본다
+    answers: [git log --oneline origin/main.., git log --oneline origin/main..HEAD]
+  - id: recall-log-left-right
+    type: recall
+    prompt: 내 main 과 origin/main 이 갈라진 뒤 각자에만 있는 커밋을 한 번에, 어느 쪽인지 표시해 본다
+    answers: [git log --oneline --left-right main...origin/main]
+  - id: recall-diff-file
+    type: recall
+    prompt: 파일 하나만 원격 origin/main 과 비교한다 — 파일은 <file>
+    answers: [git diff origin/main -- <file>, git diff origin/main <file>]
+    placeholder: { file: README.md }
+  - id: recall-fetch-prune
+    type: recall
+    prompt: 받아 오면서 원격에서 사라진 브랜치의 이름표도 지운다
+    answers: [git fetch --prune, git fetch -p]
+  - id: recall-push-delete
+    type: recall
+    prompt: 원격의 <branch> 브랜치를 지운다
+    answers: [git push origin --delete <branch>, git push origin -d <branch>, 'git push origin :<branch>']
+    placeholder: { branch: feature/old }
+  - id: recall-ls-remote
+    type: recall
+    prompt: 원격에 지금 있는 브랜치를 서버에 직접 물어본다
+    answers: [git ls-remote --heads origin, git ls-remote --branches origin, git ls-remote -h origin]
+  - id: recall-config-prune
+    type: recall
+    prompt: 앞으로 받아 올 때마다 사라진 원격 브랜치를 정리하게 전역 설정한다
+    answers: [git config --global fetch.prune true, git config set --global fetch.prune true]

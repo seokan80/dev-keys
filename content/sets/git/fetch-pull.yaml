@@ -1,0 +1,296 @@
+id: git-fetch-pull
+category: git
+order: 8
+title: fetch 와 pull
+description: 동료가 올린 커밋을 fetch 로 받아 보고 pull 로 합치기, 갈라졌을 때 pull --rebase, 원격 브랜치로 옮겨 가기
+level: 2
+# 이야기: 동료 lee 와 같은 GitHub 저장소(kim/devkeys)에서 일한다. lee 가 올린 것을 받아 보고 합치고,
+#   서로 다른 커밋을 쌓아 갈라졌을 때 pull --rebase 로 잇고, lee 가 올린 새 브랜치로 옮겨 간다.
+# 출력은 실제 git 2.53 으로 뽑았다: scripts/git-story.sh content/stories/git/fetch-pull.sh
+# 원격은 연습용 서버 저장소이고, https://github.com/kim/ 주소가 그쪽을 가리키게 했다(insteadOf). GitHub 에서 받으면
+#   서버 쪽 압축 상태에 따라 remote: 줄의 숫자가 실행마다 달라서다. 그래서 GitHub 가 덧붙이는 remote: 안내 줄은 없다.
+# 원격은 커밋 그래프 엔진 범위 밖이라 따라치기와 출력만 둔다.
+items:
+  - id: status-stale
+    type: copy
+    text: git status
+    note: (lee 가 회원가입 화면을 올렸다) 그런데도 "최신"이라고 나온다 — status 는 서버에 묻지 않고, 마지막으로 받아 온 origin/main 과 비교한다
+    output: |-
+      On branch main
+      Your branch is up to date with 'origin/main'.
+
+      nothing to commit, working tree clean
+  - id: fetch
+    type: copy
+    text: git fetch
+    note: 원격의 새 커밋을 받아 origin/main 만 옮긴다. 내 main 과 작업 폴더는 그대로라 언제 해도 안전하다
+    output: |-
+      remote: Enumerating objects: 4, done.
+      remote: Counting objects: 100% (4/4), done.
+      remote: Compressing objects: 100% (2/2), done.
+      remote: Total 3 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+      Unpacking objects: 100% (3/3), 317 bytes | 1.00 MiB/s, done.
+      From https://github.com/kim/devkeys
+         b38bb74..da93793  main       -> origin/main
+  - id: status-behind
+    type: copy
+    text: git status
+    note: 받아 온 origin/main 과 비교해 뒤처졌다고 알려 준다. fast-forward 로 따라갈 수 있다
+    output: |-
+      On branch main
+      Your branch is behind 'origin/main' by 1 commit, and can be fast-forwarded.
+        (use "git pull" to update your local branch)
+
+      nothing to commit, working tree clean
+  - id: log-incoming
+    type: copy
+    text: git log --oneline main..origin/main
+    note: 받아 왔지만 아직 내 main 에 없는 커밋 — 합치기 전에 무엇이 들어오는지 본다
+    output: 'da93793 (origin/main, origin/HEAD) feat: add signup page'
+  - id: diff-incoming
+    type: copy
+    text: git diff --stat main origin/main
+    note: 들어올 변경을 파일별로
+    output: |2-
+       signup.html | 1 +
+       1 file changed, 1 insertion(+)
+  - id: pull-ff
+    type: copy
+    text: git pull
+    note: fetch 하고 합친다. 내 쪽에 새 커밋이 없어서 main 을 앞으로 옮기기만 한다 (fast-forward)
+    output: |-
+      Updating b38bb74..da93793
+      Fast-forward
+       signup.html | 1 +
+       1 file changed, 1 insertion(+)
+       create mode 100644 signup.html
+  - id: fetch-again
+    type: copy
+    text: git fetch
+    note: (나는 README 를, lee 는 검색창을 각자 커밋했고 lee 가 먼저 올렸다) 다시 받아 온다
+    output: |-
+      remote: Enumerating objects: 4, done.
+      remote: Counting objects: 100% (4/4), done.
+      remote: Compressing objects: 100% (2/2), done.
+      remote: Total 3 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+      Unpacking objects: 100% (3/3), 334 bytes | 1.00 MiB/s, done.
+      From https://github.com/kim/devkeys
+         da93793..1df3362  main       -> origin/main
+  - id: status-diverged
+    type: copy
+    text: git status
+    note: 갈라졌다 — 서로 상대에게 없는 커밋이 하나씩 있다
+    output: |-
+      On branch main
+      Your branch and 'origin/main' have diverged,
+      and have 1 and 1 different commits each, respectively.
+        (use "git pull" if you want to integrate the remote branch with yours)
+
+      nothing to commit, working tree clean
+  - id: pull-diverged
+    type: copy
+    text: git pull
+    note: 갈라졌을 때 어떻게 합칠지 정해 두지 않으면 pull 이 멈춘다 (예전 git 은 경고만 하고 머지했다). merge 할지, rebase 할지, fast-forward 만 할지 고르라고 한다
+    output: |-
+      hint: You have divergent branches and need to specify how to reconcile them.
+      hint: You can do so by running one of the following commands sometime before
+      hint: your next pull:
+      hint:
+      hint:   git config pull.rebase false  # merge
+      hint:   git config pull.rebase true   # rebase
+      hint:   git config pull.ff only       # fast-forward only
+      hint:
+      hint: You can replace "git config" with "git config --global" to set a default
+      hint: preference for all repositories. You can also pass --rebase, --no-rebase,
+      hint: or --ff-only on the command line to override the configured default per
+      hint: invocation.
+      fatal: Need to specify how to reconcile divergent branches.
+  - id: pull-ff-only
+    type: copy
+    text: git pull --ff-only
+    note: fast-forward 만 허락하면 갈라진 상태에서는 아무것도 바꾸지 않고 멈춘다 — 실수로 합쳐지는 일이 없다
+    output: |-
+      hint: Diverging branches can't be fast-forwarded, you need to either:
+      hint:
+      hint:   git merge --no-ff
+      hint:
+      hint: or:
+      hint:
+      hint:   git rebase
+      hint:
+      hint: Disable this message with "git config set advice.diverging false"
+      fatal: Not possible to fast-forward, aborting.
+  - id: pull-rebase
+    type: copy
+    text: git pull --rebase
+    note: 이번에는 rebase 로 — 내 커밋을 받아 온 커밋 뒤로 옮겨 다시 쌓는다. 머지 커밋 없이 한 줄이 된다
+    output: Successfully rebased and updated refs/heads/main.
+  - id: log-graph
+    type: copy
+    text: git log --oneline --graph -4
+    note: 내 README 커밋이 lee 의 커밋 뒤로 옮겨졌다. rebase 는 커밋을 새로 쌓으므로 해시도 새로 생긴다
+    output: |-
+      * 6efd98d (HEAD -> main) docs: describe the project
+      * 1df3362 (origin/main, origin/HEAD) feat: add search box
+      * da93793 feat: add signup page
+      * b38bb74 feat: add login page
+  - id: push
+    type: copy
+    text: git push
+    note: 이제 origin/main 뒤에 이어지니 그대로 올라간다
+    output: |-
+      Enumerating objects: 5, done.
+      Counting objects: 100% (5/5), done.
+      Delta compression using up to 8 threads
+      Compressing objects: 100% (2/2), done.
+      Writing objects: 100% (3/3), 392 bytes | 1.00 MiB/s, done.
+      Total 3 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+      To https://github.com/kim/devkeys.git
+         1df3362..6efd98d  main -> main
+  - id: config-pull-rebase
+    type: copy
+    text: git config --global pull.rebase true
+    note: 앞으로 pull 은 늘 rebase 로. 머지로 하려면 false, fast-forward 만 하려면 pull.ff only
+  - id: fetch-branch
+    type: copy
+    text: git fetch
+    note: (lee 가 프로필 브랜치를 올렸다) 새 원격 브랜치도 받아 온다
+    output: |-
+      remote: Enumerating objects: 4, done.
+      remote: Counting objects: 100% (4/4), done.
+      remote: Compressing objects: 100% (2/2), done.
+      remote: Total 3 (delta 1), reused 0 (delta 0), pack-reused 0 (from 0)
+      Unpacking objects: 100% (3/3), 266 bytes | 1.00 MiB/s, done.
+      From https://github.com/kim/devkeys
+       * [new branch]      feature/profile -> origin/feature/profile
+  - id: branch-r
+    type: copy
+    text: git branch -r
+    note: 원격 브랜치 목록. origin/HEAD 는 원격의 기본 브랜치를 가리킨다
+    output: |2-
+        origin/HEAD -> origin/main
+        origin/feature/profile
+        origin/main
+  - id: switch-remote
+    type: copy
+    text: git switch feature/profile
+    note: 로컬에 없는 이름이면 같은 이름의 원격 브랜치를 짝으로 하는 로컬 브랜치를 만들어 옮겨 간다
+    output: |-
+      branch 'feature/profile' set up to track 'origin/feature/profile'.
+      Switched to a new branch 'feature/profile'
+  - id: branch-vv
+    type: copy
+    text: git branch -vv
+    note: 새 브랜치도 짝(origin/feature/profile)이 정해졌다
+    output: |-
+      * feature/profile 9b0b284 [origin/feature/profile] feat: add profile page
+        main            6efd98d [origin/main] docs: describe the project
+  - id: log-graph-all
+    type: copy
+    text: git log --oneline --graph --all -5
+    note: --all 은 원격 브랜치까지 그린다. lee 의 프로필 브랜치는 검색창 커밋에서 갈라졌다
+    output: |-
+      * 9b0b284 (HEAD -> feature/profile, origin/feature/profile) feat: add profile page
+      | * 6efd98d (origin/main, origin/HEAD, main) docs: describe the project
+      |/
+      * 1df3362 feat: add search box
+      * da93793 feat: add signup page
+      * b38bb74 feat: add login page
+  - id: remote-show
+    type: copy
+    text: git remote show origin
+    note: 원격을 물어봐서 원격 브랜치 · 짝(pull 할 곳 · push 할 곳) · 앞뒤 상태를 한 번에 보여 준다
+    output: |-
+      * remote origin
+        Fetch URL: https://github.com/kim/devkeys.git
+        Push  URL: https://github.com/kim/devkeys.git
+        HEAD branch: main
+        Remote branches:
+          feature/profile tracked
+          main            tracked
+        Local branches configured for 'git pull':
+          feature/profile merges with remote feature/profile
+          main            merges with remote main
+        Local refs configured for 'git push':
+          feature/profile pushes to feature/profile (up to date)
+          main            pushes to main            (up to date)
+  - id: switch-main
+    type: copy
+    text: git switch main
+    note: main 으로 돌아온다
+    output: |-
+      Switched to branch 'main'
+      Your branch is up to date with 'origin/main'.
+  - id: pull-dirty
+    type: copy
+    text: git pull
+    note: (README 를 고치던 중 — 커밋 전 — lee 가 main 에 또 올렸다) rebase 로 pull 하려면 작업 폴더가 깨끗해야 해서 거절한다
+    output: |-
+      error: cannot pull with rebase: You have unstaged changes.
+      error: Please commit or stash them.
+  - id: config-autostash
+    type: copy
+    text: git config --global rebase.autoStash true
+    note: rebase 전에 고치던 것을 stash 로 치워 두고, 끝나면 다시 꺼내게 한다
+  - id: pull-autostash
+    type: copy
+    text: git pull
+    note: 고치던 것을 치워 두고(Created autostash) 받아 합친 뒤 다시 꺼냈다(Applied autostash)
+    output: |-
+      remote: Enumerating objects: 4, done.
+      remote: Counting objects: 100% (4/4), done.
+      remote: Compressing objects: 100% (2/2), done.
+      remote: Total 3 (delta 1), reused 0 (delta 0), pack-reused 0 (from 0)
+      Unpacking objects: 100% (3/3), 258 bytes | 1.00 MiB/s, done.
+      From https://github.com/kim/devkeys
+         6efd98d..3c68201  main       -> origin/main
+      Updating 6efd98d..3c68201
+      Created autostash: 48cbc26
+      Fast-forward
+       footer.html | 1 +
+       1 file changed, 1 insertion(+)
+       create mode 100644 footer.html
+      Applied autostash.
+  - id: recall-fetch
+    type: recall
+    prompt: 원격의 새 커밋을 받아 오기만 한다 — 내 브랜치와 작업 폴더는 그대로
+    answers: [git fetch, git fetch origin]
+  - id: recall-log-incoming
+    type: recall
+    prompt: 받아 왔지만 아직 내 main 에 없는 커밋을 한 줄씩 본다
+    answers: [git log --oneline main..origin/main, git log main..origin/main --oneline]
+  - id: recall-pull
+    type: recall
+    prompt: 원격의 새 커밋을 받아 지금 브랜치에 합친다
+    answers: [git pull]
+  - id: recall-pull-rebase
+    type: recall
+    prompt: 원격의 새 커밋을 받아, 내 커밋을 그 뒤로 옮겨 쌓는다
+    answers: [git pull --rebase, git pull -r]
+  - id: recall-config-pull-rebase
+    type: recall
+    prompt: 앞으로 pull 은 늘 rebase 로 하게 전역 설정한다
+    answers: [git config --global pull.rebase true, git config set --global pull.rebase true]
+  - id: recall-config-autostash
+    type: recall
+    prompt: rebase 할 때 고치던 것을 자동으로 치웠다가 다시 꺼내게 전역 설정한다
+    answers: [git config --global rebase.autoStash true, git config set --global rebase.autoStash true]
+  - id: recall-pull-ff-only
+    type: recall
+    prompt: 원격의 새 커밋을 받되, fast-forward 로 따라갈 수 있을 때만 합친다
+    answers: [git pull --ff-only]
+  - id: recall-branch-r
+    type: recall
+    prompt: 원격 브랜치 목록을 본다
+    answers: [git branch -r, git branch --remotes]
+  - id: recall-switch-remote
+    type: recall
+    prompt: 원격에만 있는 <branch> 브랜치를 짝으로 하는 로컬 브랜치를 만들어 옮겨 간다
+    answers:
+      [
+        git switch <branch>,
+        git checkout <branch>,
+        git switch -c <branch> origin/<branch>,
+        git switch --track origin/<branch>,
+      ]
+    placeholder: { branch: feature/profile }

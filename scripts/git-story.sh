@@ -18,7 +18,11 @@ set -euo pipefail
 
 story=$(realpath "$1")
 here=$(dirname "$(realpath "$0")")
-root=$(mktemp -d)
+# 작업 폴더는 늘 같은 경로 — 원격 주소가 커밋 내용에 들어가는 경우(pull 이 만든 머지 메시지 "of <주소>")에도 해시가 같게.
+# 한 번에 하나만 돌린다
+root=/tmp/devkeys-git-story
+rm -rf "$root"
+mkdir -p "$root"
 trap 'rm -rf "$root"' EXIT
 transcript="$root/transcript"
 renames="$root/renames"
