@@ -223,6 +223,9 @@ function checkContext(id: string, setup: readonly string[], answers: readonly st
   }
 }
 
+/** 이야기 속 커밋 메시지 앞에 넣어 둔 해시를 뗀다 — 복사(cherry-pick)는 맨 앞, 되돌림(revert)은 Revert " 다음 */
+const withoutHash = (message: string) => message.replace(/^(Revert ")?[0-9a-f]{7} /, '$1');
+
 /**
  * engine 세트: 따라치기 명령을 Git 엔진으로 차례로 돌려 커밋 그래프 단계를 쌓는다.
  * 숨은 명령(before)은 그 줄을 시작할 때, 그 줄의 명령은 끝낼 때 반영한다. 엔진에서 뺀 줄(skipEngine)은 그래프가 그대로다.
@@ -266,9 +269,9 @@ function simulate(
       report(`문제 ${item.id}: 엔진에서 실패 — ${r.error.message}`);
       return null;
     }
-    // hash 를 주면 "새 해시 + 메시지". 복사한 커밋(cherry-pick · rebase)은 원본 메시지 앞의 해시를 떼고 붙인다
+    // hash 를 주면 "새 해시 + 메시지". 복사 · 되돌림 커밋은 원본 메시지에 들어 있던 해시를 떼고 붙인다
     advance(r.state, (message, label) =>
-      item.hash ? `${item.hash} ${(message ?? '').replace(/^[0-9a-f]{7} /, '')}`.trim() : (message ?? label),
+      item.hash ? `${item.hash} ${withoutHash(message ?? '')}`.trim() : (message ?? label),
     );
     lines.set(item.id, { during, after: steps.length - 1, caption });
   }

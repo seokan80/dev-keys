@@ -1,0 +1,299 @@
+id: git-find-bug
+category: git
+order: 24
+title: AI가 만든 버그 찾기
+description: 커밋 여러 개 중 어디서 깨졌는지 git bisect 로 반씩 좁혀 찾기 — 손으로, 그리고 bisect run 으로 자동으로. 찾으면 revert
+level: 2
+# 이야기: 에이전트가 장바구니 합계 기능을 여러 커밋으로 다듬었는데, 어느새 테스트(sh test.sh)가 깨졌다.
+#   어느 커밋에서 깨졌는지 git bisect 로 반씩 좁혀 찾고(손으로, 다음엔 bisect run 으로 자동), 그 커밋을 revert 한다.
+# 출력은 실제 git 2.53 으로 뽑았다: scripts/git-story.sh content/stories/git/find-bug.sh
+# engine: bisect 가 HEAD 를 옮기는 모습을 커밋 그래프로 — 엔진이 모르는 bisect 는 as 로 git checkout <커밋> 으로 돌린다.
+engine:
+  root: 'c7bba81 docs: add README'
+items:
+  - id: log
+    type: copy
+    text: git log --oneline
+    note: (에이전트가 장바구니 합계를 여러 커밋으로 다듬었다) 지금 기록
+    before:
+      - 'git commit -m "ced3b92 feat(cart): add total"'
+      - 'git commit -m "f07f9df feat(cart): add cart list"'
+      - 'git commit -m "7ee977b feat(cart): support discount"'
+      - 'git commit -m "4c0ddb1 refactor(cart): default discount"'
+      - 'git commit -m "d186428 style(cart): color buttons"'
+      - 'git commit -m "e5f0a1f feat(cart): announce changes"'
+    skipEngine: true
+    output: |-
+      e5f0a1f (HEAD -> main) feat(cart): announce changes
+      d186428 style(cart): color buttons
+      4c0ddb1 refactor(cart): default discount
+      7ee977b feat(cart): support discount
+      f07f9df feat(cart): add cart list
+      ced3b92 feat(cart): add total
+      c7bba81 docs: add README
+  - id: test-now
+    type: copy
+    text: sh test.sh
+    note: 테스트가 깨졌다. 합계 기능을 처음 넣은 ced3b92 때는 통과했다
+    skipEngine: true
+    output: 'FAIL: total 300 x 2 is not 600'
+  - id: start
+    type: copy
+    text: git bisect start
+    note: 이분 탐색 시작 — 좋은 커밋과 나쁜 커밋 사이를 반씩 잘라 범인을 찾는다
+    skipEngine: true
+    output: 'status: waiting for both good and bad commits'
+  - id: bad
+    type: copy
+    text: git bisect bad
+    note: 지금(HEAD)은 나쁘다
+    skipEngine: true
+    output: 'status: waiting for good commit(s), bad commit known'
+  - id: good
+    type: copy
+    text: git bisect good ced3b92
+    note: 이 커밋은 좋았다. 그러면 Git 이 가운데 커밋으로 옮겨 준다
+    as: git checkout C4
+    output: |-
+      Bisecting: 2 revisions left to test after this (roughly 1 step)
+      [7ee977b61cdc59d14d8bc3a96f917cd9365305fe] feat(cart): support discount
+    tree:
+      caption: 가운데 커밋으로 HEAD 가 옮겨 갔다 — 여기서 테스트해 본다
+  - id: view
+    type: copy
+    text: git bisect view --oneline
+    note: 아직 남은 후보 — HEAD 가 그 가운데에 있다
+    skipEngine: true
+    output: |-
+      e5f0a1f (main) feat(cart): announce changes
+      d186428 style(cart): color buttons
+      4c0ddb1 refactor(cart): default discount
+      7ee977b (HEAD) feat(cart): support discount
+      f07f9df feat(cart): add cart list
+  - id: status
+    type: copy
+    text: git status
+    note: bisect 중에는 브랜치가 아니라 커밋에 HEAD 가 있다 (detached). 끝나면 reset 으로 돌아간다
+    skipEngine: true
+    output: |-
+      HEAD detached at 7ee977b
+      You are currently bisecting, started from branch 'main'.
+        (use "git bisect reset" to get back to the original branch)
+
+      nothing to commit, working tree clean
+  - id: test-1
+    type: copy
+    text: sh test.sh
+    skipEngine: true
+    output: ok
+  - id: good-2
+    type: copy
+    text: git bisect good
+    note: 통과했으니 좋다 — 범인은 그 위쪽 절반에 있다
+    as: git checkout C6
+    output: |-
+      Bisecting: 0 revisions left to test after this (roughly 1 step)
+      [d1864282a7ed1817eaeecb0735835f29e65bcb6f] style(cart): color buttons
+    tree:
+      caption: 위쪽 절반의 가운데로 — 남은 후보가 반으로 줄었다
+  - id: test-2
+    type: copy
+    text: sh test.sh
+    skipEngine: true
+    output: 'FAIL: total 300 x 2 is not 600'
+  - id: bad-2
+    type: copy
+    text: git bisect bad
+    note: 깨졌으니 나쁘다
+    as: git checkout C5
+    output: |-
+      Bisecting: 0 revisions left to test after this (roughly 0 steps)
+      [4c0ddb1e413246e8fe801e4bb5f8178064907143] refactor(cart): default discount
+    tree:
+      caption: 남은 후보는 이 커밋 하나
+  - id: test-3
+    type: copy
+    text: sh test.sh
+    skipEngine: true
+    output: 'FAIL: total 300 x 2 is not 600'
+  - id: bad-3
+    type: copy
+    text: git bisect bad
+    note: 커밋 6개 중 범인을 세 번 만에 찾았다
+    skipEngine: true
+    output: |-
+      4c0ddb1e413246e8fe801e4bb5f8178064907143 is the first bad commit
+      commit 4c0ddb1e413246e8fe801e4bb5f8178064907143 (HEAD)
+      Author: Kim Dev <dev@example.com>
+      Date:   Thu Oct 15 10:00:00 2026 +0900
+
+          refactor(cart): default discount
+
+       total.sh | 2 +-
+       1 file changed, 1 insertion(+), 1 deletion(-)
+  - id: bisect-log
+    type: copy
+    text: git bisect log
+    note: 지금까지 표시한 기록. 저장해 두면 git bisect replay 로 다시 돌릴 수 있다
+    skipEngine: true
+    output: |-
+      git bisect start
+      # status: waiting for both good and bad commits
+      # bad: [e5f0a1f29333ce9638df331cc218d6c572682703] feat(cart): announce changes
+      git bisect bad e5f0a1f29333ce9638df331cc218d6c572682703
+      # status: waiting for good commit(s), bad commit known
+      # good: [ced3b92fda1f9689e0b1dc452c9751c019216f6a] feat(cart): add total
+      git bisect good ced3b92fda1f9689e0b1dc452c9751c019216f6a
+      # good: [7ee977b61cdc59d14d8bc3a96f917cd9365305fe] feat(cart): support discount
+      git bisect good 7ee977b61cdc59d14d8bc3a96f917cd9365305fe
+      # bad: [d1864282a7ed1817eaeecb0735835f29e65bcb6f] style(cart): color buttons
+      git bisect bad d1864282a7ed1817eaeecb0735835f29e65bcb6f
+      # bad: [4c0ddb1e413246e8fe801e4bb5f8178064907143] refactor(cart): default discount
+      git bisect bad 4c0ddb1e413246e8fe801e4bb5f8178064907143
+      # first bad commit: [4c0ddb1e413246e8fe801e4bb5f8178064907143] refactor(cart): default discount
+  - id: reset
+    type: copy
+    text: git bisect reset
+    note: 탐색을 끝내고 원래 브랜치로 돌아간다
+    as: git switch main
+    output: |-
+      Previous HEAD position was 4c0ddb1 refactor(cart): default discount
+      Switched to branch 'main'
+    tree:
+      caption: HEAD 가 main 으로 돌아왔다
+  - id: show-bad
+    type: copy
+    text: git show 4c0ddb1
+    note: 범인 커밋이 바꾼 것 — 할인이 없을 때 기본값을 0 이 아니라 1 로 바꿨다
+    skipEngine: true
+    output: |-
+      commit 4c0ddb1e413246e8fe801e4bb5f8178064907143
+      Author: Kim Dev <dev@example.com>
+      Date:   Thu Oct 15 10:00:00 2026 +0900
+
+          refactor(cart): default discount
+
+      diff --git a/total.sh b/total.sh
+      index 84ef06e..9a1398c 100644
+      --- a/total.sh
+      +++ b/total.sh
+      @@ -1,2 +1,2 @@
+       # total PRICE QTY [DISCOUNT]
+      -echo $(($1 * $2 - ${3:-0}))
+      +echo $(($1 * $2 - ${3:-1}))
+  - id: start-range
+    type: copy
+    text: git bisect start HEAD ced3b92
+    note: 이번엔 자동으로. 나쁜 커밋(HEAD)과 좋은 커밋을 한 번에 주고 시작
+    as: git checkout C4
+    output: |-
+      Bisecting: 2 revisions left to test after this (roughly 1 step)
+      [7ee977b61cdc59d14d8bc3a96f917cd9365305fe] feat(cart): support discount
+    tree:
+      caption: 다시 가운데 커밋에서 시작
+  - id: run
+    type: copy
+    text: git bisect run sh test.sh
+    note: 명령이 성공하면 good, 실패하면 bad — Git 이 끝까지 알아서 좁힌다 (npm test 도 된다)
+    as: git checkout C5
+    output: |-
+      running 'sh' 'test.sh'
+      ok
+      Bisecting: 0 revisions left to test after this (roughly 1 step)
+      [d1864282a7ed1817eaeecb0735835f29e65bcb6f] style(cart): color buttons
+      running 'sh' 'test.sh'
+      FAIL: total 300 x 2 is not 600
+      Bisecting: 0 revisions left to test after this (roughly 0 steps)
+      [4c0ddb1e413246e8fe801e4bb5f8178064907143] refactor(cart): default discount
+      running 'sh' 'test.sh'
+      FAIL: total 300 x 2 is not 600
+      4c0ddb1e413246e8fe801e4bb5f8178064907143 is the first bad commit
+      commit 4c0ddb1e413246e8fe801e4bb5f8178064907143
+      Author: Kim Dev <dev@example.com>
+      Date:   Thu Oct 15 10:00:00 2026 +0900
+
+          refactor(cart): default discount
+
+       total.sh | 2 +-
+       1 file changed, 1 insertion(+), 1 deletion(-)
+      bisect found first bad commit
+    tree:
+      caption: 같은 범인 — 사람이 테스트를 돌리지 않아도 됐다
+  - id: reset-2
+    type: copy
+    text: git bisect reset
+    as: git switch main
+    output: |-
+      Previous HEAD position was 4c0ddb1 refactor(cart): default discount
+      Switched to branch 'main'
+    tree:
+      caption: main 으로 돌아왔다
+  - id: revert
+    type: copy
+    text: git revert --no-edit 4c0ddb1
+    note: 범인 커밋만 되돌린다. 뒤의 커밋들은 그대로 둔다
+    as: git revert C5
+    hash: 904839c
+    output: |-
+      [main 904839c] Revert "refactor(cart): default discount"
+       Date: Sat Oct 17 09:31:00 2026 +0900
+       1 file changed, 1 insertion(+), 1 deletion(-)
+    tree:
+      caption: 되돌리는 커밋을 더했다 — 범인 커밋 하나의 변경만 사라졌다
+  - id: test-fixed
+    type: copy
+    text: sh test.sh
+    skipEngine: true
+    output: ok
+  - id: blame
+    type: copy
+    text: git blame -L 2,2 total.sh
+    note: 그 줄을 마지막으로 바꾼 것은 이제 되돌림 커밋
+    skipEngine: true
+    output: 904839c4 (Kim Dev 2026-10-17 09:31:00 +0900 2) echo $(($1 * $2 - ${3:-0}))
+  - id: log-after
+    type: copy
+    text: git log --oneline -3
+    skipEngine: true
+    output: |-
+      904839c (HEAD -> main) Revert "refactor(cart): default discount"
+      e5f0a1f feat(cart): announce changes
+      d186428 style(cart): color buttons
+
+  # ── 도전 모드(뜻 보고 치기)
+  - id: recall-start
+    type: recall
+    prompt: 이분 탐색으로 깨진 커밋 찾기를 시작한다
+    answers: [git bisect start]
+  - id: recall-bad
+    type: recall
+    prompt: 지금 커밋은 깨졌다고 알린다
+    answers: [git bisect bad]
+  - id: recall-good
+    type: recall
+    prompt: 괜찮았던 커밋을 알린다 — 커밋은 <hash>
+    answers: [git bisect good <hash>]
+    placeholder: { hash: ced3b92 }
+  - id: recall-start-range
+    type: recall
+    prompt: 나쁜 커밋(HEAD)과 좋은 커밋을 한 번에 주고 시작한다 — 좋은 커밋은 <hash>
+    answers: [git bisect start HEAD <hash>]
+    placeholder: { hash: ced3b92 }
+  - id: recall-run
+    type: recall
+    prompt: 테스트 명령 <cmd> 의 성공 · 실패로 끝까지 자동으로 좁힌다
+    answers: [git bisect run <cmd>]
+    placeholder: { cmd: npm test }
+  - id: recall-reset
+    type: recall
+    prompt: 탐색을 끝내고 원래 브랜치로 돌아간다
+    answers: [git bisect reset]
+  - id: recall-skip
+    type: recall
+    prompt: 지금 커밋은 테스트할 수 없어(빌드가 안 되는 등) 건너뛴다
+    answers: [git bisect skip]
+  - id: recall-revert
+    type: recall
+    prompt: 찾은 커밋 <hash> 만 되돌리는 커밋을 만든다 — 메시지 편집 없이
+    answers: [git revert --no-edit <hash>, git revert <hash> --no-edit]
+    placeholder: { hash: 4c0ddb1 }

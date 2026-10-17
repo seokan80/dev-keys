@@ -477,6 +477,22 @@ describe('엔진으로 도는 세트 (트리 그림)', () => {
     expect(g.layout).toEqual({ c1: { lane: 0, row: 0 }, c2: { lane: 1, row: 1 }, c3: { lane: 0, row: 2 } });
   });
 
+  it('되돌린 커밋(revert)의 설명도 원본 메시지 안의 해시를 뺀다', () => {
+    const r = engineSet(
+      [
+        '  - id: back',
+        '    type: copy',
+        '    text: git revert --no-edit HEAD',
+        '    before: [\'git commit -m "a1b2c3d feat: login"\']',
+        '    as: git revert HEAD',
+        '    hash: e4f5a6b',
+        '',
+      ].join('\n'),
+    );
+    expect(errors(r)).toEqual([]);
+    expect(r.sets[0]!.graph!.names.c3).toBe('e4f5a6b Revert "feat: login"');
+  });
+
   it('엔진이 모르는 명령은 as 로 엔진에서 돌릴 명령을 준다 (worktree add -b → git branch)', () => {
     const r = engineSet(
       [
