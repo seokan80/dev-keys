@@ -1,0 +1,14 @@
+---
+import { reportUrl } from '../../lib/site';
+
+type Props = { what: string };
+const { what } = Astro.props;
+const href = reportUrl(what, new URL(Astro.url.pathname.replace(/\.html$/, ''), Astro.site));
+---
+
+<p class="text-sm text-slate-400">
+  틀린 곳이나 실제 git 과 다른 출력을 찾았나요?
+  <a href={href} target="_blank" rel="noopener" class="text-sky-300 underline" data-testid="report-link">
+    GitHub 이슈로 알려 주세요 ↗
+  </a>
+</p>

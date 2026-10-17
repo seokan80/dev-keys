@@ -1,0 +1,80 @@
+---
+import Base from '../layouts/Base.astro';
+import Breadcrumb from '../components/Breadcrumb.astro';
+import { getCurriculum } from '../lib/content/load';
+import { REPO_URL, SITE_NAME, SITE_TAGLINE } from '../lib/site';
+
+const git = getCurriculum('git')!;
+const gitCount = git.parts.reduce((n, p) => n + p.sets.length, 0);
+---
+
+<Base
+  title={`소개 — ${SITE_NAME}`}
+  description={`${SITE_NAME}(${SITE_TAGLINE})는 개발자 명령과 코드를 따라 치며 손에 익히는 타자 연습 사이트입니다.`}
+>
+  <main class="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-10">
+    <Breadcrumb items={[{ label: SITE_NAME, href: '/' }, { label: '소개' }]} />
+    <header class="flex flex-col gap-2">
+      <h1 class="text-3xl font-bold">
+        {SITE_NAME} — {SITE_TAGLINE}
+      </h1>
+      <p class="text-lg text-slate-300">
+        읽지 말고 손으로. 검색해서 찾은 명령을 바로 쳐 보고, 그 결과를 실제 출력과 커밋 그래프로 확인하는 개발자용 타자
+        연습입니다.
+      </p>
+    </header>
+
+    <section class="guide flex flex-col gap-3">
+      <h2>무엇이 다른가</h2>
+      <ul>
+        <li>
+          <strong>진짜 git 출력</strong> — 세트마다 이야기를 실제 git 으로 돌려 출력을 뽑습니다. 해시까지 앞뒤가
+          맞습니다.
+        </li>
+        <li>
+          <strong>움직이는 커밋 그래프</strong> — 명령을 칠 때마다 옆 그래프가 그 명령 뒤의 모양으로 바뀝니다.
+        </li>
+        <li>
+          <strong>떠올려 치기와 복습</strong> — 뜻만 보고 명령을 떠올리는 도전 모드, 틀린 문제는 1 · 3 · 7 · 14일 뒤에
+          다시.
+        </li>
+      </ul>
+
+      <h2>시즌</h2>
+      <ul>
+        <li>
+          <a href="/git">시즌 1 · Git</a> — {git.parts.map((p) => p.title).join(' · ')}, {gitCount}세트
+        </li>
+        <li>시즌 2 · 터미널 · 쉘 — 준비 중</li>
+        <li>
+          시즌 3 · Java · Spring — 준비 중 (<a href="/java">Java</a> · <a href="/spring">Spring</a> 미리 맛보기)
+        </li>
+      </ul>
+
+      <h2>만드는 사람과 방식</h2>
+      <p>
+        개인 사이드 프로젝트입니다. 계획 · 코드 · 콘텐츠 초안을 AI(Claude)와 함께 만들고, 사람이 검수하고 승인한 것만
+        올립니다. 소스는{' '}
+        <a href={REPO_URL} target="_blank" rel="noopener">
+          GitHub
+        </a>{' '}
+        에 공개되어 있습니다.
+      </p>
+
+      <h2>오류 신고 · 문의</h2>
+      <p>
+        틀린 내용이나 실제 git 과 다른 출력을 찾으면 각 화면 아래의 신고 링크나
+        <a href={`${REPO_URL}/issues`} target="_blank" rel="noopener">
+          GitHub 이슈
+        </a>
+        로 알려 주세요.
+      </p>
+
+      <h2>기록</h2>
+      <p>
+        회원가입 없이 쓰고, 연습 기록은 내 브라우저에만 저장합니다. 자세한 내용은{' '}
+        <a href="/privacy">개인정보 처리방침</a>을 보세요.
+      </p>
+    </section>
+  </main>
+</Base>

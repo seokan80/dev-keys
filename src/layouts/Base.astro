@@ -1,8 +1,10 @@
 ---
 import '../styles/global.css';
 import ReviewBar from '../components/review/ReviewBar';
+import SiteFooter from '../components/site/SiteFooter.astro';
 import ThemeToggle from '../components/theme/ThemeToggle';
 import { REVIEW_AVAILABLE } from '../lib/review';
+import { SITE_NAME } from '../lib/site';
 
 interface Props {
   title: string;
@@ -12,6 +14,12 @@ interface Props {
 }
 
 const { title, description = '개발자용 타자 연습 — Git 명령과 코드를 손에 익히기', noindex = false } = Astro.props;
+// 대표 주소: 사이트 주소(astro.config 의 site) + 경로. 끝 슬래시 없이, 파일 이름(.html)도 떼고
+const path = Astro.url.pathname.replace(/\.html$/, '').replace(/\/index$/, '') || '/';
+const canonical = new URL(path, Astro.site).href;
+const ogImage = new URL('/og.png', Astro.site).href;
+// 방문 분석(Cloudflare Web Analytics, 쿠키 없음): 토큰을 빌드 환경 변수로 받으면 켠다
+const beacon = import.meta.env.PUBLIC_CF_BEACON_TOKEN;
 ---
 
 <!doctype html>
@@ -21,8 +29,27 @@ const { title, description = '개발자용 타자 연습 — Git 명령과 코�
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     {noindex && <meta name="robots" content="noindex" />}
+    <link rel="canonical" href={canonical} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:locale" content="ko_KR" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    {beacon && (
+      <script
+        is:inline
+        defer
+        src="https://static.cloudflareinsights.com/beacon.min.js"
+        data-cf-beacon={JSON.stringify({ token: beacon })}
+      />
+    )}
     <!-- 저장한 테마를 그리기 전에 적용한다 (화면이 한 번 어둡게 깜빡이지 않게) -->
     <script is:inline>
       try {
@@ -34,6 +61,7 @@ const { title, description = '개발자용 타자 연습 — Git 명령과 코�
   </head>
   <body class="min-h-dvh bg-slate-950 text-slate-100 antialiased">
     <slot />
+    <SiteFooter />
     <ThemeToggle client:only="react" />
     {REVIEW_AVAILABLE && <ReviewBar client:only="react" />}
   </body>

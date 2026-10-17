@@ -72,12 +72,14 @@ const WHY = [
           {gitCount}세트. <span class="text-slate-400">아래에서 아무 키나 눌러 바로 쳐 보세요.</span>
         </p>
       </div>
-      <HeroDemo client:only="react" lines={DEMO_LINES} graph={demo} startHref={startHref} setCount={gitCount}>
-        <pre
-          slot="fallback"
-          class="rounded-lg border border-slate-700 bg-slate-900 p-4 font-mono text-sm text-slate-400"
-        >{DEMO_LINES.map((l) => `$ ${l.text}`).join('\n')}</pre>
-      </HeroDemo>
+      <div class="min-h-[26rem]">
+        <HeroDemo client:only="react" lines={DEMO_LINES} graph={demo} startHref={startHref} setCount={gitCount}>
+          <pre
+            slot="fallback"
+            class="rounded-lg border border-slate-700 bg-slate-900 p-4 font-mono text-sm text-slate-400"
+          >{DEMO_LINES.map((l) => `$ ${l.text}`).join('\n')}</pre>
+        </HeroDemo>
+      </div>
       <div class="flex flex-wrap gap-3">
         <a
           href={startHref}
@@ -93,7 +95,9 @@ const WHY = [
     </section>
 
     <!-- 이어하기 · 오늘의 추천: 브라우저 저장값으로 정한다 -->
-    <HomeNext client:only="react" sets={toPlanSets(sets)} />
+    <div class="min-h-[5.5rem]">
+      <HomeNext client:only="react" sets={toPlanSets(sets)} />
+    </div>
 
     <section id="season-1" class="flex scroll-mt-6 flex-col gap-4" aria-labelledby="map-title">
       <div class="flex flex-col gap-1">
@@ -175,20 +179,5 @@ const WHY = [
         왼손 새끼부터 오른손 새끼까지, 손가락마다 맡은 키와 기호를 차례로 (약 2분)
       </span>
     </a>
-
-    <footer class="flex flex-wrap gap-4 border-t border-slate-800 pt-6 text-sm text-slate-500">
-      <a href="/git" class="hover:underline">
-        Git 세트 목록
-      </a>
-      <a href="/git/tree" class="hover:underline">
-        트리 미션
-      </a>
-      <a href="/playground" class="hover:underline">
-        연습장
-      </a>
-      <a href="/me" class="hover:underline">
-        내 기록
-      </a>
-    </footer>
   </main>
 </Base>

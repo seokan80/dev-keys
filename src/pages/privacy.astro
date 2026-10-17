@@ -1,0 +1,77 @@
+---
+import Base from '../layouts/Base.astro';
+import Breadcrumb from '../components/Breadcrumb.astro';
+import { REPO_URL, SITE_NAME } from '../lib/site';
+
+const EFFECTIVE = '2026년 10월 17일';
+---
+
+<Base
+  title={`개인정보 처리방침 — ${SITE_NAME}`}
+  description={`${SITE_NAME}는 개인정보를 받지 않습니다. 연습 기록은 내 브라우저에만 저장하고, 방문 통계는 쿠키 없이 집계합니다.`}
+>
+  <main class="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-10">
+    <Breadcrumb items={[{ label: SITE_NAME, href: '/' }, { label: '개인정보 처리방침' }]} />
+    <header class="flex flex-col gap-2">
+      <h1 class="text-3xl font-bold">개인정보 처리방침</h1>
+      <p class="text-slate-400">시행일: {EFFECTIVE}</p>
+    </header>
+
+    <section class="guide flex flex-col gap-3">
+      <h2>1. 받는 개인정보</h2>
+      <p>없습니다. 회원가입 · 로그인이 없고, 이름 · 이메일 · 연락처를 받지 않습니다.</p>
+
+      <h2>2. 내 브라우저에 저장하는 것</h2>
+      <p>
+        연습을 이어 하기 위해 아래 내용을 <strong>내 브라우저(localStorage)에만</strong> 저장합니다. 서버로 보내지
+        않습니다.
+      </p>
+      <ul>
+        <li>세트 · 미션별 최고 타수 · 정확도, 마지막으로 연습한 곳</li>
+        <li>도전 모드에서 틀린 문제와 복습 일정</li>
+        <li>설정(글자 크기 · 키보드 보기 등)과 테마</li>
+      </ul>
+      <p>
+        <a href="/me">내 기록</a>의 "기록 초기화"나 브라우저의 사이트 데이터 삭제로 언제든 지울 수 있습니다. 다른 기기 ·
+        브라우저로는 옮겨지지 않습니다.
+      </p>
+
+      <h2>3. 방문 통계</h2>
+      <p>
+        서비스를 낫게 하려고{' '}
+        <a href="https://www.cloudflare.com/web-analytics/" target="_blank" rel="noopener">
+          Cloudflare Web Analytics
+        </a>
+        로 페이지 조회 수 같은 집계 통계를 봅니다. 쿠키를 쓰지 않고, 개인을 식별하거나 다른 사이트에서 따라다니지
+        않습니다.
+      </p>
+
+      <h2>4. 호스팅</h2>
+      <p>
+        사이트는 Cloudflare 에서 제공됩니다. 서비스 운영과 보안을 위해 Cloudflare 가 접속 정보(IP 주소 등)를 처리할 수
+        있습니다 —{' '}
+        <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">
+          Cloudflare 개인정보처리방침
+        </a>
+        .
+      </p>
+
+      <h2>5. 외부 링크</h2>
+      <p>
+        오류 신고 링크는 GitHub 이슈 작성 화면으로 이동합니다(GitHub 계정 필요). 외부 사이트에서는 그 사이트의 방침을
+        따릅니다.
+      </p>
+
+      <h2>6. 광고</h2>
+      <p>지금은 광고를 싣지 않습니다. 광고나 새 분석 도구를 넣게 되면 먼저 이 방침을 고치고 시행일을 바꿉니다.</p>
+
+      <h2>7. 문의</h2>
+      <p>
+        <a href={`${REPO_URL}/issues`} target="_blank" rel="noopener">
+          GitHub 이슈
+        </a>
+        로 남겨 주세요.
+      </p>
+    </section>
+  </main>
+</Base>

@@ -10,7 +10,7 @@ const { set } = Astro.props;
   <a href={set.href} class="flex flex-1 flex-col gap-1 rounded-l-lg p-4 hover:bg-slate-900">
     <strong class="text-lg">{set.title}</strong>
     <span class="text-sm text-slate-400">{set.description}</span>
-    <span class="text-xs text-slate-500">
+    <span class="text-xs text-slate-400">
       {set.lines.length}줄{set.recalls.length > 0 && ` · 도전 ${set.recalls.length}문제`} · 난이도 {set.level}
     </span>
   </a>

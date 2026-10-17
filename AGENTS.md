@@ -20,7 +20,7 @@
 - 타이핑 화면 근처에 광고 · 팝업 요소를 두지 않는다
 - 범위 밖 기능(로그인, 충돌 시뮬레이션, 원격 저장소)은 구현하지 않는다
 - UI 문구는 한국어
-- 색은 Tailwind 의 slate · emerald · sky · amber · rose · fuchsia 계열만 쓴다. 화이트 테마는 이 계열의 단계를 뒤집어 만든다 — 새 계열을 쓰면 `scripts/gen-light-theme.ts` 의 목록에 더하고 다시 만든다
+- 색은 Tailwind 의 slate · emerald · sky · amber · rose · fuchsia 계열만 쓴다. 어두운 바탕의 흐린 글자는 slate-400 부터(slate-500 은 대비 4.5 미만 — Lighthouse 접근성). 화이트 테마는 이 계열의 단계를 뒤집어 만든다 — 새 계열을 쓰면 `scripts/gen-light-theme.ts` 의 목록에 더하고 다시 만든다
 
 ## 명령
 
@@ -48,4 +48,5 @@
 - Cloudflare 자격 증명은 저장소에 두지 않는다. CI는 시크릿 `CLOUDFLARE_API_TOKEN`, 변수 `CLOUDFLARE_ACCOUNT_ID`를 쓴다
 - `astro preview`는 AI 에이전트 환경에서 백그라운드로 뜬다. 끌 때는 `npx astro preview stop`
 - 주소는 끝 슬래시 없이(`trailingSlash: 'never'`, `build.format: 'file'`). Workers 정적 자산이 리다이렉트하지 않는다
+- 사이트 주소는 `astro.config.mjs` 의 `site` 하나(대표 주소 · 공유 카드 · sitemap · robots 가 따른다), 이름 · 저장소 주소는 `src/lib/site.ts`. 도메인 연결 순서는 구현계획 M7
 - 서버에서 그린 React 아일랜드는 JS가 늦게 오는 배포 환경에서 하이드레이션 전에 입력을 받으면 덮어써진다. E2E는 하이드레이션(`astro-island:not([ssr])`)을 기다리고, 검색 노출이 필요 없는 화면은 `client:only`로 그린다

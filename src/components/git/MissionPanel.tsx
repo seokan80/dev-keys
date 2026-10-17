@@ -122,7 +122,7 @@ export default function MissionPanel({ title, timeLimitSec, start, solution, nex
         </span>
         <span>
           명령 <span className="font-mono text-slate-100">{commands}</span>
-          <span className="text-slate-500"> / 권장 {solution.length}</span>
+          <span className="text-slate-400"> / 권장 {solution.length}</span>
         </span>
         <button
           type="button"
@@ -195,7 +195,7 @@ export default function MissionPanel({ title, timeLimitSec, start, solution, nex
             aria-live="polite"
             data-testid="mission-log"
           >
-            {log.length === 0 && <p className="text-slate-500">git 명령을 입력하세요. 앞의 git 은 빼도 된다.</p>}
+            {log.length === 0 && <p className="text-slate-400">git 명령을 입력하세요. 앞의 git 은 빼도 된다.</p>}
             {log.map((entry, i) => (
               <div key={i} className="mb-1">
                 <p className="text-slate-200">$ {entry.input}</p>
@@ -213,7 +213,7 @@ export default function MissionPanel({ title, timeLimitSec, start, solution, nex
             onSubmit={submit}
             className="flex items-center gap-2 rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 font-mono"
           >
-            <span className="text-slate-500">$</span>
+            <span className="text-slate-400">$</span>
             <input
               ref={inputRef}
               aria-label="git 명령"

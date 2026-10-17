@@ -36,9 +36,9 @@ export default function SeasonMap({ parts }: { parts: readonly MapPart[] }) {
             <li key={part.no} className="rounded-lg border border-slate-700 p-4" data-testid="map-part">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h3 className="font-bold">
-                  <span className="text-slate-500">{part.no}부</span> {part.title}
+                  <span className="text-slate-400">{part.no}부</span> {part.title}
                 </h3>
-                <span className="font-mono text-xs text-slate-500">
+                <span className="font-mono text-xs text-slate-400">
                   {done}/{part.sets.length}
                 </span>
               </div>

@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import Breadcrumb from '../components/Breadcrumb.astro';
+import MobileNotice from '../components/site/MobileNotice';
 import WarmupPlayer from '../components/warmup/WarmupPlayer';
 import { getSets } from '../lib/content/load';
 
@@ -20,11 +21,12 @@ const next = first ? { href: first.href, title: first.title, description: first.
         왼손 새끼부터 오른손 새끼까지, 손가락마다 맡은 키를 차례로 칩니다. 기본 자리 키를 사이에 두고 위아래 키를 오가며
         자리를 익히고, 다음 줄에서 같은 키의 Shift 기호를 칩니다.
       </p>
-      <p class="text-sm text-slate-500">
+      <p class="text-sm text-slate-400">
         시작 전에 손을 기본 자리(<kbd class="font-mono">A S D F</kbd> · <kbd class="font-mono">J K L ;</kbd>)에 올려
         두세요. F 와 J 의 돌기를 검지로 느끼면 됩니다.
       </p>
     </header>
+    <MobileNotice client:only="react" />
     <WarmupPlayer client:load next={next} />
   </main>
 </Base>

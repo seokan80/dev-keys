@@ -181,7 +181,7 @@ export default function ChallengePlayer({ setId, href, questions, pool, prompt, 
             </div>
           ))}
         </dl>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-400">
           점수 = 문제 점수 합(정답 100 · 힌트 뒤 정답 60) × (0.5 + 0.5 × 정확도). 정확도는 친 글자 중 지우지 않은 비율
         </p>
         {missed.length > 0 && (
@@ -283,7 +283,7 @@ export default function ChallengePlayer({ setId, href, questions, pool, prompt, 
               : 'border-slate-600'
         }`}
       >
-        {prompt && <span className="text-slate-500">{prompt}</span>}
+        {prompt && <span className="text-slate-400">{prompt}</span>}
         <input
           ref={inputRef}
           aria-label="답"
@@ -317,7 +317,7 @@ export default function ChallengePlayer({ setId, href, questions, pool, prompt, 
         <div className="flex flex-wrap gap-3 text-sm">
           <button
             type="button"
-            className="text-sky-300 hover:underline disabled:text-slate-500 disabled:no-underline"
+            className="text-sky-300 hover:underline disabled:text-slate-400 disabled:no-underline"
             disabled={step.hinted}
             onClick={() => {
               setStep({ kind: 'ask', hinted: true });
@@ -347,14 +347,14 @@ export default function ChallengePlayer({ setId, href, questions, pool, prompt, 
               같은 뜻:{' '}
               {others(step.input).map((a, i) => (
                 <span key={a}>
-                  {i > 0 && <span className="text-slate-500"> 또는 </span>}
+                  {i > 0 && <span className="text-slate-400"> 또는 </span>}
                   <code className="font-mono text-emerald-200">{a}</code>
                 </span>
               ))}
             </p>
           )}
           {q.note && <p className="text-slate-400">{q.note}</p>}
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-400">
             <kbd className="font-mono">Enter</kbd> 다음 문제
           </p>
         </div>
@@ -375,7 +375,7 @@ export default function ChallengePlayer({ setId, href, questions, pool, prompt, 
             정답:{' '}
             {q.answers.map((a, i) => (
               <span key={a}>
-                {i > 0 && <span className="text-slate-500"> 또는 </span>}
+                {i > 0 && <span className="text-slate-400"> 또는 </span>}
                 <code
                   className={`font-mono ${i === 0 ? 'text-emerald-300' : 'text-emerald-200/70'}`}
                   data-testid={i === 0 ? 'answer' : undefined}
@@ -386,7 +386,7 @@ export default function ChallengePlayer({ setId, href, questions, pool, prompt, 
             ))}
           </p>
           {q.note && <p className="text-slate-400">{q.note}</p>}
-          <p className={step.again ? 'text-amber-300' : 'text-xs text-slate-500'}>
+          <p className={step.again ? 'text-amber-300' : 'text-xs text-slate-400'}>
             {step.again ? '정답 중 하나를 그대로 쳐 보세요' : '한 번 따라 치면 손에 남아요. 내일 다시 나와요'}
           </p>
         </div>

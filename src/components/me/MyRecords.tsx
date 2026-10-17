@@ -34,7 +34,7 @@ export default function MyRecords({ sets, recalls }: { sets: readonly MeSet[]; r
           최고 기록
         </h2>
         {played.length === 0 ? (
-          <p className="text-slate-500">아직 기록이 없어요. 세트를 하나 끝내면 여기에 남아요.</p>
+          <p className="text-slate-400">아직 기록이 없어요. 세트를 하나 끝내면 여기에 남아요.</p>
         ) : (
           <table className="w-full text-left text-sm" data-testid="bests">
             <thead className="text-xs text-slate-400">
@@ -52,7 +52,7 @@ export default function MyRecords({ sets, recalls }: { sets: readonly MeSet[]; r
                   <tr key={s.id} className="border-t border-slate-800">
                     <td className="py-2">
                       <a href={s.href} className="hover:underline">
-                        <span className="text-slate-500">{s.category} · </span>
+                        <span className="text-slate-400">{s.category} · </span>
                         {s.title}
                       </a>
                     </td>
@@ -87,7 +87,7 @@ export default function MyRecords({ sets, recalls }: { sets: readonly MeSet[]; r
           맞히면 목록에서 빠져요.
         </p>
         {wrongs.length === 0 ? (
-          <p className="text-slate-500">복습할 문제가 없어요.</p>
+          <p className="text-slate-400">복습할 문제가 없어요.</p>
         ) : (
           <ul className="flex flex-col gap-2" data-testid="wrongs">
             {wrongs.map(([key, entry]) => {
@@ -97,13 +97,13 @@ export default function MyRecords({ sets, recalls }: { sets: readonly MeSet[]; r
                 <li key={key} className="flex flex-col gap-1 rounded-md bg-slate-900 p-3 text-sm">
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <span className="text-slate-200">{r.prompt}</span>
-                    <span className={due ? 'text-amber-300' : 'text-slate-500'}>
+                    <span className={due ? 'text-amber-300' : 'text-slate-400'}>
                       {due ? '오늘 복습' : `${shortDate(entry.due)} 복습`} · 틀린 횟수 {entry.wrong}
                     </span>
                   </div>
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <details>
-                      <summary className="cursor-pointer text-xs text-slate-500">정답 보기</summary>
+                      <summary className="cursor-pointer text-xs text-slate-400">정답 보기</summary>
                       <code className="font-mono text-emerald-300">{r.answer}</code>
                     </details>
                     <a href={r.challengeHref} className="text-xs text-sky-300 hover:underline">
@@ -115,7 +115,7 @@ export default function MyRecords({ sets, recalls }: { sets: readonly MeSet[]; r
             })}
           </ul>
         )}
-        {gone > 0 && <p className="text-xs text-slate-500">지금은 없는 문제 기록 {gone}개는 보이지 않아요.</p>}
+        {gone > 0 && <p className="text-xs text-slate-400">지금은 없는 문제 기록 {gone}개는 보이지 않아요.</p>}
       </section>
 
       <section className="flex flex-col gap-3" aria-labelledby="settings">

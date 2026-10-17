@@ -2,6 +2,8 @@
 import { getEntry, render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Breadcrumb from '../../components/Breadcrumb.astro';
+import MobileNotice from '../../components/site/MobileNotice';
+import ReportLink from '../../components/site/ReportLink.astro';
 import SetPlayer from '../../components/sets/SetPlayer';
 import type { ContentSet } from '../../lib/content/check';
 import { getSets } from '../../lib/content/load';
@@ -25,7 +27,7 @@ if (!guide) throw new Error(`해설이 없다: ${set.category}/${set.slug}`);
 const { Content } = await render(guide);
 ---
 
-<Base title={`${set.title} — ${category.title} 타자 연습 · DevKeys`} description={set.description}>
+<Base title={`${set.title} — ${category.title} 명령 따라 치며 익히기 · DevKeys`} description={set.description}>
   <main class={`mx-auto flex ${hasPanel ? 'max-w-6xl' : 'max-w-4xl'} flex-col gap-6 px-6 py-10`}>
     <Breadcrumb
       items={[
@@ -49,6 +51,8 @@ const { Content } = await render(guide);
       </div>
     </header>
 
+    <MobileNotice client:only="react" guideHref="#guide" />
+
     <SetPlayer
       client:load
       setId={set.id}
@@ -67,5 +71,6 @@ const { Content } = await render(guide);
       <p class="mb-2 text-xs font-bold tracking-widest text-sky-300 uppercase">해설</p>
       <Content />
     </article>
+    <ReportLink what={`${category.title} 세트 · ${set.title} (${set.id})`} />
   </main>
 </Base>

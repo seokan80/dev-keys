@@ -31,7 +31,7 @@ const recalls: MeRecall[] = sets.flatMap((s) =>
     <h1 class="text-3xl font-bold">내 기록</h1>
     <!-- 기록은 브라우저에만 있으니 브라우저에서 그린다 -->
     <MyRecords client:only="react" sets={meSets} recalls={recalls}>
-      <p slot="fallback" class="text-slate-500">
+      <p slot="fallback" class="text-slate-400">
         불러오는 중…
       </p>
     </MyRecords>

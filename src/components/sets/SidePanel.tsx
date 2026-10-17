@@ -47,7 +47,7 @@ export default function SidePanel({ scene, previousScene, graph, step, last }: P
             ))}
           </>
         ) : (
-          <p className="text-slate-500">명령을 치면 여기 상태가 바뀐다</p>
+          <p className="text-slate-400">명령을 치면 여기 상태가 바뀐다</p>
         )}
       </div>
     </aside>

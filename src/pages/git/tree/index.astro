@@ -24,7 +24,7 @@ const missions = getMissions();
           <a href={m.href} class="flex flex-col gap-1 rounded-lg border border-slate-700 p-4 hover:bg-slate-900">
             <strong class="text-lg">{m.title}</strong>
             <span class="text-sm text-slate-400">{m.description}</span>
-            <span class="text-xs text-slate-500">
+            <span class="text-xs text-slate-400">
               권장 명령 {m.solution.length}개 · 제한 {Math.round(m.timeLimitSec / 60)}분 · 난이도 {m.level}
             </span>
           </a>

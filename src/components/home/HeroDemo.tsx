@@ -36,9 +36,9 @@ export default function HeroDemo({ lines, graph, startHref, setCount }: Props) {
               {lines.map((line, i) => (
                 <li
                   key={line.text}
-                  className={i < lineAt ? 'text-emerald-300' : i === lineAt ? 'text-slate-100' : 'text-slate-500'}
+                  className={i < lineAt ? 'text-emerald-300' : i === lineAt ? 'text-slate-100' : 'text-slate-400'}
                 >
-                  <span className="text-slate-500">$ </span>
+                  <span className="text-slate-400">$ </span>
                   {line.text}
                 </li>
               ))}

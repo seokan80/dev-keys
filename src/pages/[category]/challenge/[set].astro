@@ -1,6 +1,8 @@
 ---
 import Base from '../../../layouts/Base.astro';
 import Breadcrumb from '../../../components/Breadcrumb.astro';
+import MobileNotice from '../../../components/site/MobileNotice';
+import ReportLink from '../../../components/site/ReportLink.astro';
 import ChallengePlayer, { type ChallengeQuestion } from '../../../components/challenge/ChallengePlayer';
 import type { ContentSet } from '../../../lib/content/check';
 import { getSets } from '../../../lib/content/load';
@@ -46,6 +48,8 @@ const href = challengeHref(set);
       </p>
     </header>
 
+    <MobileNotice client:only="react" guideHref={`${set.href}#guide`} />
+
     <!-- 오답 기록(브라우저 저장)으로 문제를 고르니 브라우저에서만 그린다 -->
     <ChallengePlayer
       client:only="react"
@@ -58,9 +62,10 @@ const href = challengeHref(set);
       guideHref={`${set.href}#guide`}
       next={nextSet ? { href: challengeHref(nextSet), title: nextSet.title } : null}
     >
-      <p slot="fallback" class="text-slate-500">
+      <p slot="fallback" class="text-slate-400">
         불러오는 중…
       </p>
     </ChallengePlayer>
+    <ReportLink what={`${category.title} 도전 · ${set.title} (${set.id})`} />
   </main>
 </Base>

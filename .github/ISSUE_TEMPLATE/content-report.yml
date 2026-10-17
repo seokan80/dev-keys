@@ -8,7 +8,7 @@ body:
     attributes:
       label: 어디서
       description: 페이지 주소 또는 세트·문제 id
-      placeholder: https://dev-keys.seokan.workers.dev/git/basic-branch
+      placeholder: 각 화면 아래의 신고 링크로 오면 미리 채워진다 (예 — 세트 git-fetch-pull 의 3번째 줄)
     validations:
       required: true
   - type: textarea

@@ -39,6 +39,8 @@ jobs:
         env:
           # PR 미리보기에만 검수 모드 스위치를 넣는다 (운영 빌드에는 없다)
           PUBLIC_REVIEW_MODE: ${{ github.event_name == 'pull_request' && '1' || '' }}
+          # 방문 분석(Cloudflare Web Analytics) — 저장소 변수 CF_BEACON_TOKEN 을 넣으면 운영 빌드에서 켜진다
+          PUBLIC_CF_BEACON_TOKEN: ${{ github.event_name == 'push' && vars.CF_BEACON_TOKEN || '' }}
       - uses: actions/upload-artifact@v7
         with:
           name: dist

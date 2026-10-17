@@ -22,13 +22,13 @@ const visible = (ch: string) => (ch === ' ' ? '·' : ch === '\n' ? '↵' : ch);
 export default function Line({ target, status, typed = '', errorAt = -1, focused = false, prefix }: Props) {
   // 줄 앞 표시($ · 질문)는 왼쪽에 두고, 이어지는 줄은 표시 뒤에 맞춰 들여 쓴다
   const mark = prefix && (
-    <span aria-hidden="true" className="shrink-0 whitespace-pre text-slate-500 select-none">
+    <span aria-hidden="true" className="shrink-0 whitespace-pre text-slate-400 select-none">
       {prefix}{' '}
     </span>
   );
   if (status !== 'current') {
     return (
-      <div className={`flex ${status === 'done' ? 'text-emerald-400/60' : 'text-slate-500'}`}>
+      <div className={`flex ${status === 'done' ? 'text-emerald-400/60' : 'text-slate-400'}`}>
         {mark}
         <span className={WRAP}>{target || ' '}</span>
       </div>
@@ -52,7 +52,7 @@ export default function Line({ target, status, typed = '', errorAt = -1, focused
         )}
         <Caret blink={focused} />
         <span>{rest}</span>
-        {atEnd && <span className="text-slate-500">↵</span>}
+        {atEnd && <span className="text-slate-400">↵</span>}
       </span>
     </div>
   );

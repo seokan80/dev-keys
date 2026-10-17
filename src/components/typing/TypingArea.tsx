@@ -313,7 +313,7 @@ export default function TypingArea({
                 // 주석은 그 줄과 같은 깊이로 들여 쓴다. 해설이라 한국어가 들어가고, 치지 않는다
                 <div
                   key={k}
-                  className={`whitespace-pre-wrap ${current ? 'text-sky-300' : 'text-slate-500'}`}
+                  className={`whitespace-pre-wrap ${current ? 'text-sky-300' : 'text-slate-400'}`}
                   style={{ paddingLeft: `${/^ */.exec(target)![0].length}ch` }}
                   data-testid={current ? 'current-comment' : undefined}
                 >

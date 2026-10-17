@@ -101,7 +101,7 @@ export default function GitScene({ scene, previous, branch = 'main', zones = ['w
             <div key={zone.id} className={`flex min-h-20 flex-col gap-2 rounded-md border p-2 ${border}`}>
               <div className="flex items-baseline justify-between text-xs">
                 <span className="font-bold text-slate-200">{zone.title}</span>
-                {shown.length < 3 && <span className="text-slate-500">{zone.hint}</span>}
+                {shown.length < 3 && <span className="text-slate-400">{zone.hint}</span>}
               </div>
               {chips.length === 0 ? (
                 <span className="text-xs text-slate-600">비어 있음</span>
@@ -115,7 +115,7 @@ export default function GitScene({ scene, previous, branch = 'main', zones = ['w
                       <li
                         key={chip}
                         className={`flex flex-wrap items-baseline justify-between gap-x-2 rounded bg-slate-800 px-2 py-1 font-mono text-xs ${
-                          gone ? 'text-slate-500 line-through' : fresh ? 'scene-pop ring-2 ring-sky-400' : ''
+                          gone ? 'text-slate-400 line-through' : fresh ? 'scene-pop ring-2 ring-sky-400' : ''
                         }`}
                       >
                         <span className="break-words">{text}</span>

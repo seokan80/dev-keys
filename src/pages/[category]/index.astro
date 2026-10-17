@@ -33,7 +33,7 @@ const curriculum = getCurriculum(category.id);
               <a href={`#part-${part.no}`} class="font-medium text-sky-300 hover:underline">
                 {part.no}부 {part.title}
               </a>
-              <span class="text-sm text-slate-500">
+              <span class="text-sm text-slate-400">
                 {part.sets.length > 0 ? `${part.sets.length}세트` : '준비 중'}
                 {part.sets.length > 0 && part.planned.length > 0 && ` · ${part.planned.length}세트 준비 중`}
               </span>
@@ -58,7 +58,7 @@ const curriculum = getCurriculum(category.id);
         <section id={`part-${part.no}`} class="flex scroll-mt-6 flex-col gap-3" data-testid="part">
           <header class="flex flex-col gap-1">
             <h2 class="text-xl font-bold">
-              <span class="text-slate-500">{part.no}부</span> {part.title}
+              <span class="text-slate-400">{part.no}부</span> {part.title}
             </h2>
             <p class="text-sm text-slate-400">{part.description}</p>
           </header>
@@ -72,7 +72,7 @@ const curriculum = getCurriculum(category.id);
           {part.planned.length > 0 && (
             <ul class="flex flex-col gap-2" data-testid="planned">
               {part.planned.map((title) => (
-                <li class="flex items-center justify-between rounded-lg border border-dashed border-slate-700 px-4 py-3 text-slate-500">
+                <li class="flex items-center justify-between rounded-lg border border-dashed border-slate-700 px-4 py-3 text-slate-400">
                   <span>{title}</span>
                   <span class="text-xs">준비 중</span>
                 </li>
@@ -82,7 +82,7 @@ const curriculum = getCurriculum(category.id);
         </section>
       ))
     ) : sets.length === 0 ? (
-      <p class="text-slate-500">준비 중입니다.</p>
+      <p class="text-slate-400">준비 중입니다.</p>
     ) : (
       <ol class="flex flex-col gap-3">
         {sets.map((set) => (
