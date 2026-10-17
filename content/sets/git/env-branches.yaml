@@ -152,7 +152,9 @@ items:
     type: copy
     text: git tag -a v1.0.0 -m "Release 1.0.0"
     note: 운영에 올라간 커밋에 버전 태그
-    skipEngine: true
+    as: git branch tags/v1.0.0
+    tree:
+      caption: 운영에 나간 커밋에 v1.0.0
   - id: push-release
     type: copy
     text: git push --follow-tags
@@ -172,7 +174,7 @@ items:
     type: copy
     text: git switch -c hotfix/login v1.0.0
     note: (운영에서 로그인 버그) 지금 운영 코드 = 태그에서 딴다. dev 나 stage 에서 따면 검증 안 된 기능이 함께 나간다
-    as: git switch -c hotfix/login main
+    as: git switch -c hotfix/login tags/v1.0.0
     tree:
       caption: hotfix/login 은 운영 중인 v1.0.0 에서
     output: Switched to a new branch 'hotfix/login'

@@ -86,7 +86,9 @@ items:
     type: copy
     text: git tag -a v1.3.0 -m "Release 1.3.0"
     note: 릴리스는 main 의 커밋에 태그로. 릴리스 브랜치를 미리 따지 않는다
-    skipEngine: true
+    as: git branch tags/v1.3.0
+    tree:
+      caption: 릴리스는 main 의 커밋에 태그 — 브랜치를 따지 않는다
   - id: push-tag
     type: copy
     text: git push --follow-tags
@@ -108,7 +110,7 @@ items:
     note: (다음 기능 랭킹을 플래그 뒤에서 main 에 합친 뒤, 1.3 에서 검색어에 & 가 들어가면 깨진다는 신고) main 을 그대로 내보낼 수 없을 때만 그 태그에서 릴리스 브랜치를 딴다
     before:
       - 'git commit -m "9a1a2f3 feat(ranking): add ranking behind flag"'
-    as: git switch -c release/1.3 main~1
+    as: git switch -c release/1.3 tags/v1.3.0
     tree:
       caption: release/1.3 은 운영 중인 v1.3.0 에서 — 필요해서 이제 땄다
     output: Switched to a new branch 'release/1.3'
@@ -176,7 +178,9 @@ items:
     type: copy
     text: git tag -a v1.3.1 -m "Release 1.3.1"
     note: 고친 버전
-    skipEngine: true
+    as: git branch tags/v1.3.1
+    tree:
+      caption: 릴리스 브랜치의 수정 커밋에 v1.3.1
   - id: push-patch
     type: copy
     text: git push --follow-tags

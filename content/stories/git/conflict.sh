@@ -50,3 +50,4 @@ quiet 'sed -i "1s/.*/# DevKeys 2/" README.md && git commit -q -am "docs: rename 
 run 'git pull --rebase'
 run 'git rebase --abort'
 run 'git status'
+run 'git log --reflog --format="%h %s"'

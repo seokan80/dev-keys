@@ -4,19 +4,25 @@ order: 7
 title: 원격 저장소 연결
 description: remote · push -u · clone 으로 내 저장소를 GitHub 에 처음 올리고, 브랜치를 올리고, 다른 곳에서 받기
 level: 2
+engine:
+  root: 'c2d7459 docs: add README'
 # 이야기: ~/devkeys 에서 만든 저장소를 GitHub 의 빈 저장소(kim/devkeys)에 처음 올리고, 기능 브랜치를 올리고, 노트북에 받는다.
 # 출력은 실제로 실행해 뽑았다 — git 2.53 으로 연습용 GitHub 저장소에: scripts/git-story.sh content/stories/git/remote-connect.sh
 #   clone 만은 같은 브랜치를 올린 연습용 서버 저장소에서 받았다. GitHub 에서 받으면 remote: 줄의 숫자가 실행마다 달라서다.
-# 원격은 커밋 그래프 엔진 범위 밖이라 따라치기와 출력만 둔다.
+# engine: 커밋 그래프가 옆에 늘 보인다. 엔진에 없는 것은 as 로 흉내 낸다 — 원격 브랜치는 origin/… 이름의 브랜치(점선), 태그는 tags/… 이름의 브랜치(tag: …), 커밋을 새로 쌓는 명령은 reset + commit.
 items:
   - id: remote-add
     type: copy
     text: git remote add origin https://github.com/kim/devkeys.git
     note: (GitHub 에서 빈 저장소 kim/devkeys 를 만든 뒤) 그 주소를 origin 이라는 이름으로 등록한다. origin 은 관례로 쓰는 이름
+    skipEngine: true
+    before:
+      - 'git commit -m "b38bb74 feat: add login page"'
   - id: remote-v
     type: copy
     text: git remote -v
     note: 등록된 원격과 주소. 받을 때(fetch)와 올릴 때(push) 주소를 따로 둘 수 있어서 두 줄이다
+    skipEngine: true
     output: |-
       origin  https://github.com/kim/devkeys.git (fetch)
       origin  https://github.com/kim/devkeys.git (push)
@@ -24,6 +30,9 @@ items:
     type: copy
     text: git push -u origin main
     note: main 을 처음 올린다. -u 는 origin/main 을 main 의 짝(upstream)으로 정해서, 다음부터는 git push · git pull 만 쳐도 된다
+    as: git branch origin/main main
+    tree:
+      caption: origin/main 이 생겼다 — 원격의 main 이 어디 있는지 적어 둔 이름표 (점선)
     output: |-
       Enumerating objects: 6, done.
       Counting objects: 100% (6/6), done.
@@ -38,11 +47,13 @@ items:
     type: copy
     text: git branch -vv
     note: 브랜치마다 짝인 원격 브랜치를 [ ] 안에 보여 준다
+    skipEngine: true
     output: '* main b38bb74 [origin/main] feat: add login page'
   - id: status
     type: copy
     text: git status
     note: 짝이 생기면 짝과 비교한 줄이 하나 더 나온다. 이 비교는 마지막으로 받아 온(fetch) 때 기준이다
+    skipEngine: true
     output: |-
       On branch main
       Your branch is up to date with 'origin/main'.
@@ -52,11 +63,16 @@ items:
     type: copy
     text: git switch -c feature/search
     note: 검색 기능 브랜치를 만든다
+    tree:
+      caption: 검색 브랜치 — 아직 원격에는 없다
     output: Switched to a new branch 'feature/search'
   - id: push-no-upstream
     type: copy
     text: git push
     note: (검색창을 커밋한 뒤) 짝이 없는 새 브랜치는 git push 만으로는 올라가지 않는다. 어떻게 올릴지 알려 준다
+    skipEngine: true
+    before:
+      - 'git commit -m "46fe865 feat: add search box"'
     output: |-
       fatal: The current branch feature/search has no upstream branch.
       To push the current branch and set the remote as upstream, use
@@ -69,6 +85,9 @@ items:
     type: copy
     text: git push -u origin feature/search
     note: 원격과 브랜치 이름을 적어 올리면서 짝을 정한다. GitHub 가 PR 을 만들 주소를 알려 준다
+    as: git branch origin/feature/search feature/search
+    tree:
+      caption: origin/feature/search 가 생겼다
     output: |-
       Enumerating objects: 4, done.
       Counting objects: 100% (4/4), done.
@@ -87,15 +106,23 @@ items:
     type: copy
     text: git config --global push.autoSetupRemote true
     note: (2.37) 짝이 없으면 같은 이름으로 짝을 만들며 올린다. 새 브랜치마다 -u 를 칠 필요가 없다
+    skipEngine: true
   - id: switch-signup
     type: copy
     text: git switch -c feature/signup
     note: 회원가입 브랜치
+    tree:
+      caption: 회원가입 브랜치를 검색 브랜치 위에서 만들었다
     output: Switched to a new branch 'feature/signup'
   - id: push-auto
     type: copy
     text: git push
     note: (회원가입 화면을 커밋한 뒤) 이제 git push 만으로 올라가고 짝도 정해진다
+    before:
+      - 'git commit -m "53621ba feat: add signup page"'
+    as: git branch origin/feature/signup feature/signup
+    tree:
+      caption: push 만으로 올라가고 origin/feature/signup 이 생겼다
     output: |-
       Enumerating objects: 4, done.
       Counting objects: 100% (4/4), done.
@@ -115,6 +142,7 @@ items:
     type: copy
     text: git branch -vv
     note: 세 브랜치 모두 짝이 생겼다
+    skipEngine: true
     output: |2-
         feature/search 46fe865 [origin/feature/search] feat: add search box
       * feature/signup 53621ba [origin/feature/signup] feat: add signup page
@@ -123,6 +151,12 @@ items:
     type: copy
     text: git clone https://github.com/kim/devkeys.git ~/laptop/devkeys
     note: (노트북에서) 저장소를 통째로 받는다. 받은 주소는 origin 으로 등록되고, 기본 브랜치(main)를 꺼내 둔다. 폴더를 적지 않으면 저장소 이름(devkeys)으로 만든다
+    as:
+      - git switch main
+      - git branch -D feature/search
+      - git branch -D feature/signup
+    tree:
+      caption: 노트북에 받은 저장소 — 로컬 브랜치는 main 하나, 원격 브랜치는 그대로
     output: |-
       Cloning into '/home/kim/laptop/devkeys'...
       remote: Enumerating objects: 12, done.
@@ -134,10 +168,12 @@ items:
   - id: cd
     type: copy
     text: cd ~/laptop/devkeys
+    skipEngine: true
   - id: branch-a
     type: copy
     text: git branch -a
     note: 원격 브랜치(remotes/origin/…)까지 본다. 로컬 브랜치는 아직 main 하나 — 다른 브랜치는 switch 하면 그때 만들어진다
+    skipEngine: true
     output: |-
       * main
         remotes/origin/HEAD -> origin/main
@@ -148,10 +184,12 @@ items:
     type: copy
     text: git remote set-url origin git@github.com:kim/devkeys.git
     note: 등록된 주소를 바꾼다 — HTTPS 를 SSH 로 (GitHub 에 SSH 키를 등록해 둔 경우). 저장소 이름이 바뀌었을 때도 쓴다
+    skipEngine: true
   - id: remote-v-after
     type: copy
     text: git remote -v
     note: 바뀐 주소
+    skipEngine: true
     output: |-
       origin  git@github.com:kim/devkeys.git (fetch)
       origin  git@github.com:kim/devkeys.git (push)

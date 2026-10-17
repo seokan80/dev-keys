@@ -4,15 +4,24 @@ order: 14
 title: 작성자 바꾸기
 description: 잘못된 이메일로 한 커밋 고치기 — 올리기 전이면 --reset-author · rebase --exec, 이미 올린 기록은 .mailmap 으로 묶어 보이기
 level: 3
+engine:
+  root: 'c614a42 docs: add README'
 # 이야기: 회사 저장소에서 개인 이메일로 커밋해 버렸다. 아직 올리지 않은 커밋은 --reset-author 로 고치고,
 #   이미 올린 기록은 그대로 두고 .mailmap 으로 한 사람으로 묶어 보이게 한다.
 # 출력은 실제 git 2.53 으로 뽑았다: scripts/git-story.sh content/stories/git/fix-author.sh
-# 작성자는 커밋 그래프에 보이지 않아 따라치기와 출력만 둔다.
+# engine: 커밋 그래프가 옆에 늘 보인다. 엔진에 없는 것은 as 로 흉내 낸다 — 원격 브랜치는 origin/… 이름의 브랜치(점선), 태그는 tags/… 이름의 브랜치(tag: …), 커밋을 새로 쌓는 명령은 reset + commit.
 items:
   - id: log-author
     type: copy
     text: git log --format="%h %an <%ae> %s" -2
     note: (회사 저장소인데 전역 설정이 개인 이메일이었다) 오늘 만든 검색 브랜치 커밋의 작성자 — %an 이름, %ae 이메일
+    skipEngine: true
+    before:
+      - 'git commit -m "91b8857 feat: add login page"'
+      - 'git commit -m "667a4b4 feat: add signup page"'
+      - git switch -c feature/search
+      - 'git commit -m "f7c5e08 feat: add search box"'
+      - 'git commit -m "5651369 feat: query search api"'
     output: |-
       5651369 Kim Dev <kim@personal.example> feat: query search api
       f7c5e08 Kim Dev <kim@personal.example> feat: add search box
@@ -20,10 +29,16 @@ items:
     type: copy
     text: git config user.email "kim@company.example"
     note: --global 없이 — 이 저장소에만 회사 이메일. 폴더별로 나누려면 includeIf (2번 세트)
+    skipEngine: true
   - id: amend-reset
     type: copy
     text: git commit --amend --reset-author --no-edit
     note: 마지막 커밋의 작성자를 지금 설정(이름 · 이메일 · 시각)으로 바꾼다
+    as:
+      - git reset --soft HEAD~1
+      - 'git commit -m "9c85f39 feat: query search api"'
+    tree:
+      caption: 마지막 커밋이 새 작성자로 다시 만들어졌다 — 해시가 바뀐다
     output: |-
       [feature/search 9c85f39] feat: query search api
        1 file changed, 1 insertion(+)
@@ -32,6 +47,12 @@ items:
     type: copy
     text: git rebase --exec "git commit --amend --reset-author --no-edit" main
     note: 여러 개면 — main 뒤의 커밋을 하나씩 다시 쌓으며 커밋마다 --exec 명령을 돌린다. 처음 커밋부터 모두라면 main 대신 --root
+    as:
+      - git reset --hard main
+      - 'git commit -m "cbd53f0 feat: add search box"'
+      - 'git commit -m "733e3e1 feat: query search api"'
+    tree:
+      caption: 브랜치의 커밋을 모두 새로 쌓았다. main 은 그대로
     output: |-
       Executing: git commit --amend --reset-author --no-edit
       [detached HEAD cbd53f0] feat: add search box
@@ -46,6 +67,7 @@ items:
     type: copy
     text: git log --format="%h %an <%ae> %s" main~1..
     note: 검색 브랜치 커밋은 회사 이메일이 됐다. main 의 커밋은 이미 올려서 그대로 둔다 — 올린 기록을 바꾸면 모두의 해시가 바뀐다
+    skipEngine: true
     output: |-
       733e3e1 Kim Dev <kim@company.example> feat: query search api
       cbd53f0 Kim Dev <kim@company.example> feat: add search box
@@ -54,6 +76,7 @@ items:
     type: copy
     text: git shortlog -sne main
     note: 사람마다 커밋 수. 같은 사람이 이메일 · 이름이 달라 셋으로 나뉘었다
+    skipEngine: true
     output: |2-
            1  Kim Dev <kim@company.example>
            1  Kim Dev <kim@personal.example>
@@ -62,6 +85,7 @@ items:
     type: copy
     text: cat .mailmap
     note: (.mailmap 을 만들었다) 첫 줄은 이 이메일의 이름을 Kim Dev 로, 둘째 줄은 개인 이메일을 회사 이메일로 묶는다
+    skipEngine: true
     output: |-
       Kim Dev <kim@company.example>
       Kim Dev <kim@company.example> <kim@personal.example>
@@ -69,11 +93,13 @@ items:
     type: copy
     text: git shortlog -sne main
     note: 기록은 그대로인데 한 사람으로 묶여 보인다
+    skipEngine: true
     output: '     3  Kim Dev <kim@company.example>'
   - id: log-mailmap
     type: copy
     text: git log --format="%h %an <%ae> | %aN <%aE>" main
     note: '%an · %ae 는 커밋에 적힌 그대로, %aN · %aE 는 .mailmap 을 거친 값. 기본 git log 의 Author: 줄은 .mailmap 을 거친다'
+    skipEngine: true
     output: |-
       667a4b4 Kim Dev <kim@personal.example> | Kim Dev <kim@company.example>
       91b8857 Kim Dev <kim@company.example> | Kim Dev <kim@company.example>
@@ -82,15 +108,20 @@ items:
     type: copy
     text: git check-mailmap "<kim@personal.example>"
     note: 어떤 이메일이 누구로 묶이는지 확인한다
+    skipEngine: true
     output: Kim Dev <kim@company.example>
   - id: add-mailmap
     type: copy
     text: git add .mailmap
     note: .mailmap 은 저장소에 커밋해 둔다 — GitHub 의 기여자 집계 · 다른 사람의 shortlog 도 따른다
+    skipEngine: true
   - id: commit-mailmap
     type: copy
     text: 'git commit -m "chore: map old author emails"'
     note: 커밋한다
+    tree:
+      caption: .mailmap 커밋 — 옛 기록은 그대로 두고 보이는 이름만 묶는다
+    hash: '8e22386'
     output: |-
       [feature/search 8e22386] chore: map old author emails
        1 file changed, 2 insertions(+)

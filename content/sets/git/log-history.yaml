@@ -6,11 +6,21 @@ description: log 옵션(--stat · --name-status · --diff-filter · --author · 
 level: 2
 # 이야기: ~/devkeys 에 Kim Dev 와 동료 Lee Dev 의 커밋이 일주일 동안 쌓였다. 누가 언제 무엇을 바꿨는지 찾아본다.
 # 출력은 실제 git 2.53 으로 뽑았다: scripts/git-story.sh content/stories/git/log-history.sh
+# engine: 살펴보는 기록이 옆 커밋 그래프에 늘 보인다. 기록을 바꾸는 명령이 없어 모든 줄이 skipEngine.
+engine:
+  root: 'c7bba81 docs: add README'
 items:
   - id: log-oneline
     type: copy
+    skipEngine: true
     text: git log --oneline
     note: (Kim Dev 와 동료 Lee Dev 가 일주일 동안 커밋했다) 한 줄씩, 최신부터. 앞 7자리는 커밋 해시의 앞부분
+    before:
+      - 'git commit -m "8b225f0 feat: add api client"'
+      - 'git commit -m "69adf2d chore: ignore .env"'
+      - 'git commit -m "dc8ecf9 feat: add login page"'
+      - 'git commit -m "0bc975c fix: skip empty token"'
+      - 'git commit -m "5f85cbb docs: describe login"'
     output: |-
       5f85cbb (HEAD -> main) docs: describe login
       0bc975c fix: skip empty token
@@ -20,6 +30,7 @@ items:
       c7bba81 docs: add README
   - id: log-stat
     type: copy
+    skipEngine: true
     text: git log --stat -1
     note: 마지막 커밋 하나(-1)를 자세히 — 누가 · 언제 · 어떤 파일을 몇 줄 바꿨는지
     output: |-
@@ -33,6 +44,7 @@ items:
        1 file changed, 2 insertions(+)
   - id: name-status
     type: copy
+    skipEngine: true
     text: git log --oneline --name-status -2
     note: 커밋마다 바뀐 파일과 상태. M 고침 · A 추가 · D 삭제
     output: |-
@@ -42,6 +54,7 @@ items:
       M       api.js
   - id: diff-filter
     type: copy
+    skipEngine: true
     text: git log --oneline --diff-filter=A --name-only
     note: 파일을 새로 추가한(A) 커밋만, 파일 이름과 함께. 지운 파일을 찾을 때는 --diff-filter=D
     output: |-
@@ -55,6 +68,7 @@ items:
       README.md
   - id: author
     type: copy
+    skipEngine: true
     text: git log --oneline --author=Lee
     note: 작성자로 거르기. 이름 일부만 써도 된다
     output: |-
@@ -62,14 +76,16 @@ items:
       dc8ecf9 feat: add login page
   - id: since
     type: copy
-    text: git log --oneline --since=2026-10-14
-    note: 날짜로 거르기. "2 weeks ago" 같은 말도 되고, --until 은 그 날까지
+    skipEngine: true
+    text: 'git log --oneline --since="2026-10-14 00:00"'
+    note: 날짜로 거르기. 날짜만 쓰면 지금 시각이 붙으니 하루의 처음부터라면 00:00 까지. "2 weeks ago" 같은 말도 되고, --until 은 그때까지
     output: |-
       5f85cbb (HEAD -> main) docs: describe login
       0bc975c fix: skip empty token
       dc8ecf9 feat: add login page
   - id: pickaxe
     type: copy
+    skipEngine: true
     text: git log --oneline -S token
     note: 코드에 token 이 생기거나 사라진 커밋 — 이 코드가 언제 들어왔는지 찾을 때
     output: |-
@@ -77,6 +93,7 @@ items:
       dc8ecf9 feat: add login page
   - id: file-log
     type: copy
+    skipEngine: true
     text: git log --oneline -- README.md
     note: 파일 하나의 기록. -- 뒤는 파일 이름이라는 표시 (이름이 바뀐 파일은 --follow 를 더한다)
     output: |-
@@ -84,6 +101,7 @@ items:
       c7bba81 docs: add README
   - id: format
     type: copy
+    skipEngine: true
     text: 'git log --format="%h %an %ad %s" --date=short -3'
     note: 원하는 모양으로. %h 해시 · %an 작성자 · %ad 날짜 · %s 제목
     output: |-
@@ -92,6 +110,7 @@ items:
       dc8ecf9 Lee Dev 2026-10-14 feat: add login page
   - id: shortlog
     type: copy
+    skipEngine: true
     text: git shortlog -sn
     note: 작성자별 커밋 수. -s 는 수만, -n 은 많은 순
     output: |2-
@@ -99,6 +118,7 @@ items:
            2  Lee Dev
   - id: show
     type: copy
+    skipEngine: true
     text: git show HEAD~1
     note: 커밋 하나의 정보와 바뀐 내용. HEAD~1 은 HEAD 바로 앞 커밋 — 해시(0bc975c)를 써도 된다
     output: |-
@@ -120,6 +140,7 @@ items:
        }
   - id: show-file
     type: copy
+    skipEngine: true
     text: git show HEAD~2:api.js
     note: 그 커밋 때의 파일 내용 — 고치기 전 코드를 볼 때
     output: |-
@@ -128,6 +149,7 @@ items:
       }
   - id: diff-commits
     type: copy
+    skipEngine: true
     text: git diff HEAD~3 HEAD --stat
     note: 두 커밋 사이에 바뀐 것. --stat 을 빼면 내용까지
     output: |2-
@@ -137,6 +159,7 @@ items:
        3 files changed, 6 insertions(+), 2 deletions(-)
   - id: blame
     type: copy
+    skipEngine: true
     text: git blame --date=short -L 2,3 api.js
     note: 줄마다 마지막으로 고친 커밋 · 사람 · 날짜. -L 2,3 은 2~3번째 줄만
     output: |-
@@ -144,6 +167,7 @@ items:
       0bc975ca (Kim Dev 2026-10-15 3)   return fetch(url, { headers })
   - id: last-modified
     type: copy
+    skipEngine: true
     text: git last-modified
     note: 파일마다 마지막으로 바꾼 커밋 — Git 2.52 에 생겼다. GitHub 파일 목록의 "마지막 커밋" 칸과 같은 것
     output: |-

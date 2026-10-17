@@ -4,16 +4,29 @@ order: 13
 title: 올린 커밋 고치기
 description: 이미 올린 내 브랜치의 커밋을 고쳐 다시 올리기 — --force-with-lease 로, range-diff 로 전후 비교, 동료의 커밋을 지우지 않게
 level: 3
+engine:
+  root: 'c2d7459 docs: add README'
 # 이야기: 이미 올린 내 브랜치(feature/search)의 커밋을 고쳐 다시 올린다. 보통 push 는 거절되고 --force-with-lease 로 올린다.
 #   range-diff 로 고치기 전후를 견주고, 같은 브랜치에 lee 가 올린 커밋을 지우지 않게 lease 가 막는 것을 본다.
 # 출력은 실제 git 2.53 으로 뽑았다: scripts/git-story.sh content/stories/git/rewrite-pushed.sh
 # 원격은 연습용 서버 저장소이고, https://github.com/kim/ 주소가 그쪽을 가리키게 했다(insteadOf).
-# 원격은 커밋 그래프 엔진 범위 밖이라 따라치기와 출력만 둔다.
+# engine: 커밋 그래프가 옆에 늘 보인다. 엔진에 없는 것은 as 로 흉내 낸다 — 원격 브랜치는 origin/… 이름의 브랜치(점선), 태그는 tags/… 이름의 브랜치(tag: …), 커밋을 새로 쌓는 명령은 reset + commit.
 items:
   - id: amend
     type: copy
     text: 'git commit --amend -m "feat: query search api"'
     note: (feature/search 를 올려 PR 을 열었는데, 마지막 커밋 메시지에 오타 qeury 가 있다) 메시지를 고친다 — 커밋을 새로 만들어 바꾼다
+    before:
+      - git branch origin/main
+      - git switch -c feature/search
+      - 'git commit -m "446fd09 feat: add search box"'
+      - 'git commit -m "1d7df99 feat: qeury search api"'
+      - git branch origin/feature/search
+    as:
+      - git reset --soft HEAD~1
+      - 'git commit -m "27c5706 feat: query search api"'
+    tree:
+      caption: 고친 커밋이 새로 생겼다 — 원격 브랜치는 옛 커밋을 가리킨다
     output: |-
       [feature/search 27c5706] feat: query search api
        Date: Sat Oct 17 09:08:00 2026 +0900
@@ -23,6 +36,7 @@ items:
     type: copy
     text: git status
     note: 올린 커밋(옛 것)과 고친 커밋(새 것)이 서로 다른 커밋이라 갈라진 것으로 보인다
+    skipEngine: true
     output: |-
       On branch feature/search
       Your branch and 'origin/feature/search' have diverged,
@@ -34,6 +48,7 @@ items:
     type: copy
     text: git push
     note: 원격 브랜치를 앞으로 옮기는 것이 아니라 바꾸는 것이라 거절된다. 여기서 pull 하면 옛 커밋과 새 커밋이 둘 다 남는다
+    skipEngine: true
     output: |-
       To https://github.com/kim/devkeys.git
        ! [rejected]        feature/search -> feature/search (non-fast-forward)
@@ -46,6 +61,11 @@ items:
     type: copy
     text: git push --force-with-lease
     note: '"원격이 내가 마지막으로 본 그대로일 때만" 덮어쓴다. 그새 누가 올렸으면 거절해 준다. 그냥 --force 는 묻지 않고 덮어쓴다'
+    as:
+      - git branch -D origin/feature/search
+      - git branch origin/feature/search feature/search
+    tree:
+      caption: 원격을 덮어썼다 — 옛 커밋은 어디에도 없다
     output: |-
       Enumerating objects: 4, done.
       Counting objects: 100% (4/4), done.
@@ -59,6 +79,7 @@ items:
     type: copy
     text: git range-diff main origin/feature/search@{1} HEAD
     note: 고치기 전 커밋들(origin/feature/search@{1} — 덮어쓰기 전 원격 위치)과 고친 뒤 커밋들을 짝지어 견준다. = 는 같음, ! 는 바뀜. PR 리뷰어에게 무엇을 고쳤는지 보여 줄 때
+    skipEngine: true
     output: |-
       1:  446fd09 = 1:  446fd09 feat: add search box
       2:  1d7df99 ! 2:  27c5706 feat: qeury search api
@@ -75,6 +96,11 @@ items:
     type: copy
     text: git commit --amend --no-edit
     note: (lee 가 같은 브랜치에 테스트를 올렸다. 나는 모르고 검색 API 를 또 고쳤다) 마지막 커밋에 합친다
+    as:
+      - git reset --soft HEAD~1
+      - 'git commit -m "35e57f6 feat: query search api"'
+    tree:
+      caption: 또 고쳤다 — lee 가 올린 것은 아직 받아 오지 않아 보이지 않는다
     output: |-
       [feature/search 35e57f6] feat: query search api
        Date: Sat Oct 17 09:08:00 2026 +0900
@@ -84,6 +110,7 @@ items:
     type: copy
     text: git push --force-with-lease
     note: 원격이 내가 마지막으로 본 때와 달라서(stale info) 거절했다 — --force 였다면 lee 의 커밋이 지워졌다
+    skipEngine: true
     output: |-
       To https://github.com/kim/devkeys.git
        ! [rejected]        feature/search -> feature/search (stale info)
@@ -92,6 +119,14 @@ items:
     type: copy
     text: git fetch
     note: 무엇이 올라왔는지 받아 온다
+    as:
+      - git switch --detach origin/feature/search
+      - 'git commit -m "7f46d8b test: add search test"'
+      - git branch -D origin/feature/search
+      - git branch origin/feature/search
+      - git switch feature/search
+    tree:
+      caption: lee 의 테스트 커밋 — 내가 고치기 전 커밋 위에 있다
     output: |-
       remote: Enumerating objects: 4, done.
       remote: Counting objects: 100% (4/4), done.
@@ -104,6 +139,7 @@ items:
     type: copy
     text: git log --oneline HEAD..origin/feature/search
     note: 위가 lee 의 커밋, 아래는 내가 고치기 전 커밋(그래서 내 쪽에 없다)
+    skipEngine: true
     output: |-
       7f46d8b (origin/feature/search) test: add search test
       27c5706 feat: query search api
@@ -111,6 +147,10 @@ items:
     type: copy
     text: git cherry-pick origin/feature/search
     note: lee 의 커밋을 내가 고친 브랜치 위로 옮겨 온다. 작성자는 lee 그대로
+    as: git cherry-pick origin/feature/search
+    tree:
+      caption: lee 의 커밋을 내 고친 브랜치 위로 옮겨 왔다
+    hash: '3603ee3'
     output: |-
       [feature/search 3603ee3] test: add search test
        Author: Lee Dev <lee@example.com>
@@ -121,6 +161,11 @@ items:
     type: copy
     text: git push --force-with-lease
     note: 이제 원격(방금 받아 온 것)을 덮어써도 lee 의 변경은 내 쪽에 들어 있다
+    as:
+      - git branch -D origin/feature/search
+      - git branch origin/feature/search feature/search
+    tree:
+      caption: 원격을 덮어써도 lee 의 변경은 들어 있다
     output: |-
       Enumerating objects: 7, done.
       Counting objects: 100% (7/7), done.
@@ -134,6 +179,7 @@ items:
     type: copy
     text: git log --oneline main..
     note: 고친 커밋 위에 lee 의 테스트
+    skipEngine: true
     output: |-
       3603ee3 (HEAD -> feature/search, origin/feature/search) test: add search test
       35e57f6 feat: query search api
@@ -142,11 +188,13 @@ items:
     type: copy
     text: git status -sb
     note: 원격과 같아졌다 — 앞서지도 뒤처지지도 않는다
+    skipEngine: true
     output: '## feature/search...origin/feature/search'
   - id: config-force-if-includes
     type: copy
     text: git config --global push.useForceIfIncludes true
     note: (2.30) fetch 만 하고 반영하지 않은 채 --force-with-lease 하면 lease 가 통과해 버린다 — 방금 fetch 뒤 바로 쳤다면 lee 의 커밋이 지워졌다. 이 설정은 받아 온 커밋을 rebase · merge 로 내 브랜치에 넣은 적이 없으면 거절한다
+    skipEngine: true
   - id: recall-amend
     type: recall
     prompt: 마지막 커밋의 메시지를 <message> 로 고친다

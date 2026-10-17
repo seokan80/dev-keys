@@ -4,15 +4,20 @@ order: 11
 title: 서브모듈
 description: 다른 저장소를 폴더 하나로 넣어 두고(submodule add), 함께 받고(--recurse-submodules · update --init), 새 버전으로 올리기(update --remote)
 level: 2
+engine:
+  root: '8b34b48 docs: add README'
 # 이야기: devkeys 저장소에 디자인 팀의 저장소(ui-kit)를 vendor/ui-kit 으로 넣고, 다른 곳에서 함께 받고, ui-kit 새 버전으로 올린다.
 # 출력은 실제 git 2.53 으로 뽑았다: scripts/git-story.sh content/stories/git/submodule.sh
 # 원격은 연습용 서버 저장소이고, https://github.com/kim/ 주소가 그쪽을 가리키게 했다(insteadOf).
-# 원격과 서브모듈은 커밋 그래프 엔진 범위 밖이라 따라치기와 출력만 둔다.
+# engine: 커밋 그래프가 옆에 늘 보인다. 엔진에 없는 것은 as 로 흉내 낸다 — 원격 브랜치는 origin/… 이름의 브랜치(점선), 태그는 tags/… 이름의 브랜치(tag: …), 커밋을 새로 쌓는 명령은 reset + commit.
 items:
   - id: submodule-add
     type: copy
     text: git submodule add https://github.com/kim/ui-kit.git vendor/ui-kit
     note: (디자인 팀이 따로 관리하는 ui-kit 저장소) 그 저장소를 vendor/ui-kit 폴더로 받아 서브모듈로 등록한다
+    skipEngine: true
+    before:
+      - git branch origin/main
     output: |-
       Cloning into '/home/kim/devkeys/vendor/ui-kit'...
       remote: Enumerating objects: 3, done.
@@ -23,6 +28,7 @@ items:
     type: copy
     text: cat .gitmodules
     note: 서브모듈의 경로와 주소를 적은 파일. 저장소에 함께 커밋되어, 받는 사람도 어디서 받을지 안다
+    skipEngine: true
     output: |-
       [submodule "vendor/ui-kit"]
               path = vendor/ui-kit
@@ -31,6 +37,7 @@ items:
     type: copy
     text: git status
     note: .gitmodules 와 vendor/ui-kit 이 스테이징됐다. vendor/ui-kit 은 파일들이 아니라 "ui-kit 의 커밋 하나"로 기록된다
+    skipEngine: true
     output: |-
       On branch main
       Your branch is up to date with 'origin/main'.
@@ -43,6 +50,7 @@ items:
     type: copy
     text: git diff --cached --submodule
     note: --submodule 은 서브모듈을 어느 커밋에서 어느 커밋으로 바꾸는지 보여 준다 — 지금은 새로 넣는 것
+    skipEngine: true
     output: |-
       diff --git a/.gitmodules b/.gitmodules
       new file mode 100644
@@ -58,6 +66,9 @@ items:
     type: copy
     text: 'git commit -m "chore: add ui-kit as a submodule"'
     note: 커밋한다. mode 160000 이 "다른 저장소의 커밋을 가리키는 항목"이라는 뜻
+    tree:
+      caption: 서브모듈을 넣은 커밋 — ui-kit 의 파일이 아니라 가리키는 커밋만 들어 있다
+    hash: '70cbdf3'
     output: |-
       [main 70cbdf3] chore: add ui-kit as a submodule
        2 files changed, 4 insertions(+)
@@ -67,6 +78,11 @@ items:
     type: copy
     text: git push
     note: 올린다. ui-kit 의 파일은 devkeys 에 들어가지 않고, 가리키는 커밋만 올라간다
+    as:
+      - git branch -D origin/main
+      - git branch origin/main main
+    tree:
+      caption: origin/main 도 같은 커밋으로
     output: |-
       Enumerating objects: 5, done.
       Counting objects: 100% (5/5), done.
@@ -80,11 +96,13 @@ items:
     type: copy
     text: git submodule status
     note: 서브모듈마다 지금 꺼내 둔 커밋. 앞에 - 가 붙으면 아직 받지 않은 것, + 면 기록된 커밋과 다른 것
+    skipEngine: true
     output: ' 0980bcd7b2bb99f305dc0f8dfdbdcd2ab47ae2f0 vendor/ui-kit (heads/main)'
   - id: clone
     type: copy
     text: git clone https://github.com/kim/devkeys.git ~/laptop/devkeys
     note: (노트북에서) 보통 clone 은 서브모듈 내용을 받지 않는다
+    skipEngine: true
     output: |-
       Cloning into '/home/kim/laptop/devkeys'...
       remote: Enumerating objects: 7, done.
@@ -95,14 +113,17 @@ items:
   - id: cd-laptop
     type: copy
     text: cd ~/laptop/devkeys
+    skipEngine: true
   - id: ls-empty
     type: copy
     text: ls vendor/ui-kit
     note: 폴더만 있고 비어 있다
+    skipEngine: true
   - id: update-init
     type: copy
     text: git submodule update --init
     note: 서브모듈을 등록하고(--init) 기록된 커밋으로 받아 꺼낸다. 이미 받아 둔 저장소에서 서브모듈을 채울 때
+    skipEngine: true
     output: |-
       Submodule 'vendor/ui-kit' (https://github.com/kim/ui-kit.git) registered for path 'vendor/ui-kit'
       Cloning into '/home/kim/laptop/devkeys/vendor/ui-kit'...
@@ -111,11 +132,13 @@ items:
     type: copy
     text: ls vendor/ui-kit
     note: 채워졌다
+    skipEngine: true
     output: button.css
   - id: clone-recurse
     type: copy
     text: git clone --recurse-submodules https://github.com/kim/devkeys.git ~/desktop/devkeys
     note: 처음부터 서브모듈까지 한 번에 받는다
+    skipEngine: true
     output: |-
       Cloning into '/home/kim/desktop/devkeys'...
       remote: Enumerating objects: 7, done.
@@ -134,10 +157,12 @@ items:
     type: copy
     text: cd ~/devkeys
     note: (디자인 팀이 ui-kit 새 버전을 올렸다) 원래 저장소로 돌아온다
+    skipEngine: true
   - id: update-remote
     type: copy
     text: git submodule update --remote
     note: 서브모듈을 원격의 최신 커밋으로 옮긴다. 이 변경은 devkeys 쪽에서 커밋해야 남는다
+    skipEngine: true
     output: |-
       remote: Enumerating objects: 5, done.
       remote: Counting objects: 100% (5/5), done.
@@ -150,6 +175,7 @@ items:
     type: copy
     text: git diff --submodule
     note: 서브모듈이 어느 커밋에서 어느 커밋으로 바뀌는지와 그 사이 커밋 목록
+    skipEngine: true
     output: |-
       Submodule vendor/ui-kit 0980bcd..485c5c3:
         > feat: dark button
@@ -157,6 +183,9 @@ items:
     type: copy
     text: 'git commit -am "chore: update ui-kit"'
     note: 새 버전을 가리키도록 커밋한다
+    tree:
+      caption: ui-kit 새 버전을 가리키는 커밋
+    hash: 'b618b9f'
     output: |-
       [main b618b9f] chore: update ui-kit
        1 file changed, 1 insertion(+), 1 deletion(-)
@@ -164,6 +193,11 @@ items:
     type: copy
     text: git push
     note: 올린다. 다른 사람은 pull 한 뒤 git submodule update 로 같은 버전을 꺼낸다
+    as:
+      - git branch -D origin/main
+      - git branch origin/main main
+    tree:
+      caption: 올렸다
     output: |-
       Enumerating objects: 5, done.
       Counting objects: 100% (5/5), done.
@@ -177,6 +211,7 @@ items:
     type: copy
     text: git config --global submodule.recurse true
     note: pull · switch 등을 할 때 서브모듈도 함께 맞춰 꺼낸다. 따로 submodule update 를 잊는 일이 줄어든다
+    skipEngine: true
   - id: recall-submodule-add
     type: recall
     prompt: 다른 저장소를 <path> 폴더에 서브모듈로 넣는다 — 주소는 <url>

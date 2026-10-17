@@ -4,16 +4,39 @@ order: 10
 title: 원격과 비교하고 정리하기
 description: 원격보다 앞섰는지 뒤처졌는지 읽고, 파일 하나만 원격과 비교하고, 합쳐진 브랜치와 오래된 원격 브랜치를 정리하기
 level: 2
+engine:
+  root: 'd51a197 docs: add README'
 # 이야기: 내 main 과 원격 main 이 서로 앞서고 뒤처진 상태를 읽고, 파일 하나만 원격과 비교한 뒤 맞추고,
 #   합쳐져 원격에서 지워진 브랜치와 오래된 브랜치를 정리한다.
 # 출력은 실제 git 2.53 으로 뽑았다: scripts/git-story.sh content/stories/git/remote-compare.sh
 # 원격은 연습용 서버 저장소이고, https://github.com/kim/ 주소가 그쪽을 가리키게 했다(insteadOf).
-# 원격은 커밋 그래프 엔진 범위 밖이라 따라치기와 출력만 둔다.
+# engine: 커밋 그래프가 옆에 늘 보인다. 엔진에 없는 것은 as 로 흉내 낸다 — 원격 브랜치는 origin/… 이름의 브랜치(점선), 태그는 tags/… 이름의 브랜치(tag: …), 커밋을 새로 쌓는 명령은 reset + commit.
 items:
   - id: fetch
     type: copy
     text: git fetch
     note: (lee 가 내 검색 브랜치를 PR 로 합치고 원격 브랜치를 지운 뒤 footer 를 올렸다. 나는 README 를 고쳐 커밋해 두었다) 먼저 받아 온다
+    before:
+      - git branch origin/main
+      - git switch -c feature/old
+      - 'git commit -m "e9d0acf wip: old idea"'
+      - git branch origin/feature/old
+      - git switch main
+      - git branch -D feature/old
+      - git switch -c feature/search
+      - 'git commit -m "be5966e feat: add search box"'
+      - git branch origin/feature/search
+      - git switch main
+      - 'git commit -m "cf2e7af docs: describe the project"'
+    as:
+      - git switch --detach origin/main
+      - 'git merge --no-ff origin/feature/search -m "eb18d70 Merge pull request #7 from kim/feature/search"'
+      - 'git commit -m "fb74a73 feat: add footer"'
+      - git branch -D origin/main
+      - git branch origin/main
+      - git switch main
+    tree:
+      caption: 원격 main 이 앞서갔다 — 나는 1개 앞서고 3개 뒤처졌다
     output: |-
       remote: Enumerating objects: 6, done.
       remote: Counting objects: 100% (6/6), done.
@@ -26,16 +49,19 @@ items:
     type: copy
     text: git status -sb
     note: 짧게 보기 — 1개 앞서고 3개 뒤처졌다. 앞선 것은 올릴 것, 뒤처진 것은 받을 것
+    skipEngine: true
     output: '## main...origin/main [ahead 1, behind 3]'
   - id: log-outgoing
     type: copy
     text: git log --oneline origin/main..
     note: 원격에 없는 내 커밋 — 올릴 것. 오른쪽을 비우면 HEAD
+    skipEngine: true
     output: 'cf2e7af (HEAD -> main) docs: describe the project'
   - id: log-incoming
     type: copy
     text: git log --oneline ..origin/main
     note: 내게 없는 원격 커밋 — 받을 것
+    skipEngine: true
     output: |-
       fb74a73 (origin/main, origin/HEAD) feat: add footer
       eb18d70 Merge pull request #7 from kim/feature/search
@@ -44,6 +70,7 @@ items:
     type: copy
     text: git log --oneline --left-right main...origin/main
     note: 양쪽을 한 번에 — < 는 내 쪽(왼쪽)에만, > 는 원격 쪽(오른쪽)에만 있는 커밋
+    skipEngine: true
     output: |-
       < cf2e7af (HEAD -> main) docs: describe the project
       > fb74a73 (origin/main, origin/HEAD) feat: add footer
@@ -53,6 +80,7 @@ items:
     type: copy
     text: git diff --stat main...origin/main
     note: 점 셋은 갈라진 뒤 원격 쪽에서 바뀐 것만. 점 둘(main..origin/main)이면 내 쪽 변경까지 섞여 보인다
+    skipEngine: true
     output: |2-
        footer.html | 1 +
        search.html | 1 +
@@ -61,6 +89,7 @@ items:
     type: copy
     text: git diff origin/main -- README.md
     note: 파일 하나만 원격과 비교한다. -- 뒤에 경로를 적는다
+    skipEngine: true
     output: |-
       diff --git a/README.md b/README.md
       index b90ddb5..2df0f8d 100644
@@ -74,11 +103,20 @@ items:
     type: copy
     text: git pull
     note: 받아서 합친다 (pull.rebase true 로 설정해 두었다 — 내 커밋을 뒤로 옮겨 쌓는다)
+    as: git rebase origin/main
+    tree:
+      caption: 내 커밋을 원격 main 뒤로 옮겼다
+    hash: '2e7d2ef'
     output: Successfully rebased and updated refs/heads/main.
   - id: push
     type: copy
     text: git push
     note: 올린다. 이제 앞서지도 뒤처지지도 않는다
+    as:
+      - git branch -D origin/main
+      - git branch origin/main main
+    tree:
+      caption: 앞서지도 뒤처지지도 않는다
     output: |-
       Enumerating objects: 5, done.
       Counting objects: 100% (5/5), done.
@@ -92,6 +130,7 @@ items:
     type: copy
     text: git branch -vv
     note: 원격에서 지운 feature/search 가 아직 짝으로 남아 있다 — fetch 는 기본으로 지운 원격 브랜치를 정리하지 않는다
+    skipEngine: true
     output: |2-
         feature/search be5966e [origin/feature/search] feat: add search box
       * main           2e7d2ef [origin/main] docs: describe the project
@@ -99,6 +138,9 @@ items:
     type: copy
     text: git fetch --prune
     note: 원격에서 사라진 브랜치의 origin/ 이름표를 지운다
+    as: git branch -D origin/feature/search
+    tree:
+      caption: 원격에서 지운 브랜치의 이름표 origin/feature/search 를 지웠다
     output: |-
       From https://github.com/kim/devkeys
        - [deleted]         (none)     -> origin/feature/search
@@ -106,6 +148,7 @@ items:
     type: copy
     text: git branch -vv
     note: 짝이 사라진 로컬 브랜치는 gone 으로 나온다 — 지워도 되는 후보
+    skipEngine: true
     output: |2-
         feature/search be5966e [origin/feature/search: gone] feat: add search box
       * main           2e7d2ef [origin/main] docs: describe the project
@@ -113,11 +156,15 @@ items:
     type: copy
     text: git branch -d feature/search
     note: main 에 합쳐졌으니 -d 로 지운다. 합쳐지지 않았다면 거절해 준다
+    as: git branch -d feature/search
+    tree:
+      caption: 합쳐진 로컬 브랜치도 지웠다 — 커밋은 main 에 있다
     output: Deleted branch feature/search (was be5966e).
   - id: ls-remote
     type: copy
     text: git ls-remote --heads origin
     note: 원격에 지금 있는 브랜치를 서버에 직접 물어본다. branch -r 은 마지막으로 받아 온 기억이다
+    skipEngine: true
     output: |-
       e9d0acf48b5690702fe48def8a3b7e350f7e4cf7        refs/heads/feature/old
       2e7d2ef424ce0002cad7ac1934c1a016c3e8293b        refs/heads/main
@@ -125,6 +172,9 @@ items:
     type: copy
     text: git push origin --delete feature/old
     note: 원격의 오래된 브랜치를 지운다. 되돌리기 어려우니 이름을 확인하고 지운다
+    as: git branch -D origin/feature/old
+    tree:
+      caption: 원격의 오래된 브랜치를 지웠다 — 어디에도 안 남은 커밋은 흐리게
     output: |-
       To https://github.com/kim/devkeys.git
        - [deleted]         feature/old
@@ -132,10 +182,12 @@ items:
     type: copy
     text: git config --global fetch.prune true
     note: 앞으로 fetch · pull 할 때마다 사라진 원격 브랜치를 정리한다
+    skipEngine: true
   - id: branch-a
     type: copy
     text: git branch -a
     note: 정리된 모습 — 로컬 main 과 원격 main 만 남았다
+    skipEngine: true
     output: |-
       * main
         remotes/origin/HEAD -> origin/main

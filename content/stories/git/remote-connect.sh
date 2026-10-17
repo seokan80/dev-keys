@@ -44,3 +44,5 @@ cd ~/laptop/devkeys
 run 'git branch -a'
 run 'git remote set-url origin git@github.com:kim/devkeys.git'
 run 'git remote -v'
+cd ~/devkeys
+run 'git log --reflog --format="%h %s"'

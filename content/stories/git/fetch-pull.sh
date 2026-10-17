@@ -56,3 +56,4 @@ lee 'git switch -q main && git pull -q && printf "<footer></footer>\n" > footer.
 run 'git pull'
 run 'git config --global rebase.autoStash true'
 run 'git pull'
+run 'git log --reflog --format="%h %s"'

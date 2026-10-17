@@ -7,9 +7,14 @@ level: 1
 # 이야기: 1편을 마친 ~/devkeys. 설정을 살펴보고, 회사 저장소에서는 회사 이메일을 쓰게 나누고, 권장 설정을 켠다.
 #   그 사이 API 키가 든 .env 를 실수로 커밋해서 추적을 멈춘다.
 # 출력은 실제 git 2.53 으로 뽑았다: scripts/git-story.sh content/stories/git/config-ignore.sh
+# engine: 커밋 그래프가 옆에 늘 보인다. 설정 · 파일 명령은 그래프와 상관없어 skipEngine.
+engine:
+  root: 'a8b0829 docs: add README'
 items:
   - id: config-list
     type: copy
+    skipEngine: true
+    before: ['git commit -m "a9bd905 feat: add api client"']
     text: git config list --global
     note: 이 PC 의 모든 저장소에 쓰는 설정. Git 2.46 부터 config 에 list · get · set 하위 명령이 생겼다
     output: |-
@@ -18,6 +23,7 @@ items:
       init.defaultbranch=main
   - id: config-origin
     type: copy
+    skipEngine: true
     text: git config list --show-origin
     note: 값마다 어느 파일에서 왔는지. 전역은 ~/.gitconfig, 이 저장소에만 쓰는 값은 .git/config
     output: |-
@@ -30,64 +36,78 @@ items:
       file:.git/config        core.logallrefupdates=true
   - id: include-if
     type: copy
+    skipEngine: true
     text: 'git config set --global includeIf.gitdir:~/work/.path ~/.gitconfig-work'
     note: ~/work 아래 저장소에서는 ~/.gitconfig-work 도 읽는다 — 회사 · 개인 이메일 나누기
   - id: work-email
     type: copy
+    skipEngine: true
     text: git config set --file ~/.gitconfig-work user.email kim@company.com
     note: 회사용 설정 파일에 회사 이메일 (--file 은 그 파일에 쓴다)
   - id: work-init
     type: copy
+    skipEngine: true
     text: git init ~/work/api
     note: 회사 저장소를 하나 만들어 확인해 보자
     output: Initialized empty Git repository in /home/kim/work/api/.git/
   - id: work-check
     type: copy
+    skipEngine: true
     text: git -C ~/work/api config get user.email
     note: -C 는 그 폴더에서 실행한 것처럼. 회사 저장소에서는 회사 이메일이 나온다
     output: kim@company.com
   - id: auto-setup-remote
     type: copy
+    skipEngine: true
     text: git config set --global push.autoSetupRemote true
     note: 새 브랜치를 처음 push 할 때 -u origin <브랜치> 없이 git push 만으로
   - id: fetch-prune
     type: copy
+    skipEngine: true
     text: git config set --global fetch.prune true
     note: 원격에서 지워진 브랜치를 fetch 할 때 내 쪽 목록에서도 지운다
   - id: zdiff3
     type: copy
+    skipEngine: true
     text: git config set --global merge.conflictStyle zdiff3
     note: 충돌 표시에 원래 내용(공통 조상)도 함께 — 양쪽이 무엇을 바꿨는지 보인다
   - id: rerere
     type: copy
+    skipEngine: true
     text: git config set --global rerere.enabled true
     note: 한 번 푼 충돌을 기억했다가 같은 충돌이 다시 나면 그대로 푼다
   - id: alias
     type: copy
+    skipEngine: true
     text: 'git config set --global alias.lg "log --oneline --graph --all"'
     note: 자주 치는 명령에 별명. 이제 git lg
   - id: lg
     type: copy
+    skipEngine: true
     text: git lg
     output: |-
       * a9bd905 (HEAD -> main) feat: add api client
       * a8b0829 docs: add README
   - id: ignore-env
     type: copy
+    skipEngine: true
     text: 'echo ".env" >> .gitignore'
     note: (API 키가 든 .env 를 실수로 커밋했다) 앞으로 무시하게 .gitignore 에 적는다
   - id: status-tracked
     type: copy
+    skipEngine: true
     text: git status --short
     note: .gitignore 는 아직 추적하지 않는 파일에만 듣는다. .env 는 이미 커밋돼서 계속 추적된다
     output: '?? .gitignore'
   - id: rm-cached
     type: copy
+    skipEngine: true
     text: git rm --cached .env
     note: 파일은 두고 추적만 멈춘다. --cached 를 빼면 파일까지 지운다
     output: rm '.env'
   - id: status-untracked
     type: copy
+    skipEngine: true
     text: git status --short
     note: D 는 다음 커밋에서 저장소에서 빠진다는 뜻. 내 폴더의 .env 는 그대로 있다
     output: |-
@@ -95,15 +115,20 @@ items:
       ?? .gitignore
   - id: check-ignore
     type: copy
+    skipEngine: true
     text: git check-ignore -v .env
     note: 왜 무시되는지 — 어느 파일 몇 번째 줄 규칙인지
     output: .gitignore:1:.env       .env
   - id: add-gitignore
     type: copy
+    skipEngine: true
     text: git add .gitignore
   - id: commit
     type: copy
     text: 'git commit -m "chore: stop tracking .env"'
+    hash: '593a58a'
+    tree:
+      caption: .env 를 기록에서 뺀 커밋 — 파일은 폴더에 남는다
     note: 이미 push 했다면 키는 기록에 남아 있다 — 키를 새로 발급받아야 한다
     output: |-
       [main 593a58a] chore: stop tracking .env
@@ -112,10 +137,12 @@ items:
        create mode 100644 .gitignore
   - id: global-ignore
     type: copy
+    skipEngine: true
     text: 'echo ".DS_Store" >> ~/.config/git/ignore'
     note: (~/.config/git 폴더를 만든 뒤) 모든 저장소에 쓰는 무시 목록. 설정하지 않아도 Git 이 읽는다
   - id: check-global
     type: copy
+    skipEngine: true
     text: git check-ignore -v .DS_Store
     output: /home/kim/.config/git/ignore:1:.DS_Store        .DS_Store
 

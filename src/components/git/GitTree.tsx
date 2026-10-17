@@ -26,7 +26,22 @@ type Props = {
   title: string;
 };
 
-type Tag = { key: string; text: string; head: boolean };
+/**
+ * 이름표 종류. 엔진에는 원격 · 태그가 없어서, 세트(engine)에서는 origin/… · upstream/… 이름의 브랜치로 원격 브랜치를,
+ * tags/… 이름의 브랜치로 태그를 흉내 낸다 — 그림에서는 다르게 그린다 (원격은 점선, 태그는 "tag: …")
+ */
+type Kind = 'branch' | 'remote' | 'tag';
+type Tag = { key: string; text: string; head: boolean; kind: Kind };
+
+const REMOTE = /^(origin|upstream)\//;
+const TAG = 'tags/';
+const kindOf = (name: string): Kind => (name.startsWith(TAG) ? 'tag' : REMOTE.test(name) ? 'remote' : 'branch');
+const KIND_ORDER: Record<Kind, number> = { branch: 0, remote: 1, tag: 2 };
+const TAG_STYLE: Record<Kind, { box: string; text: string; dash?: string }> = {
+  branch: { box: 'fill-sky-500/15 stroke-sky-500/60', text: 'fill-sky-200' },
+  remote: { box: 'fill-slate-500/10 stroke-slate-400/70', text: 'fill-slate-300', dash: '3 2' },
+  tag: { box: 'fill-fuchsia-500/15 stroke-fuchsia-400/60', text: 'fill-fuchsia-200' },
+};
 
 /**
  * 그림 안 좌표. 최신이 위라서 줄(row)이 클수록 위로 올라간다(y 가 작아진다).
@@ -80,15 +95,18 @@ export default function GitTree({ state, layout, previous, showOrphans = true, n
   // 커밋마다 붙는 이름표: HEAD 가 가리키는 브랜치(또는 detached HEAD)가 먼저
   const tags = new Map<string, Tag[]>();
   const push = (id: string, tag: Tag) => tags.set(id, [...(tags.get(id) ?? []), tag]);
-  if (current === null) push(head, { key: 'HEAD', text: 'HEAD', head: true });
+  if (current === null) push(head, { key: 'HEAD', text: 'HEAD', head: true, kind: 'branch' });
+  // git log 의 꾸밈처럼: HEAD → 지금 브랜치, 다른 브랜치, 원격 브랜치, 태그 순
   const branchNames = Object.keys(state.branches).sort((a, b) =>
-    a === current ? -1 : b === current ? 1 : a.localeCompare(b),
+    a === current ? -1 : b === current ? 1 : KIND_ORDER[kindOf(a)] - KIND_ORDER[kindOf(b)] || a.localeCompare(b),
   );
   for (const name of branchNames) {
+    const kind = kindOf(name);
     push(state.branches[name]!, {
       key: `b:${name}`,
-      text: name === current ? `HEAD → ${name}` : name,
+      text: kind === 'tag' ? `tag: ${name.slice(TAG.length)}` : name === current ? `HEAD → ${name}` : name,
       head: name === current,
+      kind,
     });
   }
 
@@ -229,15 +247,17 @@ export default function GitTree({ state, layout, previous, showOrphans = true, n
               className="tree-label"
               style={{ transform: `translate(${tag.x}px, ${tag.y}px)` }}
               data-label={tag.text}
+              data-kind={tag.kind}
             >
               <rect
                 y={-h / 2}
                 width={tagWidth(tag.text)}
                 height={h}
                 rx={4}
-                className={tag.head ? 'fill-amber-500/20 stroke-amber-400' : 'fill-sky-500/15 stroke-sky-500/60'}
+                className={tag.head ? 'fill-amber-500/20 stroke-amber-400' : TAG_STYLE[tag.kind].box}
+                strokeDasharray={tag.head ? undefined : TAG_STYLE[tag.kind].dash}
               />
-              <text x={6} dominantBaseline="central" className={tag.head ? 'fill-amber-200' : 'fill-sky-200'}>
+              <text x={6} dominantBaseline="central" className={tag.head ? 'fill-amber-200' : TAG_STYLE[tag.kind].text}>
                 {tag.text}
               </text>
             </g>

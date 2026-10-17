@@ -6,7 +6,7 @@ const sets = getSets();
 const git = sets.find((s) => s.lines.some((l) => l.scene))!;
 const firstScene = git.lines.findIndex((l) => l.scene);
 const java = sets.find((s) => s.category === 'java')!;
-const branching = sets.find((s) => s.graph && s.lines.some((l) => l.graph?.caption))!;
+const branching = sets.find((s) => s.id === 'git-branch-merge')!;
 
 test('그림이 있는 세트는 옆 칸에 상태 그림이 늘 있고, 그림이 있는 줄을 끝내면 멈추지 않고 그 상태로 바뀐다', async ({
   page,
@@ -85,4 +85,22 @@ test('코드 세트는 문장을 다 치면 그 아래에 결과 값을 보여 �
   await expect(page.getByTestId('output')).toHaveCount(0);
   await typeLines(page, java.lines.slice(0, upto + 1));
   await expect(page.getByTestId('output').first()).toHaveText(`⇒ ${java.lines[upto]!.output}`);
+});
+
+test('원격 브랜치(origin/…)는 점선 이름표로, 태그(tags/…)는 "tag: …" 로 그린다', async ({ page }) => {
+  const remote = sets.find((s) => s.id === 'git-fetch-pull')!;
+  await page.goto(remote.href);
+  await hydrated(page);
+  await typeLines(page, remote.lines.slice(0, remote.lines.findIndex((l) => l.itemId === 'fetch') + 1));
+  const tree = page.getByTestId('live-graph').getByTestId('git-tree');
+  await expect(tree.locator('[data-kind="remote"][data-label="origin/main"]')).toBeVisible();
+  await expect(tree.locator('[data-kind="branch"][data-label="HEAD → main"]')).toBeVisible();
+
+  const tags = sets.find((s) => s.id === 'git-tags-release')!;
+  await page.goto(tags.href);
+  await hydrated(page);
+  await typeLines(page, tags.lines.slice(0, tags.lines.findIndex((l) => l.itemId === 'tag-light') + 1));
+  await expect(
+    page.getByTestId('live-graph').getByTestId('git-tree').locator('[data-kind="tag"][data-label="tag: v1.0.0"]'),
+  ).toBeVisible();
 });
