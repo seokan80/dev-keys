@@ -121,11 +121,14 @@ describe('명령 출력(output)', () => {
     expect(r.sets[0]!.lines[0]!.output).toBe('Initialized empty Git repository in /home/kim/devkeys/.git/');
   });
 
-  it('출력도 ASCII · 탭 없음 · 줄 끝 공백 없음 · 100자 이하', () => {
+  it('출력도 ASCII(CLI 기호 ✓ ✗ • → … 는 된다) · 탭 없음 · 줄 끝 공백 없음 · 120자 이하', () => {
     expect(errors(withOutput('완료'))[0]).toMatch(/output.*ASCII/);
+    expect(errors(withOutput('✓ Pull request kim/devkeys#12 is marked as "ready for review"'))).toEqual([]);
     expect(errors(withOutput('a\tb'))[0]).toMatch(/output.*탭/);
     expect(errors(withOutput('ok '))[0]).toMatch(/output.*줄 끝 공백/);
-    expect(errors(withOutput('x'.repeat(101)))[0]).toMatch(/output.*100자/);
+    // 출력은 넘치면 다음 줄로 이어지니 120자까지 (실제 도구 출력이 100자를 조금 넘기도 한다)
+    expect(errors(withOutput('x'.repeat(120)))).toEqual([]);
+    expect(errors(withOutput('x'.repeat(121)))[0]).toMatch(/output.*120자/);
   });
 
   it('출력은 앞 공백(들여쓰기)을 그대로 둔다', () => {
@@ -350,8 +353,9 @@ describe('뜻 보고 치기(recall) 규칙', () => {
     expect(recall('    prompt: <name> 만들기\n    answers: ["git switch -c <name>"]\n')[0]).toMatch(/정의/);
   });
 
-  it('Git 정답은 git 으로 시작한다', () => {
-    expect(recall('    prompt: 상태 보기\n    answers: ["status"]\n')[0]).toMatch(/git 으로 시작/);
+  it('Git 정답은 git 이나 gh(GitHub CLI) 로 시작한다', () => {
+    expect(recall('    prompt: 상태 보기\n    answers: ["status"]\n')[0]).toMatch(/git · gh 로 시작/);
+    expect(recall('    prompt: 초안 PR 만들기\n    answers: ["gh pr create --draft"]\n')).toEqual([]);
   });
 
   it('context 준비 명령은 엔진에서 돌아야 한다', () => {
@@ -508,6 +512,29 @@ describe('엔진으로 도는 세트 (트리 그림)', () => {
     const [wt] = r.sets[0]!.lines;
     expect(wt!.graph).toEqual({ during: 0, after: 1, caption: '에이전트 브랜치' });
     expect(r.sets[0]!.graph!.steps[1]!.branches).toEqual({ main: 'c1', 'agent/search': 'c1' });
+  });
+
+  it('as 는 여러 명령일 수 있다 (gh pr merge --squash --delete-branch 처럼 한 줄이 엔진에서는 여러 일)', () => {
+    const r = engineSet(
+      [
+        '  - id: work',
+        '    type: copy',
+        '    text: git switch -c agent/42',
+        '  - id: merge',
+        '    type: copy',
+        '    text: gh pr merge --squash --delete-branch',
+        '    before: [\'git commit -m "a1b2c3d feat: search"\']',
+        '    as: [git switch main, git cherry-pick agent/42, git branch -D agent/42]',
+        '    hash: 3e7d1c9',
+        '    tree: { caption: 합쳤다 }',
+        '',
+      ].join('\n'),
+    );
+    expect(errors(r)).toEqual([]);
+    const g = r.sets[0]!.graph!;
+    const merge = r.sets[0]!.lines.find((l) => l.itemId === 'merge')!.graph!;
+    expect(g.steps[merge.after]!.branches).toEqual({ main: 'c3' });
+    expect(g.names.c3).toBe('3e7d1c9 feat: search');
   });
 
   it('엔진 세트가 아니면 그래프가 없다', () => {

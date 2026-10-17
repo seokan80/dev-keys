@@ -68,7 +68,10 @@ const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 /** 한 줄 길이: 코드는 읽기 좋게 80자, 터미널 명령(Git)은 한 줄로 길어지기 쉬워 100자 */
 const MAX_LINE = 80;
 const MAX_COMMAND_LINE = 100;
-const MAX_OUTPUT_LINE = 100;
+/** 출력 한 줄 — 화면에서 넘치면 다음 줄로 이어지니 실제 도구 출력을 자르지 않을 만큼 */
+const MAX_OUTPUT_LINE = 120;
+/** 출력에는 ASCII 와, CLI 도구(gh 등)가 찍는 기호만 (치는 글이 아니어서) */
+const OUTPUT_SYMBOLS = new Set(['✓', '✗', '•', '→', '…']);
 /** 예상 시간 계산 기준 (분당 타수) */
 const CPM = 200;
 const PLACEHOLDER = /<([a-z][a-z0-9_]*)>/g;
@@ -109,7 +112,7 @@ function checkCopyItem(item: CopyItem, category: CategoryId, report: (msg: strin
       const at = `문제 ${item.id} output ${i + 1}번째 줄`;
       if (line.includes('\t')) report(`${at}: 탭은 쓰지 않는다 (공백으로)`);
       else {
-        const bad = [...line].find((ch) => ch < ' ' || ch > '~');
+        const bad = [...line].find((ch) => (ch < ' ' || ch > '~') && !OUTPUT_SYMBOLS.has(ch));
         if (bad) report(`${at}: ASCII 밖 글자 ${charLabel(bad)}`);
       }
       if (/ $/.test(line)) report(`${at}: 줄 끝 공백`);
@@ -166,8 +169,8 @@ function checkRecallItem(
     const filled = answer.replace(PLACEHOLDER, (_, name: string) => item.placeholder?.[name] ?? name);
     const bad = [...filled].find((ch) => ch < ' ' || ch > '~');
     if (bad) report(`문제 ${item.id} 정답 "${answer}": ASCII 밖 글자 ${charLabel(bad)}`);
-    if (category === 'git' && !answer.startsWith('git '))
-      report(`문제 ${item.id} 정답 "${answer}": git 으로 시작해야 한다`);
+    if (category === 'git' && !/^(git|gh) /.test(answer))
+      report(`문제 ${item.id} 정답 "${answer}": git · gh 로 시작해야 한다`);
   }
 
   const fill = (text: string) =>
@@ -264,13 +267,19 @@ function simulate(
       lines.set(item.id, { during, after: during, caption });
       continue;
     }
-    const r = execute(state, (item.as ?? item.text).trim());
-    if (r.error) {
-      report(`문제 ${item.id}: 엔진에서 실패 — ${r.error.message}`);
-      return null;
+    // as 가 있으면 엔진에서는 그 명령(들)로 — 한 줄이 엔진에서 여러 일일 수 있다 (gh pr merge --squash --delete-branch)
+    const commands = item.as === undefined ? [item.text] : Array.isArray(item.as) ? item.as : [item.as];
+    let next = state;
+    for (const command of commands) {
+      const r = execute(next, command.trim());
+      if (r.error) {
+        report(`문제 ${item.id}: 엔진에서 실패 — ${r.error.message}`);
+        return null;
+      }
+      next = r.state;
     }
     // hash 를 주면 "새 해시 + 메시지". 복사 · 되돌림 커밋은 원본 메시지에 들어 있던 해시를 떼고 붙인다
-    advance(r.state, (message, label) =>
+    advance(next, (message, label) =>
       item.hash ? `${item.hash} ${withoutHash(message ?? '')}`.trim() : (message ?? label),
     );
     lines.set(item.id, { during, after: steps.length - 1, caption });

@@ -11,7 +11,7 @@
 - core를 바꾸면 단위 테스트 필수, 테스트를 먼저 쓴다. Git 엔진은 명령별 테스트 + 결과 비교 테스트 + 실제 git 대조 테스트(`tests/unit/git-real` — 동작을 바꾸면 시나리오도 더한다)
 - Git 엔진은 실제 git 기본 동작을 따른다. 다르게 하려면 docs에 이유를 남긴다
 - 콘텐츠: 세트는 `content/sets/<카테고리>/<슬러그>.yaml`, 해설은 `content/guides/<카테고리>/<슬러그>.md` (형식은 구현계획 5.3). 추가하면 `npm run validate:content` 통과 필수. 미션은 권장 풀이 테스트를 함께 추가
-- 해설은 줄 위 주석(`note`·`notes`)으로 보인다. Git 세트는 명령마다 실제 출력(`output`)을 붙이고, 출력이 앞뒤로 맞는 이야기로 쓴다. 새 Git 세트는 이야기(`content/stories/git/<슬러그>.sh`)를 실제 git 으로 돌려 출력을 뽑고 `npx tsx scripts/git-story-check.ts <슬러그>` 로 맞춰 본다. 순서 · 범위는 구현계획 5.7 Git 커리큘럼
+- 해설은 줄 위 주석(`note`·`notes`)으로 보인다. Git 세트는 명령마다 실제 출력(`output`)을 붙이고, 출력이 앞뒤로 맞는 이야기로 쓴다. 새 Git 세트는 이야기(`content/stories/git/<슬러그>.sh`)를 실제 git 으로 돌려 출력을 뽑고 `npx tsx scripts/git-story-check.ts <슬러그>` 로 맞춰 본다. `gh` 명령은 연습용 저장소 `seokan80/devkeys-sandbox`(비공개)에서 실제로 돌리고 저장소 이름 · PR 번호 · GitHub 가 만든 해시는 `rename` 으로 이야기 속 값으로 바꾼다 — 그런 이야기는 돌릴 때마다 PR 이 생기니 확인할 때만, 몰아서 돌리지 않는다 순서 · 범위는 구현계획 5.7 Git 커리큘럼
 - Git 세트의 `scene`은 그 명령 뒤의 상태를 적는다 (앞 장면 · 실제 Git 동작과 맞아야 한다). 브랜치처럼 커밋 트리가 바뀌는 세트는 `engine`을 두어 엔진이 커밋 그래프를 만들게 한다(타자 영역 옆에 늘 보인다) — 숨은 커밋은 `before`, 트리와 상관없는 명령은 `skipEngine`, 그 줄을 끝냈을 때 그래프 아래 설명은 `tree.caption`. 코드 세트의 `result`는 실제로 실행했을 때의 값이어야 한다
 - 도전 모드 문제(`type: recall`)는 따라친 명령을 설명만 보고 치게 한다. 엔진이 아는 명령은 `context`를 두어 동의어를 엔진으로 판정한다 — 단, 결과 트리가 같아도 뜻이 다른 명령(`branch -d`/`-D`, 이름을 쓴 `switch`/`switch -`, 목록 보기)에는 두지 않는다. prompt 의 `<자리>` 뒤에는 조사를 붙이지 않는다(값이 바뀌면 어긋난다)
 - 트리 미션(`content/missions/<슬러그>.yaml`)은 시작 명령 · 권장 풀이만 쓰고 목표는 엔진이 만든다. 새 미션은 `npm test -- -u` 로 목표 트리 스냅샷을 만든 뒤 사람이 확인한다
