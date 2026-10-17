@@ -255,10 +255,29 @@ describe('따라치기 글 규칙', () => {
     expect(withText('git commit -m "기능 추가"')[0]).toMatch(/1번째 줄.*ASCII/);
   });
 
-  it('탭·줄 끝 공백·80자 넘는 줄·앞뒤 빈 줄', () => {
+  it('탭·줄 끝 공백·긴 줄(Git 100자 · 코드 80자)·앞뒤 빈 줄', () => {
     expect(withText('a\n\tb')[0]).toMatch(/2번째 줄.*탭/);
     expect(withText('git status ')[0]).toMatch(/줄 끝 공백/);
-    expect(withText('x'.repeat(81))[0]).toMatch(/80자/);
+    // 터미널 명령(Git)은 한 줄로 길어지기 쉬워 100자까지, 코드는 읽기 좋게 80자까지
+    expect(withText('x'.repeat(100))).toEqual([]);
+    expect(withText('x'.repeat(101))[0]).toMatch(/100자/);
+    const code = (text: string) =>
+      errors(
+        buildContent(
+          [
+            file(
+              'content/sets/java/basics.yaml',
+              setYaml(
+                { id: 'java-basics', category: 'java' },
+                `  - id: t\n    type: copy\n    text: ${JSON.stringify(text)}\n${filler.replaceAll('git log --oneline --graph --all', 'list.stream().map(x -> x).toList();')}`,
+              ),
+            ),
+          ],
+          ['content/guides/java/basics.md'],
+        ),
+      );
+    expect(code('x'.repeat(80))).toEqual([]);
+    expect(code('x'.repeat(81))[0]).toMatch(/80자/);
     expect(withText('\ngit status')[0]).toMatch(/빈 줄/);
   });
 

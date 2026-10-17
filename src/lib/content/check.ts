@@ -65,7 +65,9 @@ export type ContentSet = SetData & {
 
 const RESERVED_SLUGS = new Set(['challenge', 'tree', 'index']);
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+/** 한 줄 길이: 코드는 읽기 좋게 80자, 터미널 명령(Git)은 한 줄로 길어지기 쉬워 100자 */
 const MAX_LINE = 80;
+const MAX_COMMAND_LINE = 100;
 const MAX_OUTPUT_LINE = 100;
 /** 예상 시간 계산 기준 (분당 타수) */
 const CPM = 200;
@@ -76,7 +78,8 @@ const charLabel = (ch: string) => (ch === '\t' ? '탭' : `"${ch}"(U+${ch.codePoi
 /** YAML 블록(|)이 붙이는 마지막 줄바꿈 하나는 떼어 낸다 */
 const linesOf = (text: string) => text.replace(/\n$/, '').split('\n');
 
-function checkCopyItem(item: CopyItem, report: (msg: string) => void): CodeLine[] {
+function checkCopyItem(item: CopyItem, category: CategoryId, report: (msg: string) => void): CodeLine[] {
+  const maxLine = category === 'git' ? MAX_COMMAND_LINE : MAX_LINE;
   const lines = linesOf(item.text);
   const where = (i: number) => `문제 ${item.id} ${i + 1}번째 줄`;
 
@@ -93,7 +96,7 @@ function checkCopyItem(item: CopyItem, report: (msg: string) => void): CodeLine[
       if (bad) report(`${where(i)}: ASCII 밖 글자 ${charLabel(bad)} — 따라치기 글은 영문·숫자·기호만`);
     }
     if (/ $/.test(line)) report(`${where(i)}: 줄 끝 공백`);
-    if (line.length > MAX_LINE) report(`${where(i)}: ${line.length}자 — ${MAX_LINE}자 이하로`);
+    if (line.length > maxLine) report(`${where(i)}: ${line.length}자 — ${maxLine}자 이하로`);
   });
 
   for (const [name, code] of Object.entries(item.hidden ?? {})) {
@@ -328,7 +331,7 @@ export function buildContent(setFiles: RawFile[], guidePaths: string[]): { sets:
           report(`문제 ${item.id}: tree 는 엔진에서 도는 줄에만 — skipEngine 과 함께 쓸 수 없다`);
         if (data.engine && item.as && item.skipEngine)
           report(`문제 ${item.id}: as 는 엔진에서 돌릴 명령 — skipEngine 과 함께 쓸 수 없다`);
-        const itemLines = checkCopyItem(item, report);
+        const itemLines = checkCopyItem(item, data.category, report);
         if (data.engine && itemLines.length > 1) report(`문제 ${item.id}: engine 세트의 명령은 한 줄씩`);
         lines.push(...itemLines);
       } else recalls.push(checkRecallItem(item, data.id, data.category, report));
