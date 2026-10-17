@@ -20,6 +20,7 @@
 - 타이핑 화면 근처에 광고 · 팝업 요소를 두지 않는다
 - 범위 밖 기능(로그인, 충돌 시뮬레이션, 원격 저장소)은 구현하지 않는다
 - UI 문구는 한국어
+- 색은 Tailwind 의 slate · emerald · sky · amber · rose · fuchsia 계열만 쓴다. 화이트 테마는 이 계열의 단계를 뒤집어 만든다 — 새 계열을 쓰면 `scripts/gen-light-theme.ts` 의 목록에 더하고 다시 만든다
 
 ## 명령
 

@@ -1,7 +1,14 @@
 @import 'tailwindcss';
+/* 화이트 테마: <html data-theme="light"> 이면 색 변수의 단계를 뒤집는다 (scripts/gen-light-theme.ts) */
+@import './theme-light.css';
 
 @theme {
   --font-mono: 'JetBrains Mono', 'D2Coding', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* 기본은 블랙 테마 — 폼 요소 · 스크롤바도 어둡게 */
+:root {
+  color-scheme: dark;
 }
 
 /* 손가락 10색 — 왼손 새끼(lp) ~ 엄지(lt), 오른손 엄지(rt) ~ 새끼(rp). 색만으로 구분하지 않게 이름도 함께 표시한다. */
