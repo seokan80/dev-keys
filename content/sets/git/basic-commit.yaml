@@ -5,7 +5,7 @@ title: 변경 사항 기록하기
 description: init · status · add · diff · commit · log · restore · reset 으로 저장소를 만들고 변경을 기록하고 되돌리기
 level: 1
 # 이야기: ~/devkeys 폴더에 저장소를 만들고 README.md 를 커밋한 뒤, 고치고 되돌려 본다.
-# 출력은 git 2.4x 기준. 해시는 이야기 안에서 서로 맞게 정했다.
+# 출력은 실제 git 2.53 으로 뽑았다: scripts/git-story.sh content/stories/git/basic-commit.sh
 items:
   - id: config-name
     type: copy
@@ -61,11 +61,11 @@ items:
     text: 'git commit -m "docs: add README"'
     note: 스테이징된 변경을 메시지와 함께 커밋한다. 첫 커밋이라 root-commit
     output: |-
-      [main (root-commit) 3f2a9c1] docs: add README
+      [main (root-commit) aa0b111] docs: add README
        1 file changed, 1 insertion(+)
        create mode 100644 README.md
     scene:
-      repo: ['3f2a9c1 docs: add README']
+      repo: ['aa0b111 docs: add README']
       arrow: { from: staged, to: repo, label: commit }
       caption: 스테이징된 것이 커밋으로 기록됐다. 스테이징은 다시 비었다
   - id: diff
@@ -74,7 +74,7 @@ items:
     note: (README.md 에 한 줄을 더한 뒤) 아직 스테이징하지 않은 변경을 본다 — + 가 더한 줄
     output: |-
       diff --git a/README.md b/README.md
-      index 1b3c5d7..9e8f7a6 100644
+      index b90ddb5..148d316 100644
       --- a/README.md
       +++ b/README.md
       @@ -1 +1,2 @@
@@ -82,7 +82,7 @@ items:
       +Typing practice for developers
     scene:
       workdir: [README.md (고침)]
-      repo: ['3f2a9c1 docs: add README']
+      repo: ['aa0b111 docs: add README']
       compare: [workdir, staged]
       caption: 작업 트리를 스테이징(마지막으로 add 한 상태)과 비교 — 아직 add 안 한 변경
   - id: add-all
@@ -91,7 +91,7 @@ items:
     note: 지금 폴더 아래의 변경을 모두 스테이징한다
     scene:
       staged: [README.md (고침)]
-      repo: ['3f2a9c1 docs: add README']
+      repo: ['aa0b111 docs: add README']
       arrow: { from: workdir, to: staged, label: add }
       caption: 고친 README.md 가 스테이징에 올라갔다
   - id: diff-staged
@@ -100,7 +100,7 @@ items:
     note: 스테이징된 변경, 즉 커밋될 내용을 본다. 이제 git diff 만 치면 아무것도 안 나온다
     output: |-
       diff --git a/README.md b/README.md
-      index 1b3c5d7..9e8f7a6 100644
+      index b90ddb5..148d316 100644
       --- a/README.md
       +++ b/README.md
       @@ -1 +1,2 @@
@@ -108,7 +108,7 @@ items:
       +Typing practice for developers
     scene:
       staged: [README.md (고침)]
-      repo: ['3f2a9c1 docs: add README']
+      repo: ['aa0b111 docs: add README']
       compare: [staged, repo]
       caption: 스테이징을 마지막 커밋과 비교 — 커밋하면 들어갈 변경
   - id: restore-staged
@@ -117,7 +117,7 @@ items:
     note: 스테이징만 취소한다. 파일을 고친 내용은 그대로 남는다
     scene:
       workdir: [README.md (고침)]
-      repo: ['3f2a9c1 docs: add README']
+      repo: ['aa0b111 docs: add README']
       arrow: { from: repo, to: staged, label: restore --staged }
       caption: 스테이징을 마지막 커밋 상태로 되돌렸다 — 고친 내용은 작업 트리에 남는다
   - id: status-modified
@@ -134,10 +134,10 @@ items:
     text: 'git commit -m "docs: describe project"'
     note: 두 번째 커밋
     output: |-
-      [main 7d4e8b2] docs: describe project
+      [main 85552e9] docs: describe project
        1 file changed, 1 insertion(+)
     scene:
-      repo: ['7d4e8b2 docs: describe project', '3f2a9c1 docs: add README']
+      repo: ['85552e9 docs: describe project', 'aa0b111 docs: add README']
       arrow: { from: staged, to: repo, label: commit }
       caption: 두 번째 커밋 — 최신 커밋이 위에 쌓이고 HEAD 가 따라 올라간다
   - id: log
@@ -145,16 +145,16 @@ items:
     text: git log --oneline
     note: 커밋 기록을 한 줄씩. HEAD -> main 은 지금 main 브랜치의 끝에 있다는 뜻
     output: |-
-      7d4e8b2 (HEAD -> main) docs: describe project
-      3f2a9c1 docs: add README
+      85552e9 (HEAD -> main) docs: describe project
+      aa0b111 docs: add README
   - id: show
     type: copy
     text: git show --stat HEAD
     note: 마지막 커밋의 정보와 바뀐 파일 목록을 본다 (--stat 을 빼면 변경 내용 전체)
     output: |-
-      commit 7d4e8b2c5a1f9e3d6b8a0c2e4f6a8b0c1d3e5f7a (HEAD -> main)
+      commit 85552e9638d474e89765f2323c92f650eb35e1f4 (HEAD -> main)
       Author: Kim Dev <dev@example.com>
-      Date:   Fri Oct 16 21:05:12 2026 +0900
+      Date:   Sat Oct 17 09:17:00 2026 +0900
 
           docs: describe project
 
@@ -165,26 +165,26 @@ items:
     text: 'git commit --amend -m "docs: describe the project"'
     note: 마지막 커밋의 메시지를 고친다. 커밋이 새로 만들어진다 — 이미 push 한 커밋에는 쓰지 않는다
     output: |-
-      [main 9b1c3d5] docs: describe the project
-       Date: Fri Oct 16 21:05:12 2026 +0900
+      [main d6085fe] docs: describe the project
+       Date: Sat Oct 17 09:17:00 2026 +0900
        1 file changed, 1 insertion(+)
     scene:
-      repo: ['9b1c3d5 docs: describe the project', '~7d4e8b2 docs: describe project', '3f2a9c1 docs: add README']
-      caption: 마지막 커밋을 새 커밋으로 바꿔 끼웠다 — 해시가 7d4e8b2 에서 9b1c3d5 로
+      repo: ['d6085fe docs: describe the project', '~85552e9 docs: describe project', 'aa0b111 docs: add README']
+      caption: 마지막 커밋을 새 커밋으로 바꿔 끼웠다 — 해시가 85552e9 에서 d6085fe 로
   - id: log-after-amend
     type: copy
     text: git log --oneline
-    note: 7d4e8b2 가 9b1c3d5 로 바뀌었다 — amend 는 고치는 게 아니라 바꿔 끼우는 것
+    note: 85552e9 가 d6085fe 로 바뀌었다 — amend 는 고치는 게 아니라 바꿔 끼우는 것
     output: |-
-      9b1c3d5 (HEAD -> main) docs: describe the project
-      3f2a9c1 docs: add README
+      d6085fe (HEAD -> main) docs: describe the project
+      aa0b111 docs: add README
   - id: restore
     type: copy
     text: git restore README.md
     note: (README.md 를 실수로 망친 뒤) 스테이징하지 않은 변경을 버린다 — 되돌릴 수 없다
     scene:
       workdir: ['~README.md (망친 변경)']
-      repo: ['9b1c3d5 docs: describe the project', '3f2a9c1 docs: add README']
+      repo: ['d6085fe docs: describe the project', 'aa0b111 docs: add README']
       arrow: { from: staged, to: workdir, label: restore }
       caption: 작업 트리를 스테이징 상태로 덮어썼다 — 망친 변경은 사라졌고 되돌릴 수 없다
   - id: reset-soft
@@ -193,7 +193,7 @@ items:
     note: 마지막 커밋을 취소한다. HEAD~1 은 바로 앞 커밋. --soft 라 변경은 스테이징된 채로 남는다
     scene:
       staged: [README.md (고침)]
-      repo: ['~9b1c3d5 docs: describe the project', '3f2a9c1 docs: add README']
+      repo: ['~d6085fe docs: describe the project', 'aa0b111 docs: add README']
       arrow: { from: repo, to: staged, label: reset --soft }
       caption: HEAD 가 한 칸 뒤로 — 취소한 커밋의 변경은 스테이징에 남았다
   - id: status-staged
