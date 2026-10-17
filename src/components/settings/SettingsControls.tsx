@@ -23,6 +23,19 @@ export default function SettingsControls({ settings, showScenes = false, classNa
       {box('들여쓰기 자동 입력', settings.autoIndent, (v) => change({ autoIndent: v }))}
       {box('키보드 보기', settings.showKeyboard, (v) => change({ showKeyboard: v }))}
       {box('숫자 6을 왼손 검지로', settings.sixFinger === 'left', (v) => change({ sixFinger: v ? 'left' : 'right' }))}
+      <label className="flex items-center gap-1">
+        글자 크기
+        <select
+          className="rounded border border-slate-600 bg-slate-900 px-1 py-0.5"
+          value={settings.fontSize}
+          onChange={(e) => change({ fontSize: e.target.value as Settings['fontSize'] })}
+        >
+          <option value="sm">작게</option>
+          <option value="md">보통</option>
+          <option value="lg">크게</option>
+          <option value="xl">아주 크게</option>
+        </select>
+      </label>
     </div>
   );
 }

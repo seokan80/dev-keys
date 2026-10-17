@@ -27,8 +27,10 @@ const settingsSchema = z.object({
   autoIndent: z.boolean(),
   showKeyboard: z.boolean(),
   sixFinger: z.enum(['right', 'left']),
-  /** Enter 를 치면 동작을 그림으로 보여 준다 */
+  /** 그림(상태 그림 · 커밋 그래프)을 타자 영역 옆에 보여 준다 */
   showScenes: z.boolean(),
+  /** 타자 화면 글자 크기 */
+  fontSize: z.enum(['sm', 'md', 'lg', 'xl']),
 });
 
 export type Best = z.infer<typeof bestSchema>;
@@ -49,6 +51,7 @@ export const DEFAULT_SETTINGS: Settings = {
   showKeyboard: true,
   sixFinger: 'right',
   showScenes: true,
+  fontSize: 'md',
 };
 export const DEFAULT_SAVE: SaveV1 = { version: 1, bests: {}, srs: {}, settings: DEFAULT_SETTINGS };
 

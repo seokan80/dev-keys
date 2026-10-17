@@ -39,12 +39,27 @@ type Props = {
   keyboardOptions?: KeyboardOptions;
   showKeyboard?: boolean;
   autoFocus?: boolean;
+  /** 글자 크기 (설정) */
+  fontSize?: FontSize;
   /** 지금 치는 줄이 바뀔 때 (다 치면 lines.length) — 옆 그래프를 그 줄에 맞춘다 */
   onLine?: (lineIndex: number) => void;
   onFinish?: (stats: TypingStats) => void;
 };
 
 const HANGUL = /[ᄀ-ᇿ㄰-㆏가-힣]/;
+
+export type FontSize = 'sm' | 'md' | 'lg' | 'xl';
+const FONT_PX: Record<FontSize, number> = { sm: 16, md: 18, lg: 21, xl: 25 };
+
+/** 키를 이 화면의 타자로 받아도 되는 곳인가 — 글을 쓰는 다른 칸(검색창 등)에 있으면 건드리지 않는다 */
+const typingAllowedFrom = (el: Element | null) =>
+  !(el instanceof HTMLElement) ||
+  !(
+    el.isContentEditable ||
+    el.tagName === 'TEXTAREA' ||
+    el.tagName === 'SELECT' ||
+    (el instanceof HTMLInputElement && !['checkbox', 'radio', 'button', 'submit'].includes(el.type))
+  );
 
 const formatTime = (ms: number) => {
   const sec = Math.floor(ms / 1000);
@@ -88,6 +103,7 @@ export default function TypingArea({
   keyboardOptions = {},
   showKeyboard = true,
   autoFocus = false,
+  fontSize = 'md',
   onLine,
   onFinish,
 }: Props) {
@@ -172,12 +188,14 @@ export default function TypingArea({
     if (finishedNow) onFinish?.(stats(next, now));
   };
 
-  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.nativeEvent.isComposing || e.key === 'Process') {
+  type Key = { key: string; ctrlKey: boolean; metaKey: boolean; altKey: boolean; composing: boolean };
+  /** 키 하나를 처리한다. 타자로 받았으면 true (기본 동작을 막는다) */
+  const handleKey = (e: Key): boolean => {
+    if (e.composing || e.key === 'Process') {
       setIme(true);
-      return;
+      return false;
     }
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return false;
 
     if (e.key === 'ArrowDown' && review) {
       // 검수 모드: 지금 줄을 정답으로 채운다 (그림을 보는 중에는 무시)
@@ -199,9 +217,32 @@ export default function TypingArea({
         setIme(false);
         send({ kind: 'char', char: e.key });
       }
-    } else return;
-    e.preventDefault();
+    } else return false;
+    return true;
   };
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const { key, ctrlKey, metaKey, altKey } = e;
+    if (handleKey({ key, ctrlKey, metaKey, altKey, composing: e.nativeEvent.isComposing })) e.preventDefault();
+  };
+
+  // 포커스가 빠져 있어도 키를 누르면 그 키부터 바로 친다 ("눌러서 시작" 없이). 다른 입력 칸에 있을 때는 그대로 둔다
+  const handleKeyRef = useRef(handleKey);
+  useEffect(() => {
+    handleKeyRef.current = handleKey;
+  });
+  useEffect(() => {
+    const onWindowKey = (e: KeyboardEvent) => {
+      const input = inputRef.current;
+      if (!input || document.activeElement === input || !typingAllowedFrom(document.activeElement)) return;
+      if (e.key.length !== 1 && !['Enter', 'Backspace', 'ArrowDown'].includes(e.key)) return;
+      input.focus({ preventScroll: true });
+      const { key, ctrlKey, metaKey, altKey, isComposing } = e;
+      if (handleKeyRef.current({ key, ctrlKey, metaKey, altKey, composing: isComposing })) e.preventDefault();
+    };
+    window.addEventListener('keydown', onWindowKey);
+    return () => window.removeEventListener('keydown', onWindowKey);
+  }, []);
 
   const restart = () => {
     commit(createSession(lines, typingOptions));
@@ -254,9 +295,10 @@ export default function TypingArea({
       )}
 
       <div
-        className={`relative max-h-96 cursor-text overflow-auto rounded-lg border bg-slate-900 p-4 font-mono text-lg leading-relaxed ${
+        className={`relative max-h-96 cursor-text overflow-auto rounded-lg border bg-slate-900 p-4 font-mono leading-relaxed ${
           focused ? 'border-emerald-500/60' : 'border-slate-700'
         }`}
+        style={{ fontSize: FONT_PX[fontSize] }}
         onClick={() => inputRef.current?.focus({ preventScroll: true })}
         data-testid="typing-area"
       >
@@ -288,7 +330,7 @@ export default function TypingArea({
               />
               {output && done && (
                 <pre
-                  className={`mb-2 text-sm whitespace-pre-wrap [overflow-wrap:anywhere] ${outputMark ? 'text-emerald-300/80' : 'text-slate-400'}`}
+                  className={`mb-2 text-[0.8em] whitespace-pre-wrap [overflow-wrap:anywhere] ${outputMark ? 'text-emerald-300/80' : 'text-slate-400'}`}
                   data-testid="output"
                 >
                   {outputMark
@@ -305,7 +347,7 @@ export default function TypingArea({
         })}
         {!focused && !finished && (
           <div className="absolute inset-0 flex items-center justify-center bg-slate-950/70 text-sm text-slate-300">
-            {!hydrated ? '불러오는 중…' : `여기를 눌러 ${state.startedAt === null ? '시작' : '계속'}`}
+            {!hydrated ? '불러오는 중…' : state.startedAt === null ? '키를 누르면 시작해요' : '키를 누르면 이어서 쳐요'}
           </div>
         )}
       </div>

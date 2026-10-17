@@ -22,7 +22,7 @@ const v1: SaveV1 = {
   version: 1,
   bests: { 'git-basic-commit:copy': best(180) },
   srs: {},
-  settings: { autoIndent: false, showKeyboard: true, sixFinger: 'left', showScenes: false },
+  settings: { autoIndent: false, showKeyboard: true, sixFinger: 'left', showScenes: false, fontSize: 'lg' },
   lastPlayed: { path: '/git/basic-commit', at: AT },
 };
 
@@ -138,13 +138,23 @@ describe('설정 · 마지막 세트', () => {
     });
   });
 
-  it('기본 설정: 들여쓰기 자동 · 키보드 보기 · 숫자 6 오른손 · 그림 보기', () => {
+  it('기본 설정: 들여쓰기 자동 · 키보드 보기 · 숫자 6 오른손 · 그림 보기 · 글자 크기 보통', () => {
     expect(DEFAULT_SAVE.settings).toEqual({
       autoIndent: true,
       showKeyboard: true,
       sixFinger: 'right',
       showScenes: true,
+      fontSize: 'md',
     });
+  });
+
+  it('글자 크기가 없던 저장값은 보통으로, 모르는 값이면 기본값으로 읽는다', () => {
+    const old = { ...v1, settings: { autoIndent: false, showKeyboard: true, sixFinger: 'left', showScenes: false } };
+    expect(parseSave(JSON.stringify(old)).save.settings.fontSize).toBe('md');
+    const big = { ...v1, settings: { ...v1.settings, fontSize: 'xl' } };
+    expect(parseSave(JSON.stringify(big)).save.settings.fontSize).toBe('xl');
+    const odd = { ...v1, settings: { ...v1.settings, fontSize: 'huge' } };
+    expect(parseSave(JSON.stringify(odd)).save.settings.fontSize).toBe('md');
   });
 
   it('그림 보기 설정이 없던 저장값은 켬으로 읽는다', () => {

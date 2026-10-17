@@ -28,7 +28,7 @@ const played: SaveV1 = {
     [basic.recalls[1]!.key]: { step: 1, wrong: 2, due: '2026-10-20' },
     [basic.recalls[0]!.key]: { step: 0, wrong: 1, due: '2026-10-17' },
   },
-  settings: { autoIndent: true, showKeyboard: true, sixFinger: 'right', showScenes: true },
+  settings: { autoIndent: true, showKeyboard: true, sixFinger: 'right', showScenes: true, fontSize: 'md' },
   lastPlayed: { path: challengeHref(basic), at: AT },
 };
 

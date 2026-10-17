@@ -139,7 +139,9 @@ export default function SetPlayer({
               typingOptions={{ autoIndent: settings.autoIndent }}
               keyboardOptions={{ sixFinger: settings.sixFinger }}
               showKeyboard={settings.showKeyboard}
-              autoFocus={phase.run > 0}
+              // 들어오자마자 바로 칠 수 있게
+              autoFocus
+              fontSize={settings.fontSize}
               onLine={setLineAt}
               onFinish={onFinish}
             />
