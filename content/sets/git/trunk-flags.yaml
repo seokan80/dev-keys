@@ -1,0 +1,248 @@
+id: git-trunk-flags
+category: git
+order: 17
+title: 트렁크 기반과 기능 플래그
+description: main 하나에 작게 자주 — 미완성 기능은 플래그로 꺼 두고, 릴리스는 태그, 릴리스 브랜치는 필요할 때만, 수정은 main 먼저 → cherry-pick -x
+level: 3
+engine:
+  root: '83a6634 chore: add feature flags'
+# 이야기: 검색 기능을 플래그를 끈 채 main 에 작게 여러 번 합치고, 다 되면 플래그를 켜는 커밋 하나로 연다.
+#   릴리스는 main 에 태그. 1.3 에 급한 수정이 필요해지면 그때 태그에서 release/1.3 을 따고, 수정은 main 에 먼저 → cherry-pick -x.
+#   다 쓴 플래그는 지운다.
+# 출력은 실제 git 2.53 으로 뽑았다: scripts/git-story.sh content/stories/git/trunk-flags.sh
+# 원격은 연습용 서버 저장소이고, https://github.com/kim/ 주소가 그쪽을 가리키게 했다(insteadOf).
+# engine: 커밋 그래프가 옆에 늘 보인다. push · pull · tag 처럼 그래프와 상관없는 줄은 skipEngine.
+items:
+  - id: cat-flags
+    type: copy
+    text: cat flags.json
+    note: (운영 중인 서비스) 기능 플래그 — 코드는 들어 있어도 꺼 두면 사용자에게 보이지 않는다
+    skipEngine: true
+    output: '{ "search": false }'
+  - id: commit-1
+    type: copy
+    text: 'git commit -m "feat(search): add search box behind flag"'
+    note: (검색창을 플래그 뒤에 숨겨 만들었다) 기능이 다 되지 않아도 작게 커밋한다
+    tree:
+      caption: main 하나에 바로 — 오래 사는 기능 브랜치가 없다
+    hash: '1ed484b'
+    output: |-
+      [main 1ed484b] feat(search): add search box behind flag
+       1 file changed, 1 insertion(+)
+       create mode 100644 search.html
+  - id: pull
+    type: copy
+    text: git pull
+    note: 올리기 전에 받아서 main 위로 (pull.rebase true). 하루에도 여러 번 하니 충돌이 작다
+    skipEngine: true
+    output: Current branch main is up to date.
+  - id: push-1
+    type: copy
+    text: git push
+    note: 올린다. 플래그가 꺼져 있어 배포돼도 사용자에게는 보이지 않는다
+    skipEngine: true
+    output: |-
+      Enumerating objects: 4, done.
+      Counting objects: 100% (4/4), done.
+      Delta compression using up to 8 threads
+      Compressing objects: 100% (2/2), done.
+      Writing objects: 100% (3/3), 350 bytes | 1.00 MiB/s, done.
+      Total 3 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+      To https://github.com/kim/devkeys.git
+         83a6634..1ed484b  main -> main
+  - id: commit-2
+    type: copy
+    text: 'git commit -m "feat(search): query api behind flag"'
+    note: (검색 API 를 붙였다) 또 작게
+    hash: 'c057eb6'
+    output: |-
+      [main c057eb6] feat(search): query api behind flag
+       1 file changed, 1 insertion(+)
+       create mode 100644 search.js
+  - id: push-2
+    type: copy
+    text: git push
+    skipEngine: true
+    output: |-
+      Enumerating objects: 4, done.
+      Counting objects: 100% (4/4), done.
+      Delta compression using up to 8 threads
+      Compressing objects: 100% (3/3), done.
+      Writing objects: 100% (3/3), 338 bytes | 1.00 MiB/s, done.
+      Total 3 (delta 1), reused 0 (delta 0), pack-reused 0 (from 0)
+      To https://github.com/kim/devkeys.git
+         1ed484b..c057eb6  main -> main
+  - id: turn-on
+    type: copy
+    text: 'git commit -am "feat(search): turn on search"'
+    note: (flags.json 의 search 를 true 로) 기능을 여는 것은 플래그를 켜는 커밋 하나. 문제가 생기면 이 줄을 되돌리면 된다 — 설정 서비스로 플래그를 두면 배포 없이 끈다
+    tree:
+      caption: 기능을 연 커밋
+    hash: '2e6605e'
+    output: |-
+      [main 2e6605e] feat(search): turn on search
+       1 file changed, 1 insertion(+), 1 deletion(-)
+  - id: tag
+    type: copy
+    text: git tag -a v1.3.0 -m "Release 1.3.0"
+    note: 릴리스는 main 의 커밋에 태그로. 릴리스 브랜치를 미리 따지 않는다
+    skipEngine: true
+  - id: push-tag
+    type: copy
+    text: git push --follow-tags
+    note: 1.3.0 배포
+    skipEngine: true
+    output: |-
+      Enumerating objects: 6, done.
+      Counting objects: 100% (6/6), done.
+      Delta compression using up to 8 threads
+      Compressing objects: 100% (3/3), done.
+      Writing objects: 100% (4/4), 413 bytes | 1.00 MiB/s, done.
+      Total 4 (delta 1), reused 0 (delta 0), pack-reused 0 (from 0)
+      To https://github.com/kim/devkeys.git
+         c057eb6..2e6605e  main -> main
+       * [new tag]         v1.3.0 -> v1.3.0
+  - id: release-branch
+    type: copy
+    text: git switch -c release/1.3 v1.3.0
+    note: (다음 기능 랭킹을 플래그 뒤에서 main 에 합친 뒤, 1.3 에서 검색어에 & 가 들어가면 깨진다는 신고) main 을 그대로 내보낼 수 없을 때만 그 태그에서 릴리스 브랜치를 딴다
+    before:
+      - 'git commit -m "9a1a2f3 feat(ranking): add ranking behind flag"'
+    as: git switch -c release/1.3 main~1
+    tree:
+      caption: release/1.3 은 운영 중인 v1.3.0 에서 — 필요해서 이제 땄다
+    output: Switched to a new branch 'release/1.3'
+  - id: switch-main
+    type: copy
+    text: git switch main
+    note: 수정은 main 에 먼저 (upstream first) — 릴리스 브랜치에만 고치면 다음 릴리스에서 버그가 되살아난다
+    output: |-
+      Switched to branch 'main'
+      Your branch is up to date with 'origin/main'.
+  - id: commit-fix
+    type: copy
+    text: 'git commit -am "fix(search): encode query"'
+    note: (검색어를 encodeURIComponent 로 감쌌다) main 에서 고친다
+    tree:
+      caption: 수정이 main 에 먼저
+    hash: '2c8fa79'
+    output: |-
+      [main 2c8fa79] fix(search): encode query
+       1 file changed, 1 insertion(+), 1 deletion(-)
+  - id: push-fix
+    type: copy
+    text: git push
+    skipEngine: true
+    output: |-
+      Enumerating objects: 5, done.
+      Counting objects: 100% (5/5), done.
+      Delta compression using up to 8 threads
+      Compressing objects: 100% (3/3), done.
+      Writing objects: 100% (3/3), 333 bytes | 1.00 MiB/s, done.
+      Total 3 (delta 1), reused 0 (delta 0), pack-reused 0 (from 0)
+      To https://github.com/kim/devkeys.git
+         9a1a2f3..2c8fa79  main -> main
+  - id: switch-release
+    type: copy
+    text: git switch release/1.3
+    note: 릴리스 브랜치로
+    output: Switched to branch 'release/1.3'
+  - id: cherry-pick-x
+    type: copy
+    text: git cherry-pick -x main
+    note: main 의 수정 커밋을 복사해 온다(백포트). -x 는 메시지에 원본 해시를 남겨 어디서 왔는지 추적하게 한다
+    as: git cherry-pick main
+    tree:
+      caption: 같은 수정이 release/1.3 에도 — 랭킹은 따라오지 않는다
+    hash: '358b869'
+    output: |-
+      [release/1.3 358b869] fix(search): encode query
+       Date: Sat Oct 17 09:25:00 2026 +0900
+       1 file changed, 1 insertion(+), 1 deletion(-)
+  - id: log-1
+    type: copy
+    text: git log -1
+    note: (cherry picked from commit …) 줄이 붙었다
+    skipEngine: true
+    output: |-
+      commit 358b869b6d84e99a7eff78d55fb4873c2b8f2f68 (HEAD -> release/1.3)
+      Author: Kim Dev <dev@example.com>
+      Date:   Sat Oct 17 09:25:00 2026 +0900
+
+          fix(search): encode query
+
+          (cherry picked from commit 2c8fa79cedbadd4dbd0c177a0dc3f4d79d357f09)
+  - id: tag-patch
+    type: copy
+    text: git tag -a v1.3.1 -m "Release 1.3.1"
+    note: 고친 버전
+    skipEngine: true
+  - id: push-patch
+    type: copy
+    text: git push --follow-tags
+    note: 릴리스 브랜치와 태그를 올려 1.3.1 배포. 릴리스 브랜치는 main 으로 다시 합치지 않는다 — 수정은 이미 main 에 있다
+    skipEngine: true
+    output: |-
+      Enumerating objects: 6, done.
+      Counting objects: 100% (6/6), done.
+      Delta compression using up to 8 threads
+      Compressing objects: 100% (4/4), done.
+      Writing objects: 100% (4/4), 513 bytes | 1.00 MiB/s, done.
+      Total 4 (delta 1), reused 0 (delta 0), pack-reused 0 (from 0)
+      To https://github.com/kim/devkeys.git
+       * [new branch]      release/1.3 -> release/1.3
+       * [new tag]         v1.3.1 -> v1.3.1
+      branch 'release/1.3' set up to track 'origin/release/1.3'.
+  - id: switch-main-clean
+    type: copy
+    text: git switch main
+    note: (검색이 잘 돌아서 플래그가 필요 없어졌다) main 으로
+    output: |-
+      Switched to branch 'main'
+      Your branch is up to date with 'origin/main'.
+  - id: remove-flag
+    type: copy
+    text: 'git commit -am "chore(search): remove flag"'
+    note: 다 쓴 플래그는 지운다. 플래그가 쌓이면 켜고 끈 조합마다 시험해야 해서 비싸다
+    tree:
+      caption: main 은 계속 한 줄 — 릴리스 브랜치만 옆에 짧게
+    hash: '9bcb309'
+    output: |-
+      [main 9bcb309] chore(search): remove flag
+       2 files changed, 2 insertions(+), 2 deletions(-)
+  - id: push-clean
+    type: copy
+    text: git push
+    skipEngine: true
+    output: |-
+      Enumerating objects: 7, done.
+      Counting objects: 100% (7/7), done.
+      Delta compression using up to 8 threads
+      Compressing objects: 100% (2/2), done.
+      Writing objects: 100% (4/4), 317 bytes | 1.00 MiB/s, done.
+      Total 4 (delta 1), reused 0 (delta 0), pack-reused 0 (from 0)
+      To https://github.com/kim/devkeys.git
+         2c8fa79..9bcb309  main -> main
+  - id: recall-commit
+    type: recall
+    prompt: 담은 변경을 메시지 <message> 로 커밋한다
+    answers: [git commit -m "<message>"]
+    placeholder: { message: 'feat(search): add search box behind flag' }
+  - id: recall-tag
+    type: recall
+    prompt: 지금 커밋에 릴리스 태그 <tag> 를 메시지와 함께 붙인다 — 메시지는 <message>
+    answers: [git tag -a <tag> -m "<message>"]
+    placeholder: { tag: v1.3.0, message: Release 1.3.0 }
+  - id: recall-release-branch
+    type: recall
+    prompt: 태그 <tag> 에서 릴리스 브랜치 <branch> 를 만들어 옮겨 간다
+    answers: [git switch -c <branch> <tag>, git checkout -b <branch> <tag>]
+    placeholder: { tag: v1.3.0, branch: release/1.3 }
+  - id: recall-backport
+    type: recall
+    prompt: main 끝의 수정 커밋을 지금 브랜치로 복사해 온다 — 원본 해시를 메시지에 남기며
+    answers: [git cherry-pick -x main]
+  - id: recall-follow-tags
+    type: recall
+    prompt: 커밋과 거기 붙은 주석 태그를 함께 올린다
+    answers: [git push --follow-tags]

@@ -1,0 +1,347 @@
+id: git-env-branches
+category: git
+order: 18
+title: 환경 브랜치 (main · stage · dev)
+description: 개발 서버 · 검증 서버 · 운영을 브랜치로 — 기능은 main 에서 따서 dev · stage 에 각각 merge, stage 를 main 으로, 핫픽스는 아래로
+level: 3
+engine:
+  root: 'd51a197 docs: add README'
+# 이야기: 개발 서버(dev) · 검증 서버(stage) · 운영(main) 브랜치로 운영하는 팀. 기능 브랜치는 main 에서 따서 dev 와 stage 에 각각 merge 하고,
+#   stage 를 main 으로 fast-forward 해 태그를 붙인다. 핫픽스는 태그에서 따서 main → stage → dev 로 내리고, dev 는 main 에서 다시 만든다.
+#   마지막에 "cherry-pick 으로 올렸다면" git 이 무엇을 모르는지 본다.
+# 출력은 실제 git 2.53 으로 뽑았다: scripts/git-story.sh content/stories/git/env-branches.sh
+# 원격은 연습용 서버 저장소이고, https://github.com/kim/ 주소가 그쪽을 가리키게 했다(insteadOf).
+# engine: 커밋 그래프가 옆에 늘 보인다. push · tag 처럼 그래프와 상관없는 줄은 skipEngine.
+items:
+  - id: branch-dev
+    type: copy
+    text: git branch dev
+    note: (운영 중인 서비스. main = 운영) 개발 서버에 올릴 브랜치를 main 에서 만든다
+    tree:
+      caption: dev — 개발 서버에 떠 있는 코드. 아직 main 과 같다
+  - id: branch-stage
+    type: copy
+    text: git branch stage
+    note: 검증(QA) 서버에 올릴 브랜치
+    tree:
+      caption: stage — 검증 서버에 떠 있는 코드
+  - id: feature-search
+    type: copy
+    text: git switch -c feature/search main
+    note: 기능 브랜치는 main 에서 딴다 — dev 에서 따면 아직 검증 안 된 남의 기능까지 딸려 온다
+    tree:
+      caption: feature/search 는 운영 코드(main)에서 시작
+    output: Switched to a new branch 'feature/search'
+  - id: switch-dev
+    type: copy
+    text: git switch dev
+    note: (검색창을 커밋한 뒤) 개발 서버에서 보려고 dev 로
+    before:
+      - 'git commit -m "dacd929 feat: add search box"'
+    output: Switched to branch 'dev'
+  - id: merge-dev-search
+    type: copy
+    text: git merge --no-ff feature/search
+    note: 기능 브랜치를 dev 에 합친다. --no-ff 로 머지 커밋을 남겨 무엇이 언제 들어왔는지 보이게
+    tree:
+      caption: dev 에 검색이 들어갔다 — 개발 서버 배포
+    hash: '935aaf8'
+    output: |-
+      Merge made by the 'ort' strategy.
+       search.html | 1 +
+       1 file changed, 1 insertion(+)
+       create mode 100644 search.html
+  - id: push-dev
+    type: copy
+    text: git push
+    note: 올린다. 보통 dev · stage · main 에 push 하면 그 서버에 자동으로 배포되게 해 둔다 — 개발 서버 배포
+    skipEngine: true
+    output: |-
+      Enumerating objects: 5, done.
+      Counting objects: 100% (5/5), done.
+      Delta compression using up to 8 threads
+      Compressing objects: 100% (3/3), done.
+      Writing objects: 100% (4/4), 397 bytes | 1.00 MiB/s, done.
+      Total 4 (delta 1), reused 0 (delta 0), pack-reused 0 (from 0)
+      To https://github.com/kim/devkeys.git
+       * [new branch]      dev -> dev
+      branch 'dev' set up to track 'origin/dev'.
+  - id: feature-ranking
+    type: copy
+    text: git switch -c feature/ranking main
+    note: 다음 기능도 main 에서
+    tree:
+      caption: feature/ranking 도 main 에서 — 검색과 섞이지 않는다
+    output: Switched to a new branch 'feature/ranking'
+  - id: switch-dev-again
+    type: copy
+    text: git switch dev
+    note: (랭킹을 커밋한 뒤) dev 로
+    before:
+      - 'git commit -m "4920f19 feat: add ranking"'
+    output: |-
+      Switched to branch 'dev'
+      Your branch is up to date with 'origin/dev'.
+  - id: merge-dev-ranking
+    type: copy
+    text: git merge --no-ff feature/ranking
+    note: 랭킹도 dev 에 — 개발 서버에는 둘 다 떠 있다
+    tree:
+      caption: dev 에는 검색 · 랭킹 둘 다
+    hash: '5b23989'
+    output: |-
+      Merge made by the 'ort' strategy.
+       ranking.html | 1 +
+       1 file changed, 1 insertion(+)
+       create mode 100644 ranking.html
+  - id: switch-stage
+    type: copy
+    text: git switch stage
+    note: (QA 가 검색만 통과시켰다) stage 로
+    output: Switched to branch 'stage'
+  - id: merge-stage-search
+    type: copy
+    text: git merge --no-ff feature/search
+    note: 통과한 기능 브랜치만 stage 에 합친다 — dev 에 넣었던 바로 그 브랜치를. dev 를 통째로 합치지 않는다 (push 하면 검증 서버 배포)
+    tree:
+      caption: stage 에는 검색만. 같은 커밋이 dev · stage 에 함께 있다
+    hash: '0ca4a58'
+    output: |-
+      Merge made by the 'ort' strategy.
+       search.html | 1 +
+       1 file changed, 1 insertion(+)
+       create mode 100644 search.html
+  - id: merged-stage
+    type: copy
+    text: git branch --merged stage
+    note: stage 에 이미 들어간 브랜치. merge 로 올렸기 때문에 git 이 안다
+    skipEngine: true
+    output: |2-
+        feature/search
+        main
+      * stage
+  - id: contains
+    type: copy
+    text: git branch --contains feature/search
+    note: 검색 커밋이 어느 환경까지 갔는지 — dev · stage 에 있고 main 에는 아직 없다
+    skipEngine: true
+    output: |2-
+        dev
+        feature/search
+      * stage
+  - id: switch-main
+    type: copy
+    text: git switch main
+    note: 운영에 내보낸다
+    output: |-
+      Switched to branch 'main'
+      Your branch is up to date with 'origin/main'.
+  - id: merge-ff-only
+    type: copy
+    text: git merge --ff-only stage
+    note: stage 가 main 바로 위에만 쌓여 있으니 앞으로 옮기기만 — QA 가 본 그 커밋이 그대로 운영으로 간다. 갈라졌으면 멈춘다
+    tree:
+      caption: main 이 stage 와 같은 커밋으로 — 새 커밋 없이
+    output: |-
+      Updating d51a197..0ca4a58
+      Fast-forward
+       search.html | 1 +
+       1 file changed, 1 insertion(+)
+       create mode 100644 search.html
+  - id: tag-release
+    type: copy
+    text: git tag -a v1.0.0 -m "Release 1.0.0"
+    note: 운영에 올라간 커밋에 버전 태그
+    skipEngine: true
+  - id: push-release
+    type: copy
+    text: git push --follow-tags
+    note: 운영 배포 — main 과 태그를 올린다
+    skipEngine: true
+    output: |-
+      Enumerating objects: 2, done.
+      Counting objects: 100% (2/2), done.
+      Delta compression using up to 8 threads
+      Compressing objects: 100% (2/2), done.
+      Writing objects: 100% (2/2), 358 bytes | 1.00 MiB/s, done.
+      Total 2 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+      To https://github.com/kim/devkeys.git
+         d51a197..0ca4a58  main -> main
+       * [new tag]         v1.0.0 -> v1.0.0
+  - id: hotfix
+    type: copy
+    text: git switch -c hotfix/login v1.0.0
+    note: (운영에서 로그인 버그) 지금 운영 코드 = 태그에서 딴다. dev 나 stage 에서 따면 검증 안 된 기능이 함께 나간다
+    as: git switch -c hotfix/login main
+    tree:
+      caption: hotfix/login 은 운영 중인 v1.0.0 에서
+    output: Switched to a new branch 'hotfix/login'
+  - id: switch-main-fix
+    type: copy
+    text: git switch main
+    note: (고쳐서 커밋한 뒤) main 으로
+    before:
+      - 'git commit -m "19c6879 fix: restore login form"'
+    output: |-
+      Switched to branch 'main'
+      Your branch is up to date with 'origin/main'.
+  - id: merge-hotfix
+    type: copy
+    text: git merge --no-ff hotfix/login
+    note: 운영에 먼저 합친다 (태그 v1.0.1 을 붙여 배포)
+    tree:
+      caption: 핫픽스가 main 에
+    hash: '138ea53'
+    output: |-
+      Merge made by the 'ort' strategy.
+       login.html | 1 +
+       1 file changed, 1 insertion(+)
+       create mode 100644 login.html
+  - id: switch-stage-down
+    type: copy
+    text: git switch stage
+    note: 이제 아래로 내린다 — 안 내리면 다음 배포 때 버그가 되살아난다
+    output: Switched to branch 'stage'
+  - id: stage-ff
+    type: copy
+    text: git merge --ff-only main
+    note: stage 는 main 뒤에 그대로 있으니 앞으로 옮기기만. 그래야 다음에도 stage → main 이 fast-forward 된다
+    tree:
+      caption: stage 도 핫픽스까지
+    output: |-
+      Updating 0ca4a58..138ea53
+      Fast-forward
+       login.html | 1 +
+       1 file changed, 1 insertion(+)
+       create mode 100644 login.html
+  - id: switch-dev-down
+    type: copy
+    text: git switch dev
+    note: dev 에도
+    output: |-
+      Switched to branch 'dev'
+      Your branch is ahead of 'origin/dev' by 2 commits.
+        (use "git push" to publish your local commits)
+  - id: dev-merge-main
+    type: copy
+    text: git merge main
+    note: dev 에는 랭킹이 더 있어서 머지 커밋이 생긴다. 세 브랜치를 올리면 모든 환경이 고쳐진다
+    tree:
+      caption: dev 에도 핫픽스. 세 환경 모두 고쳐졌다
+    hash: '3d6c859'
+    output: |-
+      Merge made by the 'ort' strategy.
+       login.html | 1 +
+       1 file changed, 1 insertion(+)
+       create mode 100644 login.html
+  - id: recreate-dev
+    type: copy
+    text: git switch -C dev main
+    note: (dev 에 버린 실험 · 꼬인 머지가 쌓였다) dev 를 main 에서 다시 만든다. -C 는 있으면 덮어쓴다. 아무도 dev 에서 브랜치를 따지 않았으니 잃는 작업이 없다
+    as:
+      - git switch main
+      - git branch -D dev
+      - git switch -c dev
+    tree:
+      caption: dev 를 운영 코드에서 새로 — 예전 dev 의 머지들은 떨어져 나갔다
+    output: |-
+      Reset branch 'dev'
+      Your branch and 'origin/dev' have diverged,
+      and have 3 and 1 different commits each, respectively.
+        (use "git pull" if you want to integrate the remote branch with yours)
+  - id: remerge-ranking
+    type: copy
+    text: git merge --no-ff feature/ranking
+    note: 아직 검증 중인 기능만 다시 합친다
+    tree:
+      caption: 새 dev = 운영 + 진행 중인 랭킹
+    hash: '3944bdc'
+    output: |-
+      Merge made by the 'ort' strategy.
+       ranking.html | 1 +
+       1 file changed, 1 insertion(+)
+       create mode 100644 ranking.html
+  - id: push-force-dev
+    type: copy
+    text: git push --force-with-lease
+    note: 다시 만든 dev 는 원격과 갈라졌으니 덮어쓴다. 팀에 미리 알린다
+    skipEngine: true
+    output: |-
+      Enumerating objects: 11, done.
+      Counting objects: 100% (11/11), done.
+      Delta compression using up to 8 threads
+      Compressing objects: 100% (7/7), done.
+      Writing objects: 100% (9/9), 954 bytes | 1.00 MiB/s, done.
+      Total 9 (delta 2), reused 0 (delta 0), pack-reused 0 (from 0)
+      To https://github.com/kim/devkeys.git
+       + 935aaf8...3944bdc dev -> dev (forced update)
+  - id: switch-stage-pick
+    type: copy
+    text: git switch stage
+    note: (만약 랭킹을 merge 대신 cherry-pick 으로 stage 에 올렸다면)
+    output: Switched to branch 'stage'
+  - id: cherry-pick
+    type: copy
+    text: git cherry-pick -x feature/ranking
+    note: 커밋을 복사해 올린다. -x 는 메시지에 원본 해시를 남긴다
+    as: git cherry-pick feature/ranking
+    tree:
+      caption: 같은 변경이 해시만 다른 커밋으로 하나 더 생겼다
+    hash: 'af384ce'
+    output: |-
+      [stage af384ce] feat: add ranking
+       Date: Sat Oct 17 09:16:00 2026 +0900
+       1 file changed, 1 insertion(+)
+       create mode 100644 ranking.html
+  - id: merged-stage-pick
+    type: copy
+    text: git branch --merged stage
+    note: feature/ranking 이 없다 — 복사본은 다른 커밋이라 git 은 합쳐진 줄 모른다. 어디까지 갔는지 추적하기 어려워진다
+    skipEngine: true
+    output: |2-
+        feature/search
+        hotfix/login
+        main
+      * stage
+  - id: cherry
+    type: copy
+    text: git cherry -v stage feature/ranking
+    note: git cherry 는 변경 내용으로 비교한다. - 는 이미 들어간 것, + 는 아직 안 들어간 것. cherry-pick 으로 운영한다면 이것으로 빠진 것을 찾는다. 원본과 복사본이 나중에 만나면 충돌 · 중복의 씨앗이 된다 — 옆 그래프에 랭킹이 둘이다
+    skipEngine: true
+    output: '- 4920f1925407e9295b839a4a82a67a22da7f47e2 feat: add ranking'
+  - id: recall-feature-from-main
+    type: recall
+    prompt: main 에서 기능 브랜치 <branch> 를 만들어 옮겨 간다
+    answers: [git switch -c <branch> main, git checkout -b <branch> main]
+    placeholder: { branch: feature/search }
+  - id: recall-merge-no-ff
+    type: recall
+    prompt: 기능 브랜치 <branch> 를 지금 브랜치에 머지 커밋을 남기며 합친다
+    answers: [git merge --no-ff <branch>]
+    placeholder: { branch: feature/search }
+  - id: recall-merged
+    type: recall
+    prompt: stage 에 이미 합쳐진 브랜치를 본다
+    answers: [git branch --merged stage]
+  - id: recall-contains
+    type: recall
+    prompt: <branch> 의 커밋을 품은 브랜치를 본다 — 어느 환경까지 갔는지
+    answers: [git branch --contains <branch>]
+    placeholder: { branch: feature/search }
+  - id: recall-ff-only
+    type: recall
+    prompt: stage 를 main 으로 — 앞으로 옮기기만 될 때만 합친다
+    answers: [git merge --ff-only stage]
+  - id: recall-hotfix
+    type: recall
+    prompt: 운영 태그 <tag> 에서 핫픽스 브랜치 <branch> 를 만들어 옮겨 간다
+    answers: [git switch -c <branch> <tag>, git checkout -b <branch> <tag>]
+    placeholder: { tag: v1.0.0, branch: hotfix/login }
+  - id: recall-recreate
+    type: recall
+    prompt: dev 를 main 에서 다시 만들어(있으면 덮어써) 옮겨 간다
+    answers: [git switch -C dev main, git checkout -B dev main]
+  - id: recall-cherry
+    type: recall
+    prompt: feature/ranking 의 변경 중 stage 에 이미 들어간 것(-)과 아닌 것(+)을 본다
+    answers: [git cherry -v stage feature/ranking, git cherry stage feature/ranking]

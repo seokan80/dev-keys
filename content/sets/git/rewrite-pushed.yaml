@@ -1,0 +1,176 @@
+id: git-rewrite-pushed
+category: git
+order: 13
+title: 올린 커밋 고치기
+description: 이미 올린 내 브랜치의 커밋을 고쳐 다시 올리기 — --force-with-lease 로, range-diff 로 전후 비교, 동료의 커밋을 지우지 않게
+level: 3
+# 이야기: 이미 올린 내 브랜치(feature/search)의 커밋을 고쳐 다시 올린다. 보통 push 는 거절되고 --force-with-lease 로 올린다.
+#   range-diff 로 고치기 전후를 견주고, 같은 브랜치에 lee 가 올린 커밋을 지우지 않게 lease 가 막는 것을 본다.
+# 출력은 실제 git 2.53 으로 뽑았다: scripts/git-story.sh content/stories/git/rewrite-pushed.sh
+# 원격은 연습용 서버 저장소이고, https://github.com/kim/ 주소가 그쪽을 가리키게 했다(insteadOf).
+# 원격은 커밋 그래프 엔진 범위 밖이라 따라치기와 출력만 둔다.
+items:
+  - id: amend
+    type: copy
+    text: 'git commit --amend -m "feat: query search api"'
+    note: (feature/search 를 올려 PR 을 열었는데, 마지막 커밋 메시지에 오타 qeury 가 있다) 메시지를 고친다 — 커밋을 새로 만들어 바꾼다
+    output: |-
+      [feature/search 27c5706] feat: query search api
+       Date: Sat Oct 17 09:08:00 2026 +0900
+       1 file changed, 1 insertion(+)
+       create mode 100644 search.js
+  - id: status-diverged
+    type: copy
+    text: git status
+    note: 올린 커밋(옛 것)과 고친 커밋(새 것)이 서로 다른 커밋이라 갈라진 것으로 보인다
+    output: |-
+      On branch feature/search
+      Your branch and 'origin/feature/search' have diverged,
+      and have 1 and 1 different commits each, respectively.
+        (use "git pull" if you want to integrate the remote branch with yours)
+
+      nothing to commit, working tree clean
+  - id: push-rejected
+    type: copy
+    text: git push
+    note: 원격 브랜치를 앞으로 옮기는 것이 아니라 바꾸는 것이라 거절된다. 여기서 pull 하면 옛 커밋과 새 커밋이 둘 다 남는다
+    output: |-
+      To https://github.com/kim/devkeys.git
+       ! [rejected]        feature/search -> feature/search (non-fast-forward)
+      error: failed to push some refs to 'https://github.com/kim/devkeys.git'
+      hint: Updates were rejected because the tip of your current branch is behind
+      hint: its remote counterpart. If you want to integrate the remote changes,
+      hint: use 'git pull' before pushing again.
+      hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+  - id: push-lease
+    type: copy
+    text: git push --force-with-lease
+    note: '"원격이 내가 마지막으로 본 그대로일 때만" 덮어쓴다. 그새 누가 올렸으면 거절해 준다. 그냥 --force 는 묻지 않고 덮어쓴다'
+    output: |-
+      Enumerating objects: 4, done.
+      Counting objects: 100% (4/4), done.
+      Delta compression using up to 8 threads
+      Compressing objects: 100% (3/3), done.
+      Writing objects: 100% (3/3), 366 bytes | 1.00 MiB/s, done.
+      Total 3 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+      To https://github.com/kim/devkeys.git
+       + 1d7df99...27c5706 feature/search -> feature/search (forced update)
+  - id: range-diff
+    type: copy
+    text: git range-diff main origin/feature/search@{1} HEAD
+    note: 고치기 전 커밋들(origin/feature/search@{1} — 덮어쓰기 전 원격 위치)과 고친 뒤 커밋들을 짝지어 견준다. = 는 같음, ! 는 바뀜. PR 리뷰어에게 무엇을 고쳤는지 보여 줄 때
+    output: |-
+      1:  446fd09 = 1:  446fd09 feat: add search box
+      2:  1d7df99 ! 2:  27c5706 feat: qeury search api
+          @@ Metadata
+           Author: Kim Dev <dev@example.com>
+
+            ## Commit message ##
+          -    feat: qeury search api
+          +    feat: query search api
+
+            ## search.js (new) ##
+           @@
+  - id: amend-again
+    type: copy
+    text: git commit --amend --no-edit
+    note: (lee 가 같은 브랜치에 테스트를 올렸다. 나는 모르고 검색 API 를 또 고쳤다) 마지막 커밋에 합친다
+    output: |-
+      [feature/search 35e57f6] feat: query search api
+       Date: Sat Oct 17 09:08:00 2026 +0900
+       1 file changed, 1 insertion(+)
+       create mode 100644 search.js
+  - id: push-stale
+    type: copy
+    text: git push --force-with-lease
+    note: 원격이 내가 마지막으로 본 때와 달라서(stale info) 거절했다 — --force 였다면 lee 의 커밋이 지워졌다
+    output: |-
+      To https://github.com/kim/devkeys.git
+       ! [rejected]        feature/search -> feature/search (stale info)
+      error: failed to push some refs to 'https://github.com/kim/devkeys.git'
+  - id: fetch
+    type: copy
+    text: git fetch
+    note: 무엇이 올라왔는지 받아 온다
+    output: |-
+      remote: Enumerating objects: 4, done.
+      remote: Counting objects: 100% (4/4), done.
+      remote: Compressing objects: 100% (2/2), done.
+      remote: Total 3 (delta 1), reused 0 (delta 0), pack-reused 0 (from 0)
+      Unpacking objects: 100% (3/3), 269 bytes | 1.00 MiB/s, done.
+      From https://github.com/kim/devkeys
+         27c5706..7f46d8b  feature/search -> origin/feature/search
+  - id: log-incoming
+    type: copy
+    text: git log --oneline HEAD..origin/feature/search
+    note: 위가 lee 의 커밋, 아래는 내가 고치기 전 커밋(그래서 내 쪽에 없다)
+    output: |-
+      7f46d8b (origin/feature/search) test: add search test
+      27c5706 feat: query search api
+  - id: cherry-pick
+    type: copy
+    text: git cherry-pick origin/feature/search
+    note: lee 의 커밋을 내가 고친 브랜치 위로 옮겨 온다. 작성자는 lee 그대로
+    output: |-
+      [feature/search 3603ee3] test: add search test
+       Author: Lee Dev <lee@example.com>
+       Date: Sat Oct 17 09:15:00 2026 +0900
+       1 file changed, 1 insertion(+)
+       create mode 100644 search.test.js
+  - id: push-lease-ok
+    type: copy
+    text: git push --force-with-lease
+    note: 이제 원격(방금 받아 온 것)을 덮어써도 lee 의 변경은 내 쪽에 들어 있다
+    output: |-
+      Enumerating objects: 7, done.
+      Counting objects: 100% (7/7), done.
+      Delta compression using up to 8 threads
+      Compressing objects: 100% (5/5), done.
+      Writing objects: 100% (6/6), 624 bytes | 1.00 MiB/s, done.
+      Total 6 (delta 1), reused 0 (delta 0), pack-reused 0 (from 0)
+      To https://github.com/kim/devkeys.git
+       + 7f46d8b...3603ee3 feature/search -> feature/search (forced update)
+  - id: log-final
+    type: copy
+    text: git log --oneline main..
+    note: 고친 커밋 위에 lee 의 테스트
+    output: |-
+      3603ee3 (HEAD -> feature/search, origin/feature/search) test: add search test
+      35e57f6 feat: query search api
+      446fd09 feat: add search box
+  - id: status-synced
+    type: copy
+    text: git status -sb
+    note: 원격과 같아졌다 — 앞서지도 뒤처지지도 않는다
+    output: '## feature/search...origin/feature/search'
+  - id: config-force-if-includes
+    type: copy
+    text: git config --global push.useForceIfIncludes true
+    note: (2.30) fetch 만 하고 반영하지 않은 채 --force-with-lease 하면 lease 가 통과해 버린다 — 방금 fetch 뒤 바로 쳤다면 lee 의 커밋이 지워졌다. 이 설정은 받아 온 커밋을 rebase · merge 로 내 브랜치에 넣은 적이 없으면 거절한다
+  - id: recall-amend
+    type: recall
+    prompt: 마지막 커밋의 메시지를 <message> 로 고친다
+    answers: [git commit --amend -m "<message>"]
+    placeholder: { message: 'feat: query search api' }
+  - id: recall-push-lease
+    type: recall
+    prompt: 원격이 내가 마지막으로 본 그대로일 때만 덮어써서 올린다
+    answers: [git push --force-with-lease]
+  - id: recall-range-diff
+    type: recall
+    prompt: main 위의 커밋들을, 덮어쓰기 전 원격 브랜치(<old>)와 지금 HEAD 사이에서 짝지어 견준다
+    answers: [git range-diff main <old> HEAD]
+    placeholder: { old: 'origin/feature/search@{1}' }
+  - id: recall-amend-no-edit
+    type: recall
+    prompt: 담은 변경을 마지막 커밋에 합친다 — 메시지는 그대로
+    answers: [git commit --amend --no-edit]
+  - id: recall-cherry-pick
+    type: recall
+    prompt: 원격 브랜치 <ref> 끝의 커밋 하나를 지금 브랜치 위로 옮겨 온다
+    answers: [git cherry-pick <ref>]
+    placeholder: { ref: origin/feature/search }
+  - id: recall-force-if-includes
+    type: recall
+    prompt: 받아 온 원격 커밋을 내 브랜치에 넣은 적이 없으면 강제 push 를 거절하게 전역 설정한다
+    answers: [git config --global push.useForceIfIncludes true, git config set --global push.useForceIfIncludes true]

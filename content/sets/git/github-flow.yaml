@@ -1,0 +1,260 @@
+id: git-github-flow
+category: git
+order: 16
+title: GitHub Flow
+description: main 은 늘 배포할 수 있게 — 기능 브랜치 → push → PR → 리뷰 반영 → squash 로 합치면 바로 배포. 급한 수정도 같은 길
+level: 2
+engine:
+  root: '0b75907 feat: add login page'
+# 이야기: main 은 늘 배포할 수 있는 상태. 기능 브랜치 → push → PR → 리뷰 반영 → squash 로 합치면 바로 배포. 운영 중 급한 수정도 같은 길로 간다.
+# 출력은 실제로 실행해 뽑았다 — git 2.53 + gh 를 연습용 GitHub 저장소에: scripts/git-story.sh content/stories/git/github-flow.sh
+#   올리기는 GitHub 로, 받아 오기는 GitHub 와 똑같이 맞춘 연습용 서버 저장소에서 했다 — GitHub 에서 받으면 remote: 숫자가 실행마다 달라서다.
+#   PR 번호(#12 · #13) · GitHub 가 만든 squash 커밋 해시와 크기는 실행할 때마다 달라서 이야기 속 값으로 바꿨다.
+# engine: 커밋 그래프가 옆에 늘 보인다. gh 는 엔진이 몰라서 as 로 엔진의 명령으로 돌린다 — 합치기는 브랜치 지우기, 받아 오기는 squash 커밋 하나.
+items:
+  - id: switch-c
+    type: copy
+    text: git switch -c feature/search
+    note: (main = 운영. 합치면 바로 배포된다) 할 일 하나에 브랜치 하나
+    tree:
+      caption: main 에서 기능 브랜치
+    output: Switched to a new branch 'feature/search'
+  - id: push
+    type: copy
+    text: git push
+    note: (검색창을 커밋한 뒤) 일찍 올린다 — 올려야 PR 을 열고 의견을 받는다
+    skipEngine: true
+    before:
+      - 'git commit -m "6a2e3b9 feat(search): add search box"'
+    output: |-
+      Enumerating objects: 4, done.
+      Counting objects: 100% (4/4), done.
+      Delta compression using up to 8 threads
+      Compressing objects: 100% (2/2), done.
+      Writing objects: 100% (3/3), 331 bytes | 1.00 MiB/s, done.
+      Total 3 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+      remote:
+      remote: Create a pull request for 'feature/search' on GitHub by visiting:
+      remote:      https://github.com/kim/devkeys/pull/new/feature/search
+      remote:
+      To https://github.com/kim/devkeys.git
+       * [new branch]      feature/search -> feature/search
+      branch 'feature/search' set up to track 'origin/feature/search'.
+  - id: pr-create
+    type: copy
+    text: gh pr create --fill
+    note: PR 을 연다. --fill 은 커밋 메시지로 제목 · 설명을 채운다. PR 마다 미리보기 배포를 붙여 두면 개발 서버가 따로 필요 없다
+    skipEngine: true
+    output: https://github.com/kim/devkeys/pull/12
+  - id: pr-view
+    type: copy
+    text: gh pr view --json number,title,state
+    note: 열린 PR
+    skipEngine: true
+    output: |-
+      {
+        "number": 12,
+        "state": "OPEN",
+        "title": "feat(search): add search box"
+      }
+  - id: commit-fix
+    type: copy
+    text: 'git commit -am "fix(search): add label"'
+    note: (리뷰에서 label 이 빠졌다는 의견) 고쳐서 같은 브랜치에 커밋한다 — PR 이 따라 바뀐다
+    tree:
+      caption: 리뷰 반영 커밋이 같은 브랜치에
+    hash: '049acb0'
+    output: |-
+      [feature/search 049acb0] fix(search): add label
+       1 file changed, 1 insertion(+)
+  - id: push-fix
+    type: copy
+    text: git push
+    note: 올리면 PR 에 커밋이 더해지고 검사가 다시 돈다
+    skipEngine: true
+    output: |-
+      Enumerating objects: 5, done.
+      Counting objects: 100% (5/5), done.
+      Delta compression using up to 8 threads
+      Compressing objects: 100% (2/2), done.
+      Writing objects: 100% (3/3), 292 bytes | 1.00 MiB/s, done.
+      Total 3 (delta 1), reused 0 (delta 0), pack-reused 0 (from 0)
+      remote: Resolving deltas: 100% (1/1), completed with 1 local object.
+      To https://github.com/kim/devkeys.git
+         6a2e3b9..049acb0  feature/search -> feature/search
+  - id: pr-commits
+    type: copy
+    text: gh pr view --json commits --jq ".commits[].messageHeadline"
+    note: PR 에 든 커밋 둘
+    skipEngine: true
+    output: |-
+      feat(search): add search box
+      fix(search): add label
+  - id: switch-main
+    type: copy
+    text: git switch main
+    note: (승인을 받았다) main 으로 돌아온다
+    output: |-
+      Switched to branch 'main'
+      Your branch is up to date with 'origin/main'.
+  - id: pr-merge
+    type: copy
+    text: gh pr merge 12 --squash --delete-branch
+    note: squash — PR 의 커밋들을 main 에 새 커밋 하나로. 원격 · 로컬 브랜치도 지운다. 합치면 main 이 배포된다
+    as: git branch -D feature/search
+    tree:
+      caption: 로컬 브랜치가 지워졌다. 합친 커밋은 아직 GitHub 의 main 에만
+    output: |-
+      ✓ Squashed and merged pull request kim/devkeys#12 (feat(search): add search box)
+      ✓ Deleted local branch feature/search
+      ✓ Deleted remote branch feature/search
+  - id: pull
+    type: copy
+    text: git pull
+    note: GitHub 의 main 에 생긴 squash 커밋을 받아 온다
+    as: 'git commit -m "feat(search): add search box (#12)"'
+    tree:
+      caption: squash 커밋 하나가 main 에. 브랜치의 커밋들은 떨어져 나갔다
+    hash: 'a3f9c21'
+    output: |-
+      remote: Enumerating objects: 4, done.
+      remote: Counting objects: 100% (4/4), done.
+      remote: Compressing objects: 100% (2/2), done.
+      remote: Total 3 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+      Unpacking objects: 100% (3/3), 1.04 KiB | 1.00 MiB/s, done.
+      From https://github.com/kim/devkeys
+         0b75907..a3f9c21  main       -> origin/main
+      Updating 0b75907..a3f9c21
+      Fast-forward
+       search.html | 2 ++
+       1 file changed, 2 insertions(+)
+       create mode 100644 search.html
+  - id: log-2
+    type: copy
+    text: git log --oneline -2
+    note: 메시지 끝에 PR 번호 — 나중에 이 커밋이 어느 PR 에서 왔는지 찾을 수 있다
+    skipEngine: true
+    output: |-
+      a3f9c21 (HEAD -> main, origin/main, origin/HEAD) feat(search): add search box (#12)
+      0b75907 feat: add login page
+  - id: switch-c-fix
+    type: copy
+    text: git switch -c fix/login-label
+    note: (운영에서 로그인 버튼 문구가 틀렸다) 급한 수정도 같은 길 — 브랜치를 따서
+    tree:
+      caption: 핫픽스도 main 에서 딴 짧은 브랜치
+    output: Switched to a new branch 'fix/login-label'
+  - id: push-fix-branch
+    type: copy
+    text: git push
+    note: (고쳐서 커밋한 뒤) 올린다
+    skipEngine: true
+    before:
+      - 'git commit -m "c4d81e2 fix(login): say sign in"'
+    output: |-
+      Enumerating objects: 5, done.
+      Counting objects: 100% (5/5), done.
+      Delta compression using up to 8 threads
+      Compressing objects: 100% (3/3), done.
+      Writing objects: 100% (3/3), 363 bytes | 1.00 MiB/s, done.
+      Total 3 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+      remote:
+      remote: Create a pull request for 'fix/login-label' on GitHub by visiting:
+      remote:      https://github.com/kim/devkeys/pull/new/fix/login-label
+      remote:
+      To https://github.com/kim/devkeys.git
+       * [new branch]      fix/login-label -> fix/login-label
+      branch 'fix/login-label' set up to track 'origin/fix/login-label'.
+  - id: pr-create-fix
+    type: copy
+    text: gh pr create --fill
+    note: PR 을 연다 — 급해도 검사와 리뷰를 거친다. 작게 고쳐서 빨리 끝난다
+    skipEngine: true
+    output: https://github.com/kim/devkeys/pull/13
+  - id: switch-main-fix
+    type: copy
+    text: git switch main
+    note: (승인을 받았다)
+    output: |-
+      Switched to branch 'main'
+      Your branch is up to date with 'origin/main'.
+  - id: pr-merge-fix
+    type: copy
+    text: gh pr merge 13 --squash --delete-branch
+    note: 합치면 바로 배포 — 따로 핫픽스 브랜치 규칙이 없는 것이 GitHub Flow 의 장점
+    as: git branch -D fix/login-label
+    tree:
+      caption: 로컬 브랜치를 지웠다
+    output: |-
+      ✓ Squashed and merged pull request kim/devkeys#13 (fix(login): say sign in)
+      ✓ Deleted local branch fix/login-label
+      ✓ Deleted remote branch fix/login-label
+  - id: pull-fix
+    type: copy
+    text: git pull
+    note: 받아 온다
+    as: 'git commit -m "fix(login): say sign in (#13)"'
+    tree:
+      caption: main 은 한 줄로 — PR 하나가 커밋 하나
+    hash: 'b7e4d10'
+    output: |-
+      remote: Enumerating objects: 5, done.
+      remote: Counting objects: 100% (5/5), done.
+      remote: Compressing objects: 100% (3/3), done.
+      remote: Total 3 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+      Unpacking objects: 100% (3/3), 1.04 KiB | 1.00 MiB/s, done.
+      From https://github.com/kim/devkeys
+         a3f9c21..b7e4d10  main       -> origin/main
+      Updating a3f9c21..b7e4d10
+      Fast-forward
+       login.html | 2 +-
+       1 file changed, 1 insertion(+), 1 deletion(-)
+  - id: log-3
+    type: copy
+    text: git log --oneline -3
+    note: main 의 기록 — PR 하나가 커밋 하나
+    skipEngine: true
+    output: |-
+      b7e4d10 (HEAD -> main, origin/main, origin/HEAD) fix(login): say sign in (#13)
+      a3f9c21 feat(search): add search box (#12)
+      0b75907 feat: add login page
+  - id: pr-list
+    type: copy
+    text: gh pr list --state merged --limit 2 --json number,title
+    note: 합친 PR 목록
+    skipEngine: true
+    output: |-
+      [
+        {
+          "number": 13,
+          "title": "fix(login): say sign in"
+        },
+        {
+          "number": 12,
+          "title": "feat(search): add search box"
+        }
+      ]
+  - id: recall-switch-c
+    type: recall
+    prompt: 기능 브랜치 <branch> 를 만들어 옮겨 간다
+    answers: [git switch -c <branch>, git checkout -b <branch>]
+    placeholder: { branch: feature/search }
+  - id: recall-pr-create
+    type: recall
+    prompt: 지금 브랜치로 PR 을 연다 — 제목 · 설명은 커밋 메시지로 채운다
+    answers: [gh pr create --fill, gh pr create -f]
+  - id: recall-pr-merge
+    type: recall
+    prompt: PR <number> 의 커밋들을 하나로 묶어(squash) 합치고 브랜치도 지운다
+    answers:
+      [
+        gh pr merge <number> --squash --delete-branch,
+        gh pr merge <number> --delete-branch --squash,
+        gh pr merge <number> -s -d,
+      ]
+    placeholder: { number: '12' }
+  - id: recall-pr-list
+    type: recall
+    prompt: 합친 PR 최근 2개를 번호와 제목만 본다
+    answers:
+      ['gh pr list --state merged --limit 2 --json number,title', 'gh pr list -s merged -L 2 --json number,title']

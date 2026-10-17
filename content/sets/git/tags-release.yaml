@@ -1,0 +1,156 @@
+id: git-tags-release
+category: git
+order: 15
+title: 태그와 릴리스
+description: 커밋에 버전 이름표 붙이기(tag · tag -a) · describe · 태그 올리기(push --follow-tags) · GitHub 릴리스(gh release create)
+level: 2
+# 이야기: 커밋에 버전 이름표(태그)를 붙이고 올린 뒤, GitHub 릴리스를 만든다.
+# 출력은 실제로 실행해 뽑았다 — git 2.53 + gh 를 연습용 GitHub 저장소에: scripts/git-story.sh content/stories/git/tags-release.sh
+# 태그는 커밋 그래프 엔진 범위 밖이라 따라치기와 출력만 둔다.
+items:
+  - id: log
+    type: copy
+    text: git log --oneline
+    note: 지금까지의 커밋 (main 은 올려 두었다)
+    output: |-
+      8fe0312 (HEAD -> main, origin/main) feat: add search box
+      b38bb74 feat: add login page
+      c2d7459 docs: add README
+  - id: tag-light
+    type: copy
+    text: git tag v1.0.0 HEAD~1
+    note: 가벼운 태그 — 커밋 하나를 가리키는 이름표일 뿐이다. 커밋을 적지 않으면 HEAD
+  - id: tag-annotated
+    type: copy
+    text: 'git tag -a v1.1.0 -m "Release 1.1.0: search box"'
+    note: 주석 태그 — 만든 사람 · 시각 · 메시지가 든 태그 객체를 만든다. 릴리스에는 이쪽을 쓴다
+  - id: tag-n
+    type: copy
+    text: git tag -n
+    note: 태그 목록과 한 줄 설명. 가벼운 태그는 커밋 메시지, 주석 태그는 태그 메시지가 보인다
+    output: |-
+      v1.0.0          feat: add login page
+      v1.1.0          Release 1.1.0: search box
+  - id: show-tag
+    type: copy
+    text: git show --no-patch v1.1.0
+    note: 주석 태그는 태그 정보(Tagger) 다음에 가리키는 커밋이 나온다
+    output: |-
+      tag v1.1.0
+      Tagger: Kim Dev <dev@example.com>
+      Date:   Sat Oct 17 09:12:00 2026 +0900
+
+      Release 1.1.0: search box
+
+      commit 8fe031239b4e7e7bc6fbbb8fc17e3b92ba2a156c (HEAD -> main, tag: v1.1.0, origin/main)
+      Author: Kim Dev <dev@example.com>
+      Date:   Sat Oct 17 09:08:00 2026 +0900
+
+          feat: add search box
+  - id: push-tag
+    type: copy
+    text: git push origin v1.1.0
+    note: 태그는 git push 만으로는 올라가지 않는다 — 이름을 적어 올린다
+    output: |-
+      Enumerating objects: 1, done.
+      Counting objects: 100% (1/1), done.
+      Writing objects: 100% (1/1), 170 bytes | 1.00 MiB/s, done.
+      Total 1 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+      To https://github.com/kim/devkeys.git
+       * [new tag]         v1.1.0 -> v1.1.0
+  - id: describe
+    type: copy
+    text: git describe
+    note: (다음 기능을 커밋했다) 가장 가까운 주석 태그 기준의 이름 — v1.1.0 뒤 1커밋, g 다음은 커밋 해시. 빌드 버전 문자열로 쓴다
+    output: v1.1.0-1-g19d7515
+  - id: tag-next
+    type: copy
+    text: 'git tag -a v1.2.0 -m "Release 1.2.0: search results"'
+    note: 다음 릴리스 태그
+  - id: config-follow-tags
+    type: copy
+    text: git config --global push.followTags true
+    note: push 할 때 올리는 커밋에 붙은 주석 태그도 함께 올린다 (가벼운 태그는 아니다)
+  - id: push-follow
+    type: copy
+    text: git push
+    note: 커밋과 v1.2.0 태그가 함께 올라갔다. 아직 안 올린 v1.0.0(가벼운 태그)은 남는다
+    output: |-
+      Enumerating objects: 5, done.
+      Counting objects: 100% (5/5), done.
+      Delta compression using up to 8 threads
+      Compressing objects: 100% (3/3), done.
+      Writing objects: 100% (4/4), 513 bytes | 1.00 MiB/s, done.
+      Total 4 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+      To https://github.com/kim/devkeys.git
+         8fe0312..19d7515  main -> main
+       * [new tag]         v1.2.0 -> v1.2.0
+  - id: ls-remote-tags
+    type: copy
+    text: git ls-remote --tags origin
+    note: 원격의 태그. ^{} 줄은 주석 태그가 가리키는 커밋이다
+    output: |-
+      d8faa2084e405e92077cd5b6945a4072c7abd23e        refs/tags/v1.1.0
+      8fe031239b4e7e7bc6fbbb8fc17e3b92ba2a156c        refs/tags/v1.1.0^{}
+      a6c2c2a3cc4f4d2d5fb52eb738e559b165706784        refs/tags/v1.2.0
+      19d7515adf355144f6777a5c64dbc8ce07626164        refs/tags/v1.2.0^{}
+  - id: release-create
+    type: copy
+    text: gh release create v1.2.0 --generate-notes
+    note: 태그로 GitHub 릴리스를 만든다. --generate-notes 는 앞 릴리스 이후 합친 PR 로 설명을 만든다. 파일을 덧붙이려면 태그 뒤에 파일 이름
+    output: https://github.com/kim/devkeys/releases/tag/v1.2.0
+  - id: release-view
+    type: copy
+    text: gh release view v1.2.0 --json tagName,name,body
+    note: 만든 릴리스. 합친 PR 이 없어서 설명에는 비교 링크만 들어갔다
+    output: |-
+      {
+        "body": "**Full Changelog**: https://github.com/kim/devkeys/compare/v1.1.0...v1.2.0",
+        "name": "v1.2.0",
+        "tagName": "v1.2.0"
+      }
+  - id: tag-delete
+    type: copy
+    text: git tag -d v1.0.0
+    note: 로컬 태그를 지운다. 이미 올린 태그라면 git push origin --delete v1.0.0 도 — 받아 간 사람에게는 남으니 올린 태그는 되도록 지우지 않는다
+    output: Deleted tag 'v1.0.0' (was b38bb74)
+  - id: tag-list
+    type: copy
+    text: git tag -l "v1.*"
+    note: 패턴으로 태그 목록
+    output: |-
+      v1.1.0
+      v1.2.0
+  - id: recall-tag-light
+    type: recall
+    prompt: <ref> 커밋에 가벼운 태그 <tag> 를 붙인다
+    answers: [git tag <tag> <ref>]
+    placeholder: { tag: v1.0.0, ref: HEAD~1 }
+  - id: recall-tag-annotated
+    type: recall
+    prompt: 지금 커밋에 메시지가 든 주석 태그 <tag> 를 붙인다 — 메시지는 <message>
+    answers: [git tag -a <tag> -m "<message>", git tag <tag> -a -m "<message>", git tag -am "<message>" <tag>]
+    placeholder: { tag: v1.1.0, message: Release 1.1.0 }
+  - id: recall-push-tag
+    type: recall
+    prompt: 태그 <tag> 를 origin 에 올린다
+    answers: [git push origin <tag>, git push origin tag <tag>, git push origin refs/tags/<tag>]
+    placeholder: { tag: v1.1.0 }
+  - id: recall-describe
+    type: recall
+    prompt: 가장 가까운 주석 태그를 기준으로 지금 커밋의 이름을 본다
+    answers: [git describe]
+  - id: recall-follow-tags
+    type: recall
+    prompt: push 할 때 올리는 커밋에 붙은 주석 태그도 함께 올라가게 전역 설정한다
+    answers: [git config --global push.followTags true, git config set --global push.followTags true]
+  - id: recall-release
+    type: recall
+    prompt: 태그 <tag> 로 GitHub 릴리스를 만들고 설명은 자동으로 만든다
+    answers: [gh release create <tag> --generate-notes]
+    placeholder: { tag: v1.2.0 }
+  - id: recall-tag-delete
+    type: recall
+    prompt: 로컬 태그 <tag> 를 지운다
+    answers: [git tag -d <tag>, git tag --delete <tag>]
+    placeholder: { tag: v1.0.0 }

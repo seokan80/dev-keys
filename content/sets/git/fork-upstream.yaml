@@ -1,0 +1,238 @@
+id: git-fork-upstream
+category: git
+order: 19
+title: Fork 와 upstream
+description: 내 계정의 fork 를 받아 원본을 upstream 으로 — upstream 최신에서 브랜치, fork 에 올려 PR, 원본이 앞서가면 맞추기
+level: 3
+# 이야기: 오픈소스 프로젝트(devkeys-org/devkeys)를 GitHub 에서 내 계정으로 fork(kim/devkeys)한 뒤, 내 fork 를 받아 원본을 upstream 으로 등록하고,
+#   upstream 최신에서 브랜치를 따 내 fork 에 올린다(PR 은 원본으로). 원본이 앞서가면 내 fork 의 main 을 맞추고,
+#   main 은 upstream 에서 받고 origin 에 올리게 짝을 나눈다. 오래된 PR 브랜치는 upstream 위로 옮긴다.
+# 출력은 실제 git 2.53 으로 뽑았다: scripts/git-story.sh content/stories/git/fork-upstream.sh
+# 원격은 연습용 서버 저장소이고, https://github.com/ 주소가 그쪽을 가리키게 했다(insteadOf).
+# 원격은 커밋 그래프 엔진 범위 밖이라 따라치기와 출력만 둔다.
+items:
+  - id: clone-fork
+    type: copy
+    text: git clone https://github.com/kim/devkeys.git
+    note: (GitHub 에서 devkeys-org/devkeys 의 Fork 를 눌러 내 계정에 kim/devkeys 를 만들었다) 원본이 아니라 내 fork 를 받는다 — 원본에는 올릴 권한이 없다
+    output: |-
+      Cloning into 'devkeys'...
+      remote: Enumerating objects: 6, done.
+      remote: Counting objects: 100% (6/6), done.
+      remote: Compressing objects: 100% (3/3), done.
+      remote: Total 6 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+      Receiving objects: 100% (6/6), done.
+  - id: cd
+    type: copy
+    text: cd devkeys
+  - id: remote-add-upstream
+    type: copy
+    text: git remote add upstream https://github.com/devkeys-org/devkeys.git
+    note: 원본을 upstream 이라는 이름으로 등록한다. origin 은 내 fork
+  - id: remote-v
+    type: copy
+    text: git remote -v
+    note: origin = 내 fork (올리는 곳), upstream = 원본 (받는 곳)
+    output: |-
+      origin  https://github.com/kim/devkeys.git (fetch)
+      origin  https://github.com/kim/devkeys.git (push)
+      upstream        https://github.com/devkeys-org/devkeys.git (fetch)
+      upstream        https://github.com/devkeys-org/devkeys.git (push)
+  - id: fetch-upstream
+    type: copy
+    text: git fetch upstream
+    note: 원본의 브랜치를 받아 온다
+    output: |-
+      From https://github.com/devkeys-org/devkeys
+       * [new branch]      main       -> upstream/main
+  - id: switch-from-upstream
+    type: copy
+    text: git switch -c fix/readme-typo upstream/main
+    note: 브랜치는 원본의 최신에서 딴다 — 내 fork 의 main 은 오래됐을 수 있다
+    output: |-
+      branch 'fix/readme-typo' set up to track 'upstream/main'.
+      Switched to a new branch 'fix/readme-typo'
+  - id: commit
+    type: copy
+    text: 'git commit -am "docs: fix typo in README"'
+    note: (README 의 practise 를 practice 로 고쳤다)
+    output: |-
+      [fix/readme-typo 9273e5f] docs: fix typo in README
+       1 file changed, 1 insertion(+), 1 deletion(-)
+  - id: push-fork
+    type: copy
+    text: git push -u origin fix/readme-typo
+    note: 내 fork 에 올린다. 그다음 GitHub 에서 원본으로 PR 을 연다 — gh pr create --repo devkeys-org/devkeys
+    output: |-
+      Enumerating objects: 5, done.
+      Counting objects: 100% (5/5), done.
+      Delta compression using up to 8 threads
+      Compressing objects: 100% (2/2), done.
+      Writing objects: 100% (3/3), 333 bytes | 1.00 MiB/s, done.
+      Total 3 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+      To https://github.com/kim/devkeys.git
+       * [new branch]      fix/readme-typo -> fix/readme-typo
+      branch 'fix/readme-typo' set up to track 'origin/fix/readme-typo'.
+  - id: switch-main
+    type: copy
+    text: git switch main
+    note: (그새 원본에 다른 PR 들이 합쳐졌다) main 으로. "최신"이라고 나오지만 내 fork 기준일 뿐이다
+    output: |-
+      Switched to branch 'main'
+      Your branch is up to date with 'origin/main'.
+  - id: fetch-again
+    type: copy
+    text: git fetch upstream
+    note: 원본의 새 커밋을 받아 온다
+    output: |-
+      remote: Enumerating objects: 7, done.
+      remote: Counting objects: 100% (7/7), done.
+      remote: Compressing objects: 100% (4/4), done.
+      remote: Total 6 (delta 1), reused 0 (delta 0), pack-reused 0 (from 0)
+      Unpacking objects: 100% (6/6), 556 bytes | 1.00 MiB/s, done.
+      From https://github.com/devkeys-org/devkeys
+         d57736c..bece36c  main       -> upstream/main
+  - id: log-behind
+    type: copy
+    text: git log --oneline main..upstream/main
+    note: 내 main 에 없는 원본의 커밋
+    output: |-
+      bece36c (upstream/main, upstream/HEAD) feat: add search box
+      3c062dd feat: add signup page
+  - id: merge-ff
+    type: copy
+    text: git merge --ff-only upstream/main
+    note: 내 main 을 원본에 맞춘다. main 에서는 작업하지 않으니 늘 fast-forward 로 따라간다
+    output: |-
+      Updating d57736c..bece36c
+      Fast-forward
+       search.html | 1 +
+       signup.html | 1 +
+       2 files changed, 2 insertions(+)
+       create mode 100644 search.html
+       create mode 100644 signup.html
+  - id: push-main
+    type: copy
+    text: git push origin main
+    note: 내 fork 의 main 도 맞춘다 (GitHub 화면의 Sync fork 또는 gh repo sync 와 같다)
+    output: |-
+      Enumerating objects: 7, done.
+      Counting objects: 100% (7/7), done.
+      Delta compression using up to 8 threads
+      Compressing objects: 100% (4/4), done.
+      Writing objects: 100% (6/6), 576 bytes | 1.00 MiB/s, done.
+      Total 6 (delta 1), reused 0 (delta 0), pack-reused 0 (from 0)
+      To https://github.com/kim/devkeys.git
+         d57736c..bece36c  main -> main
+  - id: set-upstream
+    type: copy
+    text: git branch --set-upstream-to=upstream/main
+    note: 앞으로 main 은 원본에서 받게 — git pull 만 치면 upstream 에서
+    output: branch 'main' set up to track 'upstream/main'.
+  - id: push-default
+    type: copy
+    text: git config --global remote.pushDefault origin
+    note: 올리는 곳은 늘 origin(내 fork)으로. 받는 곳과 올리는 곳이 다른 삼각형 흐름
+  - id: pull
+    type: copy
+    text: git pull
+    note: (원본에 footer 가 합쳐졌다) upstream 에서 받는다
+    output: |-
+      remote: Enumerating objects: 4, done.
+      remote: Counting objects: 100% (4/4), done.
+      remote: Compressing objects: 100% (2/2), done.
+      remote: Total 3 (delta 1), reused 0 (delta 0), pack-reused 0 (from 0)
+      Unpacking objects: 100% (3/3), 263 bytes | 1.00 MiB/s, done.
+      From https://github.com/devkeys-org/devkeys
+         bece36c..d495ce2  main       -> upstream/main
+      Updating bece36c..d495ce2
+      Fast-forward
+       footer.html | 1 +
+       1 file changed, 1 insertion(+)
+       create mode 100644 footer.html
+  - id: push
+    type: copy
+    text: git push
+    note: origin(내 fork)으로 올라간다
+    output: |-
+      Enumerating objects: 4, done.
+      Counting objects: 100% (4/4), done.
+      Delta compression using up to 8 threads
+      Compressing objects: 100% (2/2), done.
+      Writing objects: 100% (3/3), 283 bytes | 1.00 MiB/s, done.
+      Total 3 (delta 1), reused 0 (delta 0), pack-reused 0 (from 0)
+      To https://github.com/kim/devkeys.git
+         bece36c..d495ce2  main -> main
+  - id: status-sb
+    type: copy
+    text: git status -sb
+    note: 짝은 upstream/main — 원본 기준으로 앞서고 뒤처짐을 본다
+    output: '## main...upstream/main'
+  - id: switch-pr
+    type: copy
+    text: git switch fix/readme-typo
+    note: PR 브랜치가 원본보다 오래됐다
+    output: |-
+      Switched to branch 'fix/readme-typo'
+      Your branch is up to date with 'origin/fix/readme-typo'.
+  - id: rebase-upstream
+    type: copy
+    text: git rebase upstream/main
+    note: 원본 최신 위로 옮긴다. 관리자가 합치기 쉽고, 충돌이 있으면 내가 먼저 푼다
+    output: Successfully rebased and updated refs/heads/fix/readme-typo.
+  - id: push-force
+    type: copy
+    text: git push --force-with-lease
+    note: 내 fork 의 PR 브랜치를 덮어쓴다 — 열린 PR 이 따라 바뀐다. 내 브랜치라서 괜찮다
+    output: |-
+      Enumerating objects: 5, done.
+      Counting objects: 100% (5/5), done.
+      Delta compression using up to 8 threads
+      Compressing objects: 100% (2/2), done.
+      Writing objects: 100% (3/3), 329 bytes | 1.00 MiB/s, done.
+      Total 3 (delta 1), reused 0 (delta 0), pack-reused 0 (from 0)
+      To https://github.com/kim/devkeys.git
+       + 9273e5f...307d1f5 fix/readme-typo -> fix/readme-typo (forced update)
+  - id: log-3
+    type: copy
+    text: git log --oneline -3
+    note: 내 수정이 원본 최신 위에
+    output: |-
+      307d1f5 (HEAD -> fix/readme-typo, origin/fix/readme-typo) docs: fix typo in README
+      d495ce2 (upstream/main, upstream/HEAD, origin/main, origin/HEAD, main) feat: add footer
+      bece36c feat: add search box
+  - id: recall-remote-add-upstream
+    type: recall
+    prompt: 원본 저장소를 upstream 이라는 이름으로 등록한다 — 주소는 <url>
+    answers: [git remote add upstream <url>]
+    placeholder: { url: 'https://github.com/devkeys-org/devkeys.git' }
+  - id: recall-fetch-upstream
+    type: recall
+    prompt: 원본(upstream)의 브랜치를 받아 온다
+    answers: [git fetch upstream]
+  - id: recall-switch-from-upstream
+    type: recall
+    prompt: 원본 최신(upstream/main)에서 브랜치 <branch> 를 만들어 옮겨 간다
+    answers: [git switch -c <branch> upstream/main, git checkout -b <branch> upstream/main]
+    placeholder: { branch: fix/readme-typo }
+  - id: recall-merge-ff
+    type: recall
+    prompt: 내 main 을 원본 최신에 맞춘다 — 앞으로 옮기기만
+    answers: [git merge --ff-only upstream/main]
+  - id: recall-set-upstream
+    type: recall
+    prompt: 지금 브랜치가 upstream/main 에서 받아 오게 짝을 정한다
+    answers:
+      [
+        git branch --set-upstream-to=upstream/main,
+        git branch -u upstream/main,
+        git branch --set-upstream-to upstream/main,
+      ]
+  - id: recall-push-default
+    type: recall
+    prompt: 올리는 곳을 늘 origin 으로 전역 설정한다
+    answers: [git config --global remote.pushDefault origin, git config set --global remote.pushDefault origin]
+  - id: recall-rebase-upstream
+    type: recall
+    prompt: 지금 브랜치를 원본 최신(upstream/main) 위로 옮긴다
+    answers: [git rebase upstream/main]

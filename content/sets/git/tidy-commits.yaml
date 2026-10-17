@@ -1,0 +1,149 @@
+id: git-tidy-commits
+category: git
+order: 12
+title: 커밋 정리
+description: 올리기 전에 지저분한 커밋을 rebase -i 로 합치고 빼기, 나중에 찾은 실수는 --fixup · --autosquash, 쌓은 브랜치는 --update-refs
+level: 3
+# 이야기: 올리기 전에 검색 기능 브랜치의 wip · 오타 수정 · 디버그 커밋을 rebase -i 로 정리하고, 나중에 찾은 실수는
+#   --fixup + --autosquash 로 그 커밋에 합치고, 쌓아 둔 브랜치 둘을 --update-refs 로 함께 옮긴다.
+# 출력은 실제 git 2.53 으로 뽑았다: scripts/git-story.sh content/stories/git/tidy-commits.sh
+#   rebase -i 의 편집기는 이야기에서 대신 고쳤다 — 무엇을 고쳤는지는 그 줄의 해설에 적었다.
+# rebase -i 는 커밋 그래프 엔진 범위 밖이라 따라치기와 출력만 둔다.
+items:
+  - id: log-messy
+    type: copy
+    text: git log --oneline main..
+    note: (올리기 전) 검색 기능 브랜치의 커밋 — wip, 오타 수정, 디버그가 섞였다. 이대로 올리면 리뷰하는 사람이 다섯 개를 다 읽어야 한다
+    output: |-
+      bb45267 (HEAD -> feature/search) debug: log queries
+      0fcabc9 feat: query search api
+      5bfe15a fix typo
+      5f9d638 wip
+      68ec758 feat: add search box
+  - id: log-reverse
+    type: copy
+    text: git log --oneline --reverse main..
+    note: 오래된 것부터 — rebase -i 의 편집기에는 이 순서로 줄마다 "pick 해시 메시지" 가 나온다
+    output: |-
+      68ec758 feat: add search box
+      5f9d638 wip
+      5bfe15a fix typo
+      0fcabc9 feat: query search api
+      bb45267 (HEAD -> feature/search) debug: log queries
+  - id: rebase-i
+    type: copy
+    text: git rebase -i main
+    note: (편집기에서 wip · fix typo 줄의 pick 을 fixup 으로, debug 줄을 drop 으로 바꿔 저장한다) fixup 은 바로 위 커밋에 합치고 메시지는 버린다. squash 는 메시지도 합친다. 순서를 바꾸면 커밋 순서도 바뀐다
+    output: Successfully rebased and updated refs/heads/feature/search.
+  - id: log-tidy
+    type: copy
+    text: git log --oneline main..
+    note: 두 커밋으로 정리됐다. 커밋을 새로 쌓았으므로 해시가 모두 바뀌었다
+    output: |-
+      79f4149 (HEAD -> feature/search) feat: query search api
+      ff00328 feat: add search box
+  - id: show-stat
+    type: copy
+    text: git show --stat HEAD~1
+    note: 검색창 커밋에 wip · 오타 수정이 합쳐졌다 — 파일 하나, 한 줄
+    output: |-
+      commit ff00328d6583642936fea9149a545ab6a4dc4521
+      Author: Kim Dev <dev@example.com>
+      Date:   Sat Oct 17 09:05:00 2026 +0900
+
+          feat: add search box
+
+       search.html | 1 +
+       1 file changed, 1 insertion(+)
+  - id: add-fix
+    type: copy
+    text: git add search.html
+    note: (나중에 검색창에 label 이 빠진 것을 찾았다) 고친 것을 담는다
+  - id: commit-fixup
+    type: copy
+    text: git commit --fixup=HEAD~1
+    note: '"이 커밋을 HEAD~1 에 합칠 것" 이라고 표시해 둔다. 메시지가 fixup! <대상 메시지> 가 된다'
+    output: |-
+      [feature/search 96f1496] fixup! feat: add search box
+       1 file changed, 1 insertion(+)
+  - id: log-fixup
+    type: copy
+    text: git log --oneline main..
+    note: fixup! 커밋이 맨 위에 쌓였다
+    output: |-
+      96f1496 (HEAD -> feature/search) fixup! feat: add search box
+      79f4149 feat: query search api
+      ff00328 feat: add search box
+  - id: rebase-autosquash
+    type: copy
+    text: git rebase -i --autosquash main
+    note: fixup! 커밋을 대상 커밋 바로 아래로 옮기고 fixup 으로 바꿔 둔다. 편집기는 그대로 저장하면 된다
+    output: Successfully rebased and updated refs/heads/feature/search.
+  - id: log-autosquashed
+    type: copy
+    text: git log --oneline main..
+    note: 다시 두 커밋 — 검색창 커밋에 label 까지 들어갔다
+    output: |-
+      7685464 (HEAD -> feature/search) feat: query search api
+      7c47210 feat: add search box
+  - id: config-autosquash
+    type: copy
+    text: git config --global rebase.autoSquash true
+    note: rebase -i 할 때 늘 --autosquash 처럼
+  - id: commit-fixup-branch
+    type: copy
+    text: git commit -a --fixup=feature/search
+    note: (검색 결과 화면을 feature/search 위에 쌓아 feature/search-results 에서 만드는 중, 검색 API 의 실수를 찾았다) 대상은 브랜치 이름으로도 가리킨다
+    output: |-
+      [feature/search-results 2c144b8] fixup! feat: query search api
+       1 file changed, 1 insertion(+), 1 deletion(-)
+  - id: rebase-update-refs
+    type: copy
+    text: git rebase --autosquash --update-refs main
+    note: (2.44 부터 --autosquash 는 -i 없이도 된다) 아래 브랜치(feature/search)의 커밋이 바뀌면, --update-refs 가 그 브랜치 이름표도 새 커밋으로 옮겨 준다
+    output: |-
+      Successfully rebased and updated refs/heads/feature/search-results.
+      Updated the following refs with --update-refs:
+              refs/heads/feature/search
+  - id: log-stacked
+    type: copy
+    text: git log --oneline --graph main..
+    note: 두 브랜치가 그대로 쌓여 있다. --update-refs 가 없으면 feature/search 는 옛 커밋을 가리킨 채 남는다
+    output: |-
+      * df2c327 (HEAD -> feature/search-results) feat: show search results
+      * 7a61f3b (feature/search) feat: query search api
+      * 7c47210 feat: add search box
+  - id: config-update-refs
+    type: copy
+    text: git config --global rebase.updateRefs true
+    note: rebase 할 때 늘 --update-refs 처럼 — 브랜치를 쌓아 PR 을 여러 개로 나눌 때
+  - id: recall-rebase-i
+    type: recall
+    prompt: main 뒤에 쌓인 내 커밋들을 편집기에서 골라 합치고 빼고 순서를 바꾼다
+    answers: [git rebase -i main, git rebase --interactive main]
+  - id: recall-log-reverse
+    type: recall
+    prompt: main 뒤에 쌓인 커밋을 오래된 것부터 한 줄씩 본다
+    answers: [git log --oneline --reverse main.., git log --reverse --oneline main..]
+  - id: recall-fixup
+    type: recall
+    prompt: 담은 변경을 <commit> 커밋에 나중에 합칠 커밋으로 만든다
+    answers: [git commit --fixup=<commit>, git commit --fixup <commit>]
+    placeholder: { commit: HEAD~1 }
+  - id: recall-autosquash
+    type: recall
+    prompt: fixup! 커밋을 대상 커밋에 합치며 main 위로 다시 쌓는다 — 편집기로 확인하면서
+    answers:
+      [git rebase -i --autosquash main, git rebase --interactive --autosquash main, git rebase --autosquash -i main]
+  - id: recall-config-autosquash
+    type: recall
+    prompt: rebase -i 할 때 늘 fixup! 커밋을 정리하게 전역 설정한다
+    answers: [git config --global rebase.autoSquash true, git config set --global rebase.autoSquash true]
+  - id: recall-update-refs
+    type: recall
+    prompt: fixup! 커밋을 합치며 main 위로 다시 쌓고, 사이에 낀 브랜치 이름표도 함께 옮긴다 (편집기 없이)
+    answers: [git rebase --autosquash --update-refs main, git rebase --update-refs --autosquash main]
+  - id: recall-config-update-refs
+    type: recall
+    prompt: rebase 할 때 늘 사이에 낀 브랜치 이름표도 옮기게 전역 설정한다
+    answers: [git config --global rebase.updateRefs true, git config set --global rebase.updateRefs true]
