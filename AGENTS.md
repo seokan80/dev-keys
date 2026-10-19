@@ -44,7 +44,10 @@
 ## 환경
 
 - Node 24 (`.nvmrc`), npm (`packageManager`). TypeScript는 6.0으로 고정 — typescript-eslint · @astrojs/check가 7을 아직 지원하지 않는다
-- GitHub: 저장소 주인 `seokan80`, Claude 작업 계정 `seokanai`. 세션을 시작하면 `gh api user --jq .login`과 `git var GIT_AUTHOR_IDENT`가 `seokanai`인지 확인하고, 다르면 멈추고 알린다
+- GitHub 역할: 저장소 주인 `seokan80`은 환경 관리(저장소·보드 생성, 권한·시크릿·CI·배포 구성, 계정 운영 규칙 수정)를, 개발 계정 `seokanai`는 기능 개발(기능·콘텐츠·버그 수정의 이슈·커밋·PR)을 수행한다. 읽기 전용 조사·검토는 어느 계정이든 가능하다.
+- 쓰기 작업 전에 `gh api user --jq .login`과 `git var GIT_AUTHOR_IDENT`로 실제 계정과 작성자를 확인한다. 수행할 역할과 계정이 다를 때만 쓰기를 멈추고 알린다. 계정 신원을 위장하거나 전역 인증을 임의 변경하지 않는다.
+- 환경 구성도 브랜치·PR·보호 규칙을 따른다. `seokan80`이 작성한 PR은 다른 검토자가 승인해야 한다. 자기 PR을 스스로 승인하거나 관리자 권한으로 보호 규칙을 우회하지 않는다. 사용자가 명시적으로 승인한 최초 빈 저장소 초기 구성만 initial main push를 허용한다.
+- CI 배포는 사람 계정이 아니라 저장소의 Cloudflare API 토큰 권한으로 실행된다. GitHub 계정과 Cloudflare 토큰 권한을 혼동하지 않는다.
 - Cloudflare 자격 증명은 저장소에 두지 않는다. CI는 시크릿 `CLOUDFLARE_API_TOKEN`, 변수 `CLOUDFLARE_ACCOUNT_ID`를 쓴다
 - `astro preview`는 AI 에이전트 환경에서 백그라운드로 뜬다. 끌 때는 `npx astro preview stop`
 - 주소는 끝 슬래시 없이(`trailingSlash: 'never'`, `build.format: 'file'`). Workers 정적 자산이 리다이렉트하지 않는다
