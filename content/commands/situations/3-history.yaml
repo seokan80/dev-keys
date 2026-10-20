@@ -1,0 +1,115 @@
+# 명령 찾기 상황 문장 — 3부 기록 다듬기 (구현계획 5.9 ③). 평가 세트의 질문을 베끼지 않는다.
+
+rebase-i:
+  - 커밋 합치기
+  - 커밋 정리하기
+  - 커밋 순서 바꾸기
+  - 커밋 몇 개 squash
+  - 중간 커밋 빼기
+
+rebase-autosquash-i:
+  - fixup 커밋 자동으로 합치기
+  - autosquash 하기
+
+commit-fixup:
+  - 예전 커밋에 수정 붙이기
+  - fixup 커밋 만들기
+  - 나중에 합칠 수정 커밋
+
+commit-fixup-a:
+  - 고친 파일 바로 fixup
+
+rebase-autosquash-update-refs:
+  - 위에 쌓은 브랜치도 같이 옮기기
+  - stacked PR 브랜치 정리
+
+config-rebase-autoSquash:
+  - rebase 할 때 fixup 자동 정리
+
+config-rebase-updateRefs:
+  - rebase 때 다른 브랜치도 따라오게
+
+log-oneline-reverse:
+  - 오래된 커밋부터 보기
+  - 커밋 거꾸로 보기
+
+push-force-with-lease:
+  - 강제 push 안전하게
+  - force push 하기
+  - amend 하고 push 가 거절돼
+  - rebase 하고 다시 올리기
+
+config-push-useForceIfIncludes:
+  - force push 더 안전하게
+
+range-diff:
+  - 커밋 고치기 전후 비교
+  - 리뷰어에게 뭘 고쳤는지 보여 주기
+
+commit-amend-no-edit-reset-author:
+  - 커밋 작성자 바꾸기
+  - 작성자를 내 계정으로 다시
+
+rebase-exec:
+  - 커밋마다 명령 실행
+  - 여러 커밋 작성자 한꺼번에 고치기
+  - 커밋마다 테스트 돌리기
+
+check-mailmap:
+  - mailmap 확인
+  - 이메일이 누구로 묶이는지
+
+shortlog-sne:
+  - 사람별 커밋 수와 이메일
+  - 작성자 이메일별 집계
+
+log-format:
+  - 커밋 출력 형식 바꾸기
+  - 작성자 이메일까지 보기
+
+log-format-n:
+  - 커밋 메시지 본문까지 보기
+  - 꼬리말까지 보기
+
+tag:
+  - 태그 달기
+  - 가벼운 태그 만들기
+
+tag-a-m:
+  - 버전 태그 만들기
+  - 메시지 있는 태그
+  - 릴리스 태그 붙이기
+
+tag-d:
+  - 태그 삭제
+  - 로컬 태그 지우기
+
+tag-l:
+  - 태그 목록 보기
+  - 특정 버전 태그만 찾기
+
+tag-n:
+  - 태그와 설명 같이 보기
+
+show-no-patch:
+  - 태그 정보 보기
+  - 커밋 정보만 내용 없이
+
+describe:
+  - 지금 버전 이름 보기
+  - 빌드 버전 문자열 만들기
+  - 마지막 태그에서 몇 커밋 지났는지
+
+config-push-followTags:
+  - push 할 때 태그도 같이
+
+ls-remote-tags:
+  - 원격에 있는 태그 목록
+
+gh-release-create-generate-notes:
+  - 릴리스 노트 자동으로
+  - github release 만들기
+  - 태그로 릴리스 게시
+
+gh-release-view-json:
+  - 릴리스 내용 확인

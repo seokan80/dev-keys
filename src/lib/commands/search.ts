@@ -104,28 +104,45 @@ export function searchCommands(entries: readonly SearchEntry[], query: string, l
     .filter((t) => t.length > 0 && !STOP.has(t));
   if (terms.length === 0) return [];
 
-  const scored = entries.map((entry, index) => {
+  // 낱말마다 명령별 점수: 명령 낱말 그대로 8, 명령 조각 5, 아니면 상황(4배) · 해설(2배) 중 큰 쪽
+  const prepared = entries.map((entry) => {
     const cmd = entry.display.toLowerCase();
-    const cmdWords = cmd.split(/\s+/).map((w) => w.replace(/^-+/, ''));
     const situations = entry.situations.toLowerCase();
     const notes = entry.notes.toLowerCase();
-    const looseSituations = loose(situations);
-    const looseNotes = loose(notes);
+    return {
+      cmd,
+      cmdWords: cmd.split(/\s+/).map((w) => w.replace(/^-+/, '')),
+      situations,
+      notes,
+      looseSituations: loose(situations),
+      looseNotes: loose(notes),
+    };
+  });
+  const termScores = terms.map((term) =>
+    prepared.map((p) => {
+      const bare = term.replace(/^-+/, '');
+      if (p.cmdWords.includes(bare)) return 8;
+      if (p.cmd.includes(term)) return 5;
+      return Math.max(4 * textScore(term, p.situations, p.looseSituations), 2 * textScore(term, p.notes, p.looseNotes));
+    }),
+  );
+  // 흔한 낱말(커밋 · 브랜치 · 파일 …)은 가볍게, 드문 낱말(되살리기 · 추적 …)은 무겁게 — 검색의 IDF
+  const n = entries.length;
+  const phrase = loose(terms.join(' '));
+  const weights = termScores.map((scores) => Math.log(1 + n / (1 + scores.filter((s) => s > 0).length)));
+
+  const scored = entries.map((entry, index) => {
     let score = 0;
     let hit = 0;
-    for (const term of terms) {
-      const bare = term.replace(/^-+/, '');
-      // 명령 낱말 그대로 8, 명령 조각 5, 아니면 상황(4배) · 해설(2배) 중 큰 쪽
-      const s = cmdWords.includes(bare)
-        ? 8
-        : cmd.includes(term)
-          ? 5
-          : Math.max(4 * textScore(term, situations, looseSituations), 2 * textScore(term, notes, looseNotes));
+    terms.forEach((_, t) => {
+      const s = termScores[t]![index]!;
       if (s > 0) hit += 1;
-      score += s;
-    }
+      score += s * weights[t]!;
+    });
     // 낱말이 여럿이면 많이 맞을수록 — 일부만 걸린 것은 뒤로
     if (terms.length > 1) score *= (hit / terms.length) ** 2;
+    // 질문이 상황 문장에 붙은 그대로 들어 있으면 더 (구절 일치 — "스테이징 취소" 와 "스테이징 취소하기")
+    if (terms.length > 1 && prepared[index]!.looseSituations.includes(phrase)) score *= 1.5;
     return { entry, index, score };
   });
 

@@ -1,0 +1,135 @@
+# 명령 찾기 상황 문장 — 5부 AI 에이전트와 Git (구현계획 5.9 ③). 평가 세트의 질문을 베끼지 않는다.
+
+add-p:
+  - 필요한 변경만 골라 담기
+  - 부분만 add
+  - 한 파일 안에서 일부만 커밋
+
+restore-p:
+  - 고친 것 중 일부만 버리기
+  - 디버그 코드만 지우기
+
+restore-staged-p:
+  - 스테이징 일부만 취소
+
+diff-staged-stat:
+  - 커밋될 파일 요약
+
+commit-v:
+  - 커밋 메시지 쓰면서 diff 보기
+
+stash-push-keep-index-u:
+  - 커밋할 것만 남기고 테스트
+  - 나머지 변경 잠시 치우기
+
+stash-push-keep-index-m-u:
+  - 스테이징 외에는 이름 붙여 치우기
+
+worktree-prune:
+  - 지운 폴더의 worktree 기록 정리
+  - worktree 목록에 없는 폴더가 보여
+
+worktree-remove-force:
+  - 수정 남은 worktree 강제로 지우기
+
+commit-trailer-m:
+  - 공동 작성자 표시
+  - Co-authored-by 넣기
+  - 커밋에 꼬리말 붙이기
+
+config-trailer-ai-key:
+  - 꼬리말 짧게 쓰기
+
+log-grep-oneline:
+  - 메시지에 단어 들어간 커밋
+  - 커밋 메시지 검색
+  - AI 가 만든 커밋 찾기
+
+shortlog-group-sn:
+  - 공동 작성자까지 집계
+
+config-commit-gpgSign:
+  - 커밋 서명 켜기
+  - verified 커밋 만들기
+
+config-gpg-format:
+  - ssh 키로 서명
+
+config-user-signingkey:
+  - 서명 키 지정
+
+bisect-start:
+  - bisect 시작
+  - 언제부터 깨졌는지 찾기
+  - 회귀 버그 찾기
+
+bisect-good:
+  - 이 커밋은 정상
+
+bisect-bad:
+  - 이 커밋은 버그 있음
+
+bisect-run:
+  - 테스트로 bisect 자동
+  - 깨진 커밋 자동 탐색
+
+bisect-skip:
+  - 빌드 안 되는 커밋 건너뛰기
+
+bisect-reset:
+  - bisect 끝내기
+
+bisect-log:
+  - bisect 기록 보기
+
+bisect-oneline:
+  - 찾은 범인 커밋 한 줄로
+
+clone-depth:
+  - 얕은 clone
+  - 최신 커밋만 받기
+
+clone-filter:
+  - partial clone
+  - 파일 내용은 나중에 받기
+
+sparse-checkout-set:
+  - 일부 폴더만 체크아웃
+  - 모노레포에서 필요한 폴더만
+
+sparse-checkout-list:
+  - 꺼내 둔 폴더 확인
+
+sparse-checkout-disable:
+  - 모든 파일 다시 꺼내기
+
+count-objects-vH:
+  - 저장소 크기 확인
+
+maintenance-start:
+  - 저장소 정리 예약
+  - git 자동 최적화
+
+maintenance-register:
+  - 정리 대상 저장소 등록
+
+maintenance-run-task:
+  - 저장소 정리 바로 실행
+
+config-maintenance-repo:
+  - 정리 등록된 저장소 확인
+
+gh-pr-create-draft-fill:
+  - 초안 PR 만들기
+  - draft PR
+
+gh-pr-diff-name-only:
+  - PR 변경 파일 확인
+
+gh-pr-ready:
+  - draft 해제
+  - 리뷰 요청할 준비 끝
+
+gh-pr-review-approve:
+  - PR 승인
+  - approve 하기

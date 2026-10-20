@@ -25,6 +25,22 @@ describe('searchCommands', () => {
     expect(slugs('메시지')[0]).toBe('commit-amend-m');
   });
 
+  it('질문이 상황 문장에 붙은 그대로 들어 있으면 낱말이 흩어져 맞는 것보다 위', () => {
+    const r = searchCommands(
+      [
+        {
+          slug: 'scattered',
+          display: 'git reset --soft',
+          situations: '커밋을 취소하되 변경은 스테이징된 채로',
+          notes: '',
+        },
+        { slug: 'phrase', display: 'git restore --staged', situations: '스테이징 취소하기', notes: '' },
+      ],
+      '스테이징 취소',
+    );
+    expect(r[0]!.slug).toBe('phrase');
+  });
+
   it('명령 조각으로 찾는다', () => {
     expect(slugs('amend')[0]).toBe('commit-amend-m');
     expect(slugs('git restore')[0]).toBe('restore-staged');

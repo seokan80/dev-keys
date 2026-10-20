@@ -28,7 +28,8 @@ describe('evaluate', () => {
 
 // 기준선: 검색이나 세트를 바꿔 정답률이 떨어지면 실패한다. 오르면 기준을 올린다 (npm run eval:commands)
 // 2026-10-20 ② 처음 잰 값 — 102문항 1위 52% · 상위 3 72% · 상위 10 86%
-const BASELINE = { top1: 0.5, top3: 0.7, top10: 0.85 };
+// 2026-10-20 ③ 상황 문장 · IDF · 구절 일치 — 1위 66% · 상위 3 86% · 상위 10 94%
+const BASELINE = { top1: 0.6, top3: 0.8, top10: 0.9 };
 
 describe('명령 찾기 평가 세트 (content/commands/eval.yaml)', () => {
   const { catalog, evalCases } = loadContent(join(import.meta.dirname, '../../..'));
