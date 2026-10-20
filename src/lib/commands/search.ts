@@ -57,6 +57,14 @@ const STOP = new Set([
   '하나',
 ]);
 
+/** 같은 뜻의 다른 말 — 질문 낱말을 이 말로도 찾는다 ("커밋 아이디" 는 세트에서 "해시") */
+const SYNONYMS: Record<string, readonly string[]> = {
+  아이디: ['해시'],
+  id: ['해시'],
+  sha: ['해시'],
+  조회: ['보기', '본다', '확인'],
+};
+
 function stem(word: string): string {
   if (!/[가-힣]$/.test(word)) return word;
   for (const t of TAILS) if (word.length > t.length + 1 && word.endsWith(t)) return word.slice(0, -t.length);
@@ -100,6 +108,8 @@ export function searchCommands(entries: readonly SearchEntry[], query: string, l
   const terms = q
     .split(/\s+/)
     .filter((t) => t !== 'git' && t !== 'gh' && !STOP.has(t))
+    // 조사만 띄어 쓴 낱말("id 로")은 버린다
+    .filter((t) => !TAILS.includes(t))
     .map(stem)
     .filter((t) => t.length > 0 && !STOP.has(t));
   if (terms.length === 0) return [];
@@ -118,13 +128,15 @@ export function searchCommands(entries: readonly SearchEntry[], query: string, l
       looseNotes: loose(notes),
     };
   });
+  const scoreOf = (word: string, p: (typeof prepared)[number]) => {
+    const bare = word.replace(/^-+/, '');
+    if (p.cmdWords.includes(bare)) return 8;
+    if (p.cmd.includes(word)) return 5;
+    return Math.max(4 * textScore(word, p.situations, p.looseSituations), 2 * textScore(word, p.notes, p.looseNotes));
+  };
+  // 같은 뜻의 말이 있으면 그중 가장 잘 맞는 것으로
   const termScores = terms.map((term) =>
-    prepared.map((p) => {
-      const bare = term.replace(/^-+/, '');
-      if (p.cmdWords.includes(bare)) return 8;
-      if (p.cmd.includes(term)) return 5;
-      return Math.max(4 * textScore(term, p.situations, p.looseSituations), 2 * textScore(term, p.notes, p.looseNotes));
-    }),
+    prepared.map((p) => Math.max(...[term, ...(SYNONYMS[term] ?? [])].map((w) => scoreOf(w, p)))),
   );
   // 흔한 낱말(커밋 · 브랜치 · 파일 …)은 가볍게, 드문 낱말(되살리기 · 추적 …)은 무겁게 — 검색의 IDF
   const n = entries.length;

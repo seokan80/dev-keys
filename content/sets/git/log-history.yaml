@@ -147,6 +147,20 @@ items:
       export function request(url, token) {
         return fetch(url, { headers: { Authorization: token } })
       }
+  - id: show-name-only
+    type: copy
+    skipEngine: true
+    text: git show --name-only dc8ecf9
+    note: 커밋 해시(log 에서 본 앞 7자리)로 그 커밋에서 바뀐 파일 이름만 — 내용 대신. 추가 · 수정 · 삭제(A · M · D)까지 보려면 --name-status
+    output: |-
+      commit dc8ecf9329aa90f33f89b4d19bf4f5a08aaa5597
+      Author: Lee Dev <lee@example.com>
+      Date:   Wed Oct 14 16:05:00 2026 +0900
+
+          feat: add login page
+
+      api.js
+      login.html
   - id: diff-commits
     type: copy
     skipEngine: true
@@ -248,6 +262,18 @@ items:
     prompt: <rev> 커밋 때의 <file> 파일 내용을 본다
     answers: ['git show <rev>:<file>']
     placeholder: { rev: HEAD~2, file: api.js }
+  - id: recall-show-name-only
+    type: recall
+    prompt: <rev> 커밋에서 바뀐 파일 이름만 본다
+    answers:
+      - git show --name-only <rev>
+      - git show <rev> --name-only
+      - git show --oneline --name-only <rev>
+      - git show --name-only --oneline <rev>
+      - git show --format= --name-only <rev>
+      - git show --name-only --format= <rev>
+      - git diff-tree --no-commit-id --name-only -r <rev>
+    placeholder: { rev: dc8ecf9 }
   - id: recall-diff-stat
     type: recall
     prompt: 두 커밋 사이에 바뀐 파일과 줄 수를 본다 — <a> 부터 <b> 까지

@@ -41,6 +41,25 @@ describe('searchCommands', () => {
     expect(r[0]!.slug).toBe('phrase');
   });
 
+  it('같은 뜻의 다른 말로도 찾는다 — 커밋 아이디 · id 는 해시, 조회는 보기', () => {
+    const entries = [
+      { slug: 'add', display: 'git add', situations: '변경 파일을 커밋할 목록에 올리기', notes: '' },
+      {
+        slug: 'show-name-only',
+        display: 'git show --name-only',
+        situations: '커밋 해시로 변경 파일 목록 보기',
+        notes: '',
+      },
+    ];
+    expect(searchCommands(entries, '커밋 아이디로 변경 파일 목록 조회')[0]!.slug).toBe('show-name-only');
+    expect(searchCommands(entries, '커밋 id 로 변경 파일 목록')[0]!.slug).toBe('show-name-only');
+  });
+
+  it('조사만 띄어 쓴 낱말("id 로")은 버린다', () => {
+    const entries = [{ slug: 'log', display: 'git log', situations: '로그 보기', notes: '' }];
+    expect(searchCommands(entries, '로')).toEqual([]);
+  });
+
   it('명령 조각으로 찾는다', () => {
     expect(slugs('amend')[0]).toBe('commit-amend-m');
     expect(slugs('git restore')[0]).toBe('restore-staged');
