@@ -2,6 +2,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildContent, type ContentSet } from './check';
+import { buildCatalog, type CommandEntry } from '../commands/catalog';
 import { buildCurricula, type Curriculum } from './curriculum';
 import { buildMissions, type ContentMission } from './missions';
 import { orderedSets } from './next';
@@ -31,11 +32,28 @@ export function loadContent(root = process.cwd()) {
     listFiles(root, 'curriculum', /\.ya?ml$/).map((p) => read(root, p)),
     sets.sets,
   );
+  // 명령 카탈로그(Git): 주소 조각이 겹치면 명령 페이지가 덮어써지니 막는다
+  const catalog = buildCatalog(sets.sets.filter((s) => s.category === 'git'));
+  const seen = new Map<string, string>();
+  const catalogProblems = catalog.flatMap((e) => {
+    const other = seen.get(e.slug);
+    seen.set(e.slug, e.key);
+    return other
+      ? [
+          {
+            path: 'src/lib/commands/catalog.ts',
+            message: `명령 주소 "${e.slug}" 가 겹친다: ${other} · ${e.key}`,
+            level: 'error' as const,
+          },
+        ]
+      : [];
+  });
   return {
     sets: sets.sets,
     missions: missions.missions,
     curricula: curricula.curricula,
-    problems: [...sets.problems, ...missions.problems, ...curricula.problems],
+    catalog,
+    problems: [...sets.problems, ...missions.problems, ...curricula.problems, ...catalogProblems],
   };
 }
 
@@ -76,4 +94,16 @@ export function getCurriculum(category: string): Curriculum | null {
     cachedCurricula = curricula;
   }
   return cachedCurricula.find((c) => c.category === category) ?? null;
+}
+
+let cachedCatalog: CommandEntry[] | null = null;
+
+/** 페이지용: Git 명령 카탈로그 (예시가 많은 명령부터) */
+export function getCatalog(): CommandEntry[] {
+  if (!cachedCatalog) {
+    const { catalog, problems } = loadContent();
+    errorsOf(problems);
+    cachedCatalog = catalog;
+  }
+  return cachedCatalog;
 }

@@ -1,0 +1,112 @@
+---
+import Base from '../../../layouts/Base.astro';
+import Breadcrumb from '../../../components/Breadcrumb.astro';
+import ReportLink from '../../../components/site/ReportLink.astro';
+import type { CommandEntry } from '../../../lib/commands/catalog';
+import { getCatalog } from '../../../lib/content/load';
+
+export function getStaticPaths() {
+  return getCatalog().map((entry) => ({ params: { command: entry.slug }, props: { entry } }));
+}
+
+const { entry } = Astro.props as { entry: CommandEntry };
+const head = entry.sub.split(' ')[0];
+const related = getCatalog()
+  .filter((e) => e.slug !== entry.slug && e.tool === entry.tool && e.sub.split(' ')[0] === head)
+  .slice(0, 10);
+const lead = entry.situations[0] ?? entry.examples.find((x) => x.note)?.note ?? `${entry.display} 의 쓰임과 실제 출력`;
+const examples = entry.examples.slice(0, 5);
+// 출력은 길면 앞부분만
+const clip = (output: string) => {
+  const lines = output.split('\n');
+  return lines.length > 14 ? [...lines.slice(0, 14), '…'].join('\n') : output;
+};
+---
+
+<Base
+  title={`${entry.display} — 언제 쓰나 · 실제 출력 · DevKeys`}
+  description={`${lead}. 실제 git 출력과 함께 바로 쳐 보기.`}
+>
+  <main class="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-10">
+    <Breadcrumb
+      items={[
+        { label: 'DevKeys', href: '/' },
+        { label: 'Git', href: '/git' },
+        { label: '명령 찾기', href: '/git/commands' },
+        { label: entry.display },
+      ]}
+    />
+    <header class="flex flex-col gap-2">
+      <h1 class="font-mono text-2xl font-bold break-all text-emerald-300">{entry.display}</h1>
+      <p class="text-slate-300">{lead}</p>
+    </header>
+
+    {entry.situations.length > 0 && (
+      <section class="flex flex-col gap-2" aria-labelledby="when-title">
+        <h2 id="when-title" class="text-lg font-bold">
+          이럴 때
+        </h2>
+        <ul class="list-disc pl-5 text-slate-300" data-testid="situations">
+          {entry.situations.map((s) => (
+            <li>{s}</li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    {examples.length > 0 && (
+      <section class="flex flex-col gap-4" aria-labelledby="examples-title">
+        <h2 id="examples-title" class="text-lg font-bold">
+          세트에 나온 모습
+        </h2>
+        {examples.map((x) => (
+          <div class="flex flex-col gap-2 rounded-lg border border-slate-700 p-4" data-testid="example">
+            {x.note && <p class="text-sm text-slate-300"># {x.note}</p>}
+            <pre class="overflow-x-auto font-mono text-sm text-emerald-300">$ {x.text}</pre>
+            {x.output && <pre class="overflow-x-auto font-mono text-xs leading-relaxed text-slate-400">{clip(x.output)}</pre>}
+            <a href={x.href} class="text-sm text-sky-300 hover:underline">
+              {x.setTitle} 세트에서 바로 쳐 보기 →
+            </a>
+          </div>
+        ))}
+      </section>
+    )}
+
+    <section class="flex flex-col gap-2" aria-labelledby="practice-title">
+      <h2 id="practice-title" class="text-lg font-bold">
+        연습하는 세트
+      </h2>
+      <ul class="flex flex-wrap gap-2">
+        {entry.sets.map((s) => (
+          <li>
+            <a href={s.href} class="rounded-full border border-slate-700 px-3 py-1 text-sm hover:bg-slate-900">
+              {s.title}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    {related.length > 0 && (
+      <section class="flex flex-col gap-2" aria-labelledby="related-title">
+        <h2 id="related-title" class="text-lg font-bold">
+          같은 명령의 다른 모양
+        </h2>
+        <ul class="flex flex-col gap-1">
+          {related.map((e) => (
+            <li>
+              <a href={`/git/commands/${e.slug}`} class="font-mono text-sm text-emerald-300 hover:underline">
+                {e.display}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    <a href="/git/commands" class="text-sm text-sky-300 hover:underline">
+      ← 다른 명령 찾기
+    </a>
+    <ReportLink what={`명령 찾기 · ${entry.display}`} />
+  </main>
+</Base>

@@ -44,6 +44,17 @@ const curriculum = getCurriculum(category.id);
     )}
     {category.id === 'git' && (
       <a
+        href="/git/commands"
+        class="flex flex-col gap-1 rounded-lg border border-sky-700/70 bg-sky-500/5 p-4 hover:bg-sky-500/10"
+        data-testid="commands-card"
+      >
+        <span class="text-xs text-sky-300">명령이 기억나지 않을 때</span>
+        <strong class="text-lg">명령 찾기</strong>
+        <span class="text-sm text-slate-400">하고 싶은 일을 적으면 명령과 실제 출력, 바로 쳐 볼 세트를 찾아 준다</span>
+      </a>
+    )}
+    {category.id === 'git' && (
+      <a
         href="/git/tree"
         class="flex flex-col gap-1 rounded-lg border border-emerald-700/70 bg-emerald-500/5 p-4 hover:bg-emerald-500/10"
         data-testid="tree-missions-card"

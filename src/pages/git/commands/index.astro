@@ -1,0 +1,74 @@
+---
+import Base from '../../../layouts/Base.astro';
+import Breadcrumb from '../../../components/Breadcrumb.astro';
+import CommandSearch from '../../../components/commands/CommandSearch';
+import { getCatalog } from '../../../lib/content/load';
+
+const catalog = getCatalog();
+// 검색할 글: 상황 · 해설을 잇는다 (보이는 설명은 첫 상황, 없으면 첫 해설)
+const summary = (e: (typeof catalog)[number]) => e.situations[0] ?? e.examples.find((x) => x.note)?.note ?? '';
+const entries = catalog.map((e) => ({
+  slug: e.slug,
+  display: e.display,
+  situations: e.situations.join(' · '),
+  notes: [...new Set(e.examples.map((x) => x.note ?? '').filter(Boolean))].join(' · '),
+}));
+// 하위 명령(첫 낱말)별로 묶고, 많이 쓰는 묶음부터
+const groups = new Map<string, typeof catalog>();
+for (const e of catalog) {
+  const head = e.tool === 'gh' ? `gh ${e.sub.split(' ')[0]}` : e.sub.split(' ')[0]!;
+  groups.set(head, [...(groups.get(head) ?? []), e]);
+}
+const ordered = [...groups.entries()].sort(
+  (a, b) => b[1].reduce((n, e) => n + e.examples.length, 0) - a[1].reduce((n, e) => n + e.examples.length, 0),
+);
+---
+
+<Base
+  title="Git 명령 찾기 — 하고 싶은 일로 명령 찾기 · DevKeys"
+  description={`하고 싶은 일을 한국어로 적으면 Git 명령을 찾아 줍니다. 세트에 나온 명령 ${catalog.length}개 — 이럴 때 쓰는 상황, 실제 출력, 바로 쳐 보기.`}
+>
+  <main class="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-10">
+    <Breadcrumb items={[{ label: 'DevKeys', href: '/' }, { label: 'Git', href: '/git' }, { label: '명령 찾기' }]} />
+    <header class="flex flex-col gap-2">
+      <h1 class="text-3xl font-bold">Git 명령 찾기</h1>
+      <p class="text-slate-400">
+        세트에 나온 명령 {catalog.length}개. 명령마다 이럴 때 쓰는 상황, 실제 출력, 바로 쳐 볼 세트가 있습니다.
+      </p>
+    </header>
+
+    <CommandSearch client:only="react" entries={entries}>
+      <input
+        slot="fallback"
+        disabled
+        placeholder="불러오는 중…"
+        class="rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-lg"
+        aria-label="명령 찾기"
+      />
+    </CommandSearch>
+
+    <section class="flex flex-col gap-6" aria-labelledby="all-title">
+      <h2 id="all-title" class="text-xl font-bold">
+        모든 명령
+      </h2>
+      {ordered.map(([head, list]) => (
+        <section class="flex flex-col gap-2" data-testid="command-group">
+          <h3 class="font-mono text-sm font-bold text-slate-400">{head.startsWith('gh ') ? head : `git ${head}`}</h3>
+          <ul class="flex flex-col gap-1">
+            {list.map((e) => (
+              <li>
+                <a
+                  href={`/git/commands/${e.slug}`}
+                  class="flex flex-wrap items-baseline gap-x-3 rounded px-2 py-1 hover:bg-slate-900"
+                >
+                  <code class="font-mono text-emerald-300">{e.display}</code>
+                  <span class="text-sm text-slate-400">{summary(e)}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+    </section>
+  </main>
+</Base>

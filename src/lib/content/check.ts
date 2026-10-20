@@ -63,7 +63,7 @@ export type ContentSet = SetData & {
   graph: SetGraph | null;
 };
 
-const RESERVED_SLUGS = new Set(['challenge', 'tree', 'index']);
+const RESERVED_SLUGS = new Set(['challenge', 'tree', 'index', 'commands']);
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 /** 한 줄 길이: 코드는 읽기 좋게 80자, 터미널 명령(Git)은 한 줄로 길어지기 쉬워 100자 */
 const MAX_LINE = 80;

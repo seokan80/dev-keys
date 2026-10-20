@@ -60,3 +60,41 @@ test.describe('터치 기기', () => {
     await expect(notice).toHaveCount(0);
   });
 });
+
+test.describe('명령 찾기', () => {
+  test('하고 싶은 일을 한국어로 적으면 명령이 나오고, 명령 페이지에 상황 · 실제 출력 · 바로 쳐 볼 세트가 있다', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await page.getByTestId('nav-commands').click();
+    await expect(page).toHaveURL('/git/commands');
+    await page.getByTestId('command-search').fill('커밋 메시지를 고치고 싶어');
+    const first = page.getByTestId('search-result').first();
+    await expect(first).toContainText('git commit --amend');
+    await expect(page).toHaveURL(/\?q=/);
+    await first.click();
+    await expect(page).toHaveURL(/\/git\/commands\/commit-amend/);
+    await expect(page.getByTestId('situations')).toBeVisible();
+    await expect(page.getByTestId('example').first()).toContainText('$ git commit --amend');
+    await page
+      .getByTestId('example')
+      .first()
+      .getByRole('link', { name: /바로 쳐 보기/ })
+      .click();
+    await expect(page).toHaveURL(/\/git\/[a-z-]+$/);
+  });
+
+  test('명령 조각으로도 찾고, 주소의 ?q= 로 바로 검색한다. 못 찾으면 알려 준다', async ({ page }) => {
+    await page.goto('/git/commands?q=force-with-lease');
+    await expect(page.getByTestId('search-result').first()).toContainText('--force-with-lease');
+    await page.getByTestId('command-search').fill('쿠버네티스');
+    await expect(page.getByTestId('no-result')).toBeVisible();
+  });
+
+  test('모든 명령 목록은 서버 HTML 에 있다 (검색 노출)', async ({ request }) => {
+    const html = await (await request.get('/git/commands')).text();
+    expect(html).toContain('/git/commands/commit-amend');
+    const sitemap = await (await request.get('/sitemap.xml')).text();
+    expect(sitemap).toContain('/git/commands/switch-c</loc>');
+  });
+});
