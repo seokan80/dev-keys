@@ -209,3 +209,13 @@ export function buildCatalog(sets: readonly SetLike[]): CommandEntry[] {
 
   return [...byKey.values()].sort((a, b) => b.examples.length - a.examples.length || a.key.localeCompare(b.key));
 }
+
+/** 검색에 쓰는 글: 상황은 그대로, 해설은 겹치지 않게 이어서 (검색 화면 · 평가가 같은 것을 쓴다) */
+export function searchEntriesOf(catalog: readonly CommandEntry[]) {
+  return catalog.map((e) => ({
+    slug: e.slug,
+    display: e.display,
+    situations: e.situations.join(' · '),
+    notes: [...new Set(e.examples.map((x) => x.note ?? '').filter(Boolean))].join(' · '),
+  }));
+}

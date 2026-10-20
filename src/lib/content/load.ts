@@ -1,8 +1,10 @@
 // 빌드 때(Node) content/ 를 읽는다. 페이지와 검증 스크립트가 같은 로더를 쓴다.
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { buildContent, type ContentSet } from './check';
+import { buildContent, type ContentSet, type Problem } from './check';
+import { parse } from 'yaml';
 import { buildCatalog, type CommandEntry } from '../commands/catalog';
+import { evalSchema, type EvalCase } from '../commands/eval';
 import { buildCurricula, type Curriculum } from './curriculum';
 import { buildMissions, type ContentMission } from './missions';
 import { orderedSets } from './next';
@@ -48,13 +50,48 @@ export function loadContent(root = process.cwd()) {
         ]
       : [];
   });
+  const evaluation = loadEval(root, new Set(catalog.map((e) => e.slug)));
   return {
     sets: sets.sets,
     missions: missions.missions,
     curricula: curricula.curricula,
     catalog,
-    problems: [...sets.problems, ...missions.problems, ...curricula.problems, ...catalogProblems],
+    evalCases: evaluation.cases,
+    problems: [
+      ...sets.problems,
+      ...missions.problems,
+      ...curricula.problems,
+      ...catalogProblems,
+      ...evaluation.problems,
+    ],
   };
+}
+
+const EVAL_PATH = 'content/commands/eval.yaml';
+
+/** 명령 찾기 평가 세트: 형식 · 정답 명령이 카탈로그에 있는지 · 질문 중복 */
+function loadEval(root: string, slugs: ReadonlySet<string>): { cases: EvalCase[]; problems: Problem[] } {
+  if (!existsSync(join(root, EVAL_PATH))) return { cases: [], problems: [] };
+  const report = (message: string): Problem => ({ path: EVAL_PATH, message, level: 'error' });
+  let raw: unknown;
+  try {
+    raw = parse(readFileSync(join(root, EVAL_PATH), 'utf8'));
+  } catch (e) {
+    return { cases: [], problems: [report(`YAML 문법 오류: ${(e as Error).message.split('\n')[0]}`)] };
+  }
+  const parsed = evalSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { cases: [], problems: parsed.error.issues.map((i) => report(`${i.path.join('.')}: ${i.message}`)) };
+  }
+  const problems: Problem[] = [];
+  const seen = new Set<string>();
+  for (const c of parsed.data) {
+    if (seen.has(c.q)) problems.push(report(`질문이 두 번: "${c.q}"`));
+    seen.add(c.q);
+    for (const slug of c.expect)
+      if (!slugs.has(slug)) problems.push(report(`"${c.q}" 의 정답 "${slug}" 가 명령 카탈로그에 없다`));
+  }
+  return { cases: parsed.data, problems };
 }
 
 let cached: ContentSet[] | null = null;

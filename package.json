@@ -18,7 +18,8 @@
     "typecheck": "astro check",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "eval:commands": "tsx scripts/eval-commands.ts"
   },
   "dependencies": {
     "@astrojs/react": "7.1.0",

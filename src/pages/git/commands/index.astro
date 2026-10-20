@@ -2,17 +2,13 @@
 import Base from '../../../layouts/Base.astro';
 import Breadcrumb from '../../../components/Breadcrumb.astro';
 import CommandSearch from '../../../components/commands/CommandSearch';
+import { searchEntriesOf } from '../../../lib/commands/catalog';
 import { getCatalog } from '../../../lib/content/load';
 
 const catalog = getCatalog();
 // 검색할 글: 상황 · 해설을 잇는다 (보이는 설명은 첫 상황, 없으면 첫 해설)
 const summary = (e: (typeof catalog)[number]) => e.situations[0] ?? e.examples.find((x) => x.note)?.note ?? '';
-const entries = catalog.map((e) => ({
-  slug: e.slug,
-  display: e.display,
-  situations: e.situations.join(' · '),
-  notes: [...new Set(e.examples.map((x) => x.note ?? '').filter(Boolean))].join(' · '),
-}));
+const entries = searchEntriesOf(catalog);
 // 하위 명령(첫 낱말)별로 묶고, 많이 쓰는 묶음부터
 const groups = new Map<string, typeof catalog>();
 for (const e of catalog) {
