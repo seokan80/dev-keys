@@ -78,4 +78,22 @@ test('↑ 로 이전 명령을 다시 부르고, 처음부터를 누르면 시�
   await page.getByRole('button', { name: '처음부터' }).click();
   await expect(page.getByTestId('mission-status')).toContainText('명령 0');
   await expect(page.locator('[data-testid="git-tree"]').first().locator('[data-commit]')).toHaveCount(4);
+  await expect(input).toBeFocused();
+  await input.press('ArrowUp');
+  await expect(input).toHaveValue('');
+  await input.press('ArrowDown');
+  await expect(input).toHaveValue('');
+});
+
+test('성공 후 다시 하면 입력창에 포커스가 돌아오고 이전 풀이 기록이 없다', async ({ page }) => {
+  await open(page, 'pick-fix');
+  await enter(page, ['git cherry-pick C3']);
+  await expect(page.getByTestId('mission-solved')).toBeVisible();
+  await page.getByRole('button', { name: '다시 하기', exact: true }).click();
+  const input = page.getByLabel('git 명령');
+  await expect(input).toBeFocused();
+  await input.press('ArrowUp');
+  await expect(input).toHaveValue('');
+  await enter(page, ['git cherry-pick C3']);
+  await expect(page.getByTestId('mission-solved')).toContainText('명령 1개');
 });
