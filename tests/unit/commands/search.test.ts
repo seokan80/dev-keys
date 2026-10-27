@@ -69,6 +69,15 @@ describe('searchCommands', () => {
     expect(slugs('메시지')[0]).toBe('commit-amend-m');
   });
 
+  it('별칭은 별명 또는 alias로도 찾는다', () => {
+    expect(
+      searchCommands(
+        [{ slug: 'alias', display: 'git config set alias.lg', situations: '긴 명령에 별명 붙이기', notes: '' }],
+        '별칭',
+      )[0]?.slug,
+    ).toBe('alias');
+  });
+
   it('질문이 상황 문장에 붙은 그대로 들어 있으면 낱말이 흩어져 맞는 것보다 위', () => {
     const r = searchCommands(
       [
@@ -132,6 +141,7 @@ describe('실제 카탈로그에서 동작과 제외 조건 구분', () => {
     ['원격 변경 안 합치고 받기', 'fetch'],
     ['원격 변경 가져와서 합치기', 'pull'],
     ['아직 안 합친 브랜치 찾기', 'branch-no-merged'],
+    ['자주 쓰는 명령 별칭 만들기', 'config-alias-lg'],
   ])('%s → %s', (query, expected) => {
     expect(searchCommands(entries, query)[0]?.slug).toBe(expected);
   });

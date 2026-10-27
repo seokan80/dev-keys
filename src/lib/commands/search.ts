@@ -65,6 +65,7 @@ const SYNONYMS: Record<string, readonly string[]> = {
   sha: ['해시'],
   조회: ['보기', '본다', '확인'],
   받기: ['가져오기'],
+  별칭: ['별명', 'alias'],
 };
 
 function stem(word: string): string {
