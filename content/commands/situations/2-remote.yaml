@@ -1,0 +1,163 @@
+# 명령 찾기 상황 문장 — 2부 원격 (구현계획 5.9 ③). 평가 세트의 질문을 베끼지 않는다.
+
+clone:
+  - 저장소 복제하기
+  - github 프로젝트 받기
+  - git clone 하기
+  - 원격 저장소 가져와서 시작
+
+remote-add:
+  - 원격 저장소 추가
+  - origin 등록하기
+  - github 에 올리려고 연결
+  - upstream 추가
+
+remote-v:
+  - 원격 저장소 주소 보기
+  - origin 어디야
+
+remote-set-url:
+  - 원격 주소 변경
+  - https 를 ssh 로
+  - 저장소 이름 바뀌어서 주소 고치기
+
+remote-show:
+  - 원격 상태 자세히
+  - 원격 브랜치와 추적 관계 보기
+
+push:
+  - 커밋 올리기
+  - github 에 push
+  - 원격에 반영
+
+push-u:
+  - 처음 push 하기
+  - 새 브랜치 원격에 올리기
+  - upstream 지정해서 push
+
+push-delete:
+  - 원격 브랜치 지우기
+  - github 브랜치 삭제
+  - push 로 브랜치 삭제
+
+fetch:
+  - 원격 변경 가져오기만
+  - fetch 하기
+  - 원격 최신 상태 확인
+
+fetch-prune:
+  - 사라진 원격 브랜치 정리
+  - 지워진 원격 브랜치 목록에서 빼기
+
+pull:
+  - 최신 코드 받기
+  - 원격 내용 가져와서 합치기
+  - pull 하기
+
+pull-rebase:
+  - pull 할 때 rebase
+  - 내 커밋을 원격 뒤로 옮기기
+  - 머지 커밋 없이 받아오기
+
+pull-ff-only:
+  - fast forward 될 때만 pull
+  - 실수로 merge 안 되게 pull
+
+pull-no-rebase:
+  - merge 로 pull 하기
+  - pull 할 때 머지 커밋 만들기
+
+config-pull-rebase:
+  - pull 기본을 rebase 로
+  - pull 할 때마다 rebase 설정
+
+config-rebase-autoStash:
+  - 수정 중일 때 pull 안 됨
+  - rebase 전에 자동으로 stash
+
+branch-vv:
+  - 브랜치 추적 원격 확인
+  - upstream 확인하기
+  - 브랜치마다 연결된 원격
+
+branch-r:
+  - 원격 브랜치만 보기
+  - origin 브랜치 목록
+
+branch-a:
+  - 로컬 원격 브랜치 전부 보기
+  - 모든 브랜치 목록
+
+ls-remote-heads:
+  - 서버에 있는 브랜치 확인
+  - 원격 브랜치 직접 조회
+
+status-sb:
+  - 원격보다 앞섰는지 뒤처졌는지
+  - ahead behind 확인
+
+log-left-right-oneline:
+  - 양쪽 브랜치에만 있는 커밋 비교
+  - 내 쪽과 원격 쪽 커밋 나눠 보기
+
+log-graph-oneline-n:
+  - 최근 커밋 그래프로 몇 개만
+
+log-all-graph-oneline-n:
+  - 원격 브랜치까지 그래프 최근 것만
+
+commit-am:
+  - 수정한 파일 바로 커밋
+  - add 없이 커밋
+
+commit-no-edit:
+  - 머지 커밋 기본 메시지로
+  - 충돌 해결 후 merge 마무리
+
+merge-abort:
+  - merge 취소
+  - 충돌 났을 때 합치기 그만두기
+  - 머지 전으로 되돌리기
+
+rebase-continue:
+  - 충돌 고친 뒤 rebase 이어서
+  - rebase 계속하기
+
+rebase-abort:
+  - rebase 취소
+  - rebase 전으로 돌아가기
+  - rebase 그만두기
+
+diff-diff-filter-name-only:
+  - 충돌난 파일 목록
+  - 아직 충돌 안 푼 파일
+
+clone-recurse-submodules:
+  - 서브모듈 포함해서 clone
+  - submodule 같이 받기
+
+submodule-add:
+  - 서브모듈 넣기
+  - 다른 저장소를 폴더로 포함
+  - submodule 추가하기
+
+submodule-update-init:
+  - 서브모듈 받기
+  - 서브모듈 초기화
+  - clone 했는데 서브모듈이 비었어
+
+submodule-update-remote:
+  - 서브모듈 최신으로 업데이트
+  - submodule 새 버전 받기
+
+submodule-status:
+  - 서브모듈 상태 확인
+
+config-submodule-recurse:
+  - pull 할 때 서브모듈도 같이
+
+diff-cached-submodule:
+  - 서브모듈 바뀐 커밋 확인
+
+diff-submodule:
+  - 서브모듈 변경 내용 보기

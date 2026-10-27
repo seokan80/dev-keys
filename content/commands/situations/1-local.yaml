@@ -1,0 +1,367 @@
+# 명령 찾기 상황 문장 — 1부 로컬 (구현계획 5.9 ③). 명령 주소 → 사람이 검색창에 칠 법한 말.
+# Claude Code 가 쓰고 사람이 검수한다. 평가 세트(content/commands/eval.yaml)의 질문을 베끼지 않는다 — 같은 문장은 검증이 막는다.
+
+init:
+  - 폴더를 깃 저장소로 시작하기
+  - git 처음 시작할 때
+  - 저장소 새로 만들기
+  - 빈 폴더에서 git 쓰기
+
+status:
+  - 지금 상태 확인
+  - 커밋 안 한 파일 있는지 보기
+  - 스테이징 됐는지 확인
+  - 작업 폴더 상태 보기
+
+status-short:
+  - 상태를 간단히 보기
+  - 바뀐 파일 목록만 짧게
+  - status 를 한 줄로
+
+add:
+  - 파일 스테이징하기
+  - 변경을 커밋에 담기
+  - 바뀐 파일 전부 올리기
+  - 충돌 고친 파일 해결 표시
+
+diff:
+  - 뭘 고쳤는지 보기
+  - 고친 내용 줄 단위로 비교
+  - 수정한 부분 확인하기
+  - 두 브랜치 내용 비교
+
+diff-staged:
+  - 스테이징한 내용 확인
+  - 커밋될 변경 미리 보기
+  - add 한 거 다시 확인
+
+commit-m:
+  - 커밋하기
+  - 변경 저장하기
+  - 커밋 메시지 쓰기
+  - 한 줄 메시지로 커밋
+
+commit-amend-m:
+  - 커밋 메시지 잘못 썼어
+  - 직전 커밋 메시지만 바꾸기
+  - 커밋 메시지 수정하기
+
+reset-soft:
+  - 커밋 되돌리기 변경은 그대로
+  - 커밋을 잘못 했어 다시 하고 싶어
+  - 방금 커밋 없던 걸로
+  - 커밋 취소하고 다시 커밋하기
+
+reset:
+  - 스테이징 전부 내리기
+  - add 한 거 다 취소
+  - 커밋 취소하고 파일은 남기기
+
+reset-hard:
+  - 고친 거 전부 버리고 처음으로
+  - 커밋까지 완전히 지우기
+  - 작업한 거 다 날리기
+  - 특정 커밋으로 완전히 돌아가기
+
+restore:
+  - 수정한 파일 원래대로 되돌리기
+  - 변경 내용 버리기
+  - 파일 고친 거 취소
+
+restore-staged:
+  - add 취소
+  - 스테이징 취소하기
+  - 실수로 add 한 파일 빼기
+
+restore-source:
+  - 예전 버전 파일 꺼내기
+  - 파일을 몇 커밋 전으로
+  - 특정 커밋의 파일 내용으로 되돌리기
+
+reflog-n:
+  - 지워진 커밋 찾기
+  - 커밋을 날려 버렸어
+  - reset 한 거 되돌리기
+  - HEAD 가 어디 있었는지 기록
+  - 잃어버린 커밋 복구
+  - 삭제한 커밋 살리기
+
+rm-cached:
+  - 파일 추적 그만하기
+  - 실수로 커밋한 비밀 파일 빼기
+  - env 파일이 올라가 버렸어
+
+check-ignore-v:
+  - gitignore 가 안 먹혀
+  - 어떤 규칙에 무시되는지
+
+clean-fd:
+  - 새로 생긴 파일 폴더 다 지우기
+  - untracked 파일 지우기
+
+branch:
+  - 브랜치 만들기
+  - 브랜치 목록 보기
+  - 이동하지 않고 브랜치만 생성
+
+checkout-b:
+  - 예전 방식으로 브랜치 만들고 이동
+  - checkout 으로 새 브랜치
+
+switch:
+  - 브랜치 바꾸기
+  - main 으로 돌아가기
+  - 다른 브랜치로 옮겨 가기
+  - 원격에 있는 브랜치로 이동
+
+switch-dash:
+  - 이전 브랜치로 가기
+  - 브랜치 왔다 갔다
+
+branch-D:
+  - 브랜치 강제 삭제
+  - 안 합쳐진 브랜치도 지우기
+
+branch-m:
+  - 브랜치 이름 변경
+  - 브랜치 이름 잘못 지었어
+
+branch-merged:
+  - 합쳐진 브랜치 목록
+  - 지워도 되는 브랜치 찾기
+
+branch-no-merged:
+  - 아직 merge 안 된 브랜치
+  - 안 합친 브랜치 목록
+
+cherry-pick:
+  - 커밋 하나만 가져오기
+  - 다른 브랜치 커밋 복사
+  - 특정 커밋만 골라서 적용
+
+cherry-pick-x:
+  - 커밋 복사하면서 원본 표시
+  - 어디서 가져온 커밋인지 남기기
+
+stash:
+  - 작업 중인 거 임시 저장
+  - 커밋 안 하고 브랜치 바꾸기
+  - 하던 일 잠깐 미뤄 두기
+
+stash-push-m-u:
+  - 새 파일까지 임시 저장
+  - 이름 붙여서 stash
+
+stash-pop:
+  - 임시 저장한 거 다시 가져오기
+  - stash 꺼내기
+
+stash-apply:
+  - stash 꺼내고 남겨 두기
+  - 임시 저장 적용만
+
+stash-list:
+  - 임시 저장 목록
+  - stash 뭐 있는지
+
+stash-drop:
+  - 임시 저장 버리기
+  - stash 지우기
+
+stash-show-stat-u:
+  - stash 안에 뭐가 들었는지
+
+log-oneline:
+  - 커밋 목록 간단히
+  - 커밋 이력 보기
+  - 커밋 해시 확인
+
+log-all-graph-oneline:
+  - 모든 브랜치 기록을 그래프로
+  - 브랜치 그림으로 보기
+
+log:
+  - 파일 하나의 기록 보기
+  - 이 파일이 언제 바뀌었는지
+
+log-stat-n:
+  - 커밋마다 바뀐 파일과 줄 수
+  - 마지막 커밋 자세히
+
+show-stat:
+  - 커밋 내용 보기
+  - 마지막 커밋에서 바뀐 파일
+
+log-author:
+  - 내가 한 커밋만
+  - 작성자로 커밋 찾기
+
+log-author-oneline:
+  - 동료 커밋만 한 줄씩
+
+log-since:
+  - 날짜로 커밋 거르기
+  - 어제부터 커밋
+
+log-oneline-since:
+  - 최근 며칠 커밋만 짧게
+
+log-S:
+  - 코드가 언제 들어왔는지
+  - 함수가 언제 생겼는지 찾기
+  - 지워진 코드 찾기
+
+log-oneline-S:
+  - 특정 문자열이 바뀐 커밋 짧게
+
+log-diff-filter:
+  - 파일을 추가한 커밋만
+  - 파일을 지운 커밋 찾기
+
+log-diff-filter-name-only-oneline:
+  - 새 파일이 생긴 커밋과 파일 이름
+
+log-name-status:
+  - 커밋마다 어떤 파일이 추가 수정 삭제됐는지
+
+log-name-status-oneline-n:
+  - 최근 커밋의 파일 변경 상태
+
+log-date-format-n:
+  - 커밋을 원하는 모양으로 출력
+  - 작성자와 날짜를 같이 보기
+
+blame-date-L:
+  - 줄마다 누가 고쳤는지
+  - 이 코드 누가 썼어
+
+last-modified:
+  - 파일별 마지막 커밋
+  - 파일마다 언제 마지막으로 바뀌었는지
+
+shortlog-sn:
+  - 작성자별 커밋 수
+  - 기여한 사람 순위
+
+config-user-name:
+  - 커밋 작성자 이름 바꾸기
+  - git 이름 설정
+
+config-user-email:
+  - git 이메일 설정
+  - 커밋 이메일 바꾸기
+  - 회사 이메일로 커밋하기
+
+config-init-defaultBranch:
+  - master 대신 main 쓰기
+  - 처음 브랜치 이름 정하기
+
+config-list-global:
+  - git 설정 보기
+  - 전역 설정 목록
+
+config-list-show-origin:
+  - 이 설정 어디서 온 거야
+
+config-set-global:
+  - 폴더마다 다른 git 설정
+  - 회사 개인 계정 나누기
+
+config-alias-lg:
+  - git 명령 줄여 쓰기
+  - alias 만들기
+
+lg:
+  - 별명으로 만든 git 명령 쓰기
+
+config-fetch-prune:
+  - fetch 할 때마다 지워진 원격 브랜치 정리
+
+config-merge-conflictStyle:
+  - 충돌 날 때 원래 코드도 같이 보기
+  - zdiff3 켜기
+
+config-push-autoSetupRemote:
+  - push 할 때 upstream 자동으로
+  - 매번 -u 안 쓰고 push
+
+config-rerere-enabled:
+  - 충돌 해결 기억하기
+  - rerere 켜기
+
+log-oneline-n:
+  - 최근 커밋 몇 개만
+  - 마지막 커밋 3개 보기
+
+switch-c:
+  - 브랜치 생성하면서 이동
+  - 새 기능 브랜치 따기
+  - 태그에서 브랜치 만들기
+
+diff-stat:
+  - 바뀐 파일과 줄 수만
+  - 변경 요약 보기
+  - 몇 줄 바뀌었는지
+
+merge:
+  - 브랜치 합치기
+  - merge 하기
+  - fast-forward 로 합치기
+
+merge-no-ff:
+  - 머지 커밋 남기며 합치기
+  - fast forward 하지 않고 merge
+
+branch-d:
+  - 브랜치 삭제
+  - 다 쓴 브랜치 정리
+
+log-graph-oneline:
+  - 커밋 그래프 보기
+  - 브랜치 모양 한 줄씩
+
+show:
+  - 커밋 하나 자세히 보기
+  - 예전 커밋의 파일 내용 보기
+
+show-name-only:
+  - 커밋에서 바뀐 파일 이름만
+  - 해시로 변경된 파일 목록 보기
+  - 특정 커밋이 건드린 파일들
+  - 커밋에 들어간 파일 목록
+
+worktree-add-b:
+  - 작업 폴더 하나 더 만들기
+  - stash 안 하고 급한 수정
+  - 브랜치마다 폴더 따로
+
+worktree-list:
+  - 열린 작업 폴더 목록
+  - worktree 뭐 있는지
+
+worktree-remove:
+  - worktree 지우기
+  - 작업 폴더 정리
+
+branch-v:
+  - 브랜치마다 마지막 커밋
+
+clean-f:
+  - 추적 안 되는 파일 삭제
+
+clean-n:
+  - 지워질 파일 미리 보기
+
+commit-amend-no-edit:
+  - 커밋에 파일 추가하기
+  - 마지막 커밋에 수정 합치기
+  - 메시지는 두고 커밋 고치기
+
+revert-no-edit:
+  - 커밋 취소하는 커밋 만들기
+  - push 한 커밋 되돌리기
+  - revert 하기
+
+blame-L:
+  - 이 줄 누가 썼는지
+  - 코드 작성자 찾기

@@ -24,12 +24,13 @@
 
 ## 명령
 
-| 할 일            | 명령                                                                                                 |
-| ---------------- | ---------------------------------------------------------------------------------------------------- |
-| 개발 서버        | `npm run dev`                                                                                        |
-| 검사 (CI와 같음) | `npm run lint` · `npm run format:check` · `npm run typecheck` · `npm test` · `npm run build`         |
-| E2E              | `npm run test:e2e` — 로컬은 빌드 후 `wrangler dev`로 띄워 시험. `E2E_BASE_URL`을 주면 그 주소를 시험 |
-| 콘텐츠 검증      | `npm run validate:content` (`build`가 먼저 실행한다)                                                 |
+| 할 일            | 명령                                                                                                           |
+| ---------------- | -------------------------------------------------------------------------------------------------------------- |
+| 개발 서버        | `npm run dev`                                                                                                  |
+| 검사 (CI와 같음) | `npm run lint` · `npm run format:check` · `npm run typecheck` · `npm test` · `npm run build`                   |
+| E2E              | `npm run test:e2e` — 로컬은 빌드 후 `wrangler dev`로 띄워 시험. `E2E_BASE_URL`을 주면 그 주소를 시험           |
+| 콘텐츠 검증      | `npm run validate:content` (`build`가 먼저 실행한다)                                                           |
+| 명령 찾기 정답률 | `npm run eval:commands` — 검색 · 세트 · 상황 문장을 바꾸면 돌린다. 기준선은 `tests/unit/commands/eval.test.ts` |
 
 ## 작업 방식
 
