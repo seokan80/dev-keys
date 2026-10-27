@@ -62,6 +62,15 @@ test.describe('터치 기기', () => {
 });
 
 test.describe('명령 찾기', () => {
+  test('받기만 하는 경우와 받아 합치는 경우를 구분한다', async ({ page }) => {
+    await page.goto('/git/commands');
+    const input = page.getByTestId('command-search');
+    await input.fill('동료가 올린 거 받아만 오고 합치진 않기');
+    await expect(page.getByTestId('search-result').first()).toHaveAttribute('href', '/git/commands/fetch');
+    await input.fill('원격 변경 가져와서 합치기');
+    await expect(page.getByTestId('search-result').first()).toHaveAttribute('href', '/git/commands/pull');
+  });
+
   test('하고 싶은 일을 한국어로 적으면 명령이 나오고, 명령 페이지에 상황 · 실제 출력 · 바로 쳐 볼 세트가 있다', async ({
     page,
   }) => {

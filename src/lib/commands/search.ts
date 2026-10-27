@@ -55,6 +55,7 @@ const STOP = new Set([
   '때',
   '좀',
   '하나',
+  '거',
 ]);
 
 /** 같은 뜻의 다른 말 — 질문 낱말을 이 말로도 찾는다 ("커밋 아이디" 는 세트에서 "해시") */
@@ -63,12 +64,43 @@ const SYNONYMS: Record<string, readonly string[]> = {
   id: ['해시'],
   sha: ['해시'],
   조회: ['보기', '본다', '확인'],
+  받기: ['가져오기'],
+  별칭: ['별명', 'alias'],
 };
 
 function stem(word: string): string {
   if (!/[가-힣]$/.test(word)) return word;
   for (const t of TAILS) if (word.length > t.length + 1 && word.endsWith(t)) return word.slice(0, -t.length);
   return word;
+}
+
+/** 자주 쓰는 동작의 활용형을 맞춘다. 명령 이름과 옵션은 그대로 둔다. */
+function actions(text: string): string {
+  return text
+    .replace(
+      /받아(?:만)?(?:\s*(?:오기만|오기|오고|온다|온|와서|와))?/g,
+      (s) => `가져오기${s.includes('만') ? '만' : ''}`,
+    )
+    .replace(/가져(?:오기만|오기|오되|오고|온다|온|와서|와)/g, (s) => `가져오기${s.endsWith('만') ? '만' : ''}`)
+    .replace(/합(?:치[가-힣]*|친다|친|칠[가-힣]*)|병합(?:하[가-힣]*)?/g, '합치기');
+}
+
+const focusWords = (text: string) =>
+  [...actions(text).matchAll(/([가-힣]{2,}?)만(?=\s|$)/g)].map((m) => stem(m[1]!)).filter((word) => !STOP.has(word));
+
+/** 부정한 동작을 일반 낱말에서 분리한다. 부정어가 다른 문장까지 번지지 않게 동작 바로 옆만 본다. */
+function polarity(text: string): { positive: string; excluded: string[] } {
+  const excluded: string[] = [];
+  const positive = text
+    .replace(/([가-힣]{2,}?)(?:하지|지|진)\s*않[가-힣]*/g, (_, verb: string) => {
+      excluded.push(actions(verb));
+      return ' ';
+    })
+    .replace(/(?:^|\s)안\s+([가-힣]{2,})/g, (_, verb: string) => {
+      excluded.push(actions(stem(verb)));
+      return ' ';
+    });
+  return { positive: actions(positive), excluded };
 }
 
 /** 받침을 뗀 느슨한 글 — "고친다" → "고치다", 활용으로 받침이 생겨도 만나게 */
@@ -105,7 +137,10 @@ function textScore(term: string, text: string, looseText: string): number {
 export function searchCommands(entries: readonly SearchEntry[], query: string, limit = 20): SearchEntry[] {
   const q = query.trim().toLowerCase();
   if (!q) return [];
-  const terms = q
+  const { positive, excluded } = polarity(q);
+  // 「받아만 오기」「이름만 보기」처럼 범위를 한정한 낱말은 주변 설명보다 무겁게 친다.
+  const focused = focusWords(positive);
+  const terms = positive
     .split(/\s+/)
     .filter((t) => t !== 'git' && t !== 'gh' && !STOP.has(t))
     // 조사만 띄어 쓴 낱말("id 로")은 버린다
@@ -114,11 +149,12 @@ export function searchCommands(entries: readonly SearchEntry[], query: string, l
     .filter((t) => t.length > 0 && !STOP.has(t));
   if (terms.length === 0) return [];
 
-  // 낱말마다 명령별 점수: 명령 낱말 그대로 8, 명령 조각 5, 아니면 상황(4배) · 해설(2배) 중 큰 쪽
+  // 낱말마다 명령별 점수: 명령 낱말 그대로 8, 명령 조각 5, 아니면 상황(8배) · 해설 중 큰 쪽
   const prepared = entries.map((entry) => {
     const cmd = entry.display.toLowerCase();
-    const situations = entry.situations.toLowerCase();
-    const notes = entry.notes.toLowerCase();
+    const situation = polarity(entry.situations.toLowerCase());
+    const situations = situation.positive;
+    const notes = polarity(entry.notes.toLowerCase()).positive;
     return {
       cmd,
       cmdWords: cmd.split(/\s+/).map((w) => w.replace(/^-+/, '')),
@@ -126,13 +162,15 @@ export function searchCommands(entries: readonly SearchEntry[], query: string, l
       notes,
       looseSituations: loose(situations),
       looseNotes: loose(notes),
+      excluded: situation.excluded,
+      focused: focusWords(situations),
     };
   });
   const scoreOf = (word: string, p: (typeof prepared)[number]) => {
     const bare = word.replace(/^-+/, '');
     if (p.cmdWords.includes(bare)) return 8;
     if (p.cmd.includes(word)) return 5;
-    return Math.max(4 * textScore(word, p.situations, p.looseSituations), 2 * textScore(word, p.notes, p.looseNotes));
+    return Math.max(8 * textScore(word, p.situations, p.looseSituations), textScore(word, p.notes, p.looseNotes));
   };
   // 같은 뜻의 말이 있으면 그중 가장 잘 맞는 것으로
   const termScores = terms.map((term) =>
@@ -148,13 +186,24 @@ export function searchCommands(entries: readonly SearchEntry[], query: string, l
     let hit = 0;
     terms.forEach((_, t) => {
       const s = termScores[t]![index]!;
-      if (s > 0) hit += 1;
+      // 해설의 약한 조각 일치도 상황의 정확한 일치와 똑같이 세면 긴 해설이 유리해진다.
+      hit += Math.min(1, s / 8);
       score += s * weights[t]!;
     });
     // 낱말이 여럿이면 많이 맞을수록 — 일부만 걸린 것은 뒤로
     if (terms.length > 1) score *= (hit / terms.length) ** 2;
     // 질문이 상황 문장에 붙은 그대로 들어 있으면 더 (구절 일치 — "스테이징 취소" 와 "스테이징 취소하기")
     if (terms.length > 1 && prepared[index]!.looseSituations.includes(phrase)) score *= 1.5;
+    for (const word of focused) {
+      const p = prepared[index]!;
+      score *= p.focused.includes(word) ? 1.5 : 0.1 + 0.9 * Math.min(1, scoreOf(word, p) / 8) ** 2;
+    }
+    // 부정한 동작은 부정한 설명과 맞추고, 그 동작을 하는 설명은 뒤로 보낸다.
+    for (const word of excluded) {
+      const p = prepared[index]!;
+      if (p.excluded.includes(word)) score *= 1.5;
+      else if (textScore(word, p.situations, p.looseSituations) > 0) score *= 0.25;
+    }
     return { entry, index, score };
   });
 
