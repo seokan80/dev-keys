@@ -206,6 +206,24 @@ const SCENARIOS: Record<string, string[]> = {
 };
 
 describe.skipIf(!hasGit)('실제 git 대조', () => {
+  it.each([
+    String.raw`commit --allow-empty --message="fix typo"`,
+    String.raw`commit --allow-empty -mfix\ typo`,
+    String.raw`commit --allow-empty -am"fix typo"`,
+    String.raw`commit --allow-empty -m "fix \"quote\""`,
+    String.raw`commit --allow-empty -m "a\qb"`,
+    String.raw`commit --allow-empty -m '-am'`,
+    String.raw`commit --allow-empty -m "pre"fix`,
+  ])('실제 Bash가 푼 Git 인자와 커밋 메시지 비교: %s', (command) => {
+    const repo = new RealRepo();
+    // 엔진 tokenize를 재사용하지 않고 실제 셸이 따옴표와 이스케이프를 풀게 한다.
+    execFileSync('bash', ['--noprofile', '--norc', '-c', `git ${command}`], { cwd: repo.dir, env, stdio: 'pipe' });
+    const result = execute(initialRepo(), command);
+    expect(result.error).toBeNull();
+    expect(result.state.commits.c2?.message).toBe(repo.git('log', '-1', '--format=%B').out);
+    expect(engineSnapshot(result.state)).toEqual(repo.snapshot());
+  });
+
   it('시나리오가 20개 이상 (M3 완료 기준)', () => {
     expect(Object.keys(SCENARIOS).length).toBeGreaterThanOrEqual(20);
   });
