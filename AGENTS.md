@@ -34,9 +34,9 @@
 
 ## 작업 방식
 
-- 이슈 하나 = 브랜치 하나(`<이슈번호>-<짧은 이름>`) → PR → 저장소 주인 Approve → 병합
+- 이슈 하나 = 브랜치 하나(`<이슈번호>-<짧은 이름>`) → PR → 저장소 주인의 승인·병합 또는 배포 지시 → 병합
 - 할 일은 시작하기 전에 이슈로 만들어 프로젝트 보드(#6) Todo 에 할 순서대로 올려 둔다 — 저장소 주인이 다음 작업을 미리 볼 수 있게. 시작할 때 In Progress, PR 은 In Review
-- main은 보호돼 있다: 승인 1명, 마지막 푸시 뒤 승인, 대화 해결 필요
+- main 보호 설정은 유지한다: 필수 검사(`check` · `deploy` · `e2e`)와 대화 해결을 확인한다. `seokan80` 단일 계정에서는 자기 PR을 GitHub Approve 할 수 없으므로, 모든 필수 검사 통과 후 저장소 주인이 대화에서 승인하거나 병합·배포를 지시하면 관리자 병합한다. 지시가 없으면 PR을 검토 대기로 둔다
 - PR마다 미리보기 `https://pr-<번호>-dev-keys.seokan.workers.dev`, main은 `https://dev-keys.seokan.workers.dev`로 자동 배포
 - 콘텐츠 검수는 PR 미리보기(또는 `npm run dev`)에서 오른쪽 아래 "검수 모드"를 켜고 `↓`(채우기) · Enter(출력 · 그림)로 넘겨 본다. 운영 빌드에는 이 스위치가 없다
 - 병합 · 배포가 끝나면 브랜치와 작업 트리를 바로 지운다
@@ -45,9 +45,8 @@
 ## 환경
 
 - Node 24 (`.nvmrc`), npm (`packageManager`). TypeScript는 6.0으로 고정 — typescript-eslint · @astrojs/check가 7을 아직 지원하지 않는다
-- GitHub 역할: 저장소 주인 `seokan80`은 환경 관리(저장소·보드 생성, 권한·시크릿·CI·배포 구성, 계정 운영 규칙 수정)를, 개발 계정 `seokanai`는 기능 개발(기능·콘텐츠·버그 수정의 이슈·커밋·PR)을 수행한다. 읽기 전용 조사·검토는 어느 계정이든 가능하다.
-- 쓰기 작업 전에 `gh api user --jq .login`과 `git var GIT_AUTHOR_IDENT`로 실제 계정과 작성자를 확인한다. 수행할 역할과 계정이 다를 때만 쓰기를 멈추고 알린다. 계정 신원을 위장하거나 전역 인증을 임의 변경하지 않는다.
-- 환경 구성도 브랜치·PR·보호 규칙을 따른다. `seokan80`이 작성한 PR은 다른 검토자가 승인해야 한다. 자기 PR을 스스로 승인하거나 관리자 권한으로 보호 규칙을 우회하지 않는다. 사용자가 명시적으로 승인한 최초 빈 저장소 초기 구성만 initial main push를 허용한다.
+- GitHub 작업 계정은 모두 `seokan80`으로 통일한다(2026-10-28 저장소 주인 지시). 환경 관리·기능·콘텐츠·버그 수정·이슈·커밋·PR·병합·배포 모두 포함한다. `seokanai`는 보류하며, 별도 지시 전까지 전환하지 않는다.
+- 쓰기 전에 `gh api user --jq .login`이 `seokan80`이고 `git var GIT_AUTHOR_IDENT`의 작성자가 `seokan80`인지 확인한다. 다르면 쓰기를 멈추고 알린다. 계정 신원을 위장하거나 전역 인증을 임의 변경하지 않는다.
 - CI 배포는 사람 계정이 아니라 저장소의 Cloudflare API 토큰 권한으로 실행된다. GitHub 계정과 Cloudflare 토큰 권한을 혼동하지 않는다.
 - Cloudflare 자격 증명은 저장소에 두지 않는다. CI는 시크릿 `CLOUDFLARE_API_TOKEN`, 변수 `CLOUDFLARE_ACCOUNT_ID`를 쓴다
 - `astro preview`는 AI 에이전트 환경에서 백그라운드로 뜬다. 끌 때는 `npx astro preview stop`
