@@ -1,0 +1,34 @@
+id: vim-editing
+category: vim
+order: 2
+title: 삭제와 수정
+description: x · r · dd와 입력·Backspace로 고치고 u · Ctrl+R로 되돌린다
+initial:
+  - const port = 30000;
+  - const host = 'locax';
+  - const debug = true;
+steps:
+  - id: port
+    prompt: 첫 줄의 여분 0 한 글자를 지워 포트를 3000으로 만드세요
+    keys: $hx
+  - id: host
+    prompt: 둘째 줄의 locax에서 x를 l로 바꾸세요
+    keys: j$hhrl
+  - id: delete
+    prompt: 셋째 줄 전체를 dd로 지우세요
+    keys: jdd
+  - id: undo
+    prompt: u로 방금 지운 줄을 되돌리세요
+    keys: u
+  - id: redo
+    prompt: Ctrl+R로 줄 삭제를 다시 실행하세요
+    keys: <C-r>
+  - id: backspace
+    prompt: 둘째 줄 앞에 //x를 입력하고 Backspace로 x를 지운 뒤 공백을 넣고 Esc를 누르세요
+    keys: I//x<BS> <Esc>
+  - id: newline
+    prompt: 첫 줄 앞에서 // config를 입력하고 Enter와 Esc로 새 줄을 만드세요
+    keys: ggI// config<CR><Esc>
+  - id: clean
+    prompt: 첫 줄의 // config를 dd로 지우세요
+    keys: ggdd

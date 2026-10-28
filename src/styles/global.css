@@ -28,13 +28,13 @@
 /* 세트 해설 (Markdown) */
 .guide {
   line-height: 1.8;
-  color: #cbd5e1;
+  color: var(--color-slate-300);
 }
 .guide h2 {
   margin: 2rem 0 0.75rem;
   font-size: 1.25rem;
   font-weight: 700;
-  color: #f1f5f9;
+  color: var(--color-slate-100);
 }
 .guide > h2:first-child {
   margin-top: 0;
@@ -51,11 +51,11 @@
   list-style: disc;
 }
 .guide a {
-  color: #34d399;
+  color: var(--color-emerald-400);
   text-decoration: underline;
 }
 .guide strong {
-  color: #f1f5f9;
+  color: var(--color-slate-100);
 }
 .guide code {
   font-family: var(--font-mono);
@@ -64,7 +64,7 @@
 .guide :not(pre) > code {
   padding: 0.1em 0.35em;
   border-radius: 0.25rem;
-  background: rgb(255 255 255 / 0.08);
+  background: var(--color-slate-800);
 }
 .guide pre {
   padding: 1rem;
@@ -80,7 +80,7 @@
 .guide th,
 .guide td {
   padding: 0.4rem 0.75rem;
-  border: 1px solid rgb(255 255 255 / 0.12);
+  border: 1px solid var(--color-slate-700);
   text-align: left;
 }
 

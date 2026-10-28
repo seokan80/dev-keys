@@ -1,0 +1,27 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`입문 4세트를 별도로 읽고 타자 따라치기 세트와 섞지 않는다 1`] = `
+[
+  [
+    "# mode: demo!",
+    "cursor: start",
+    "save: later",
+  ],
+  [
+    "const port = 3000;",
+    "// const host = 'local';",
+  ],
+  [
+    "export APP_ENV=staging",
+    "export PORT=3000",
+    "export APP_ENV=staging",
+    "echo ready",
+    "echo ready",
+  ],
+  [
+    "server=staging",
+    "port=3000",
+    "server=staging # checked!",
+  ],
+]
+`;

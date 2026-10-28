@@ -1,6 +1,6 @@
 // 검색 엔진에 알려 줄 주소 목록. 검색에서 뺀 화면(noindex — 도전 모드 · 내 기록 · 연습장)은 넣지 않는다
 import type { APIRoute } from 'astro';
-import { getCatalog, getMissions, getSets } from '../lib/content/load';
+import { getCatalog, getMissions, getSets, getVimLessons } from '../lib/content/load';
 import { CATEGORIES } from '../schemas/categories';
 
 export const GET: APIRoute = ({ site }) => {
@@ -11,6 +11,7 @@ export const GET: APIRoute = ({ site }) => {
     '/warmup',
     ...CATEGORIES.map((c) => `/${c.id}`),
     ...getSets().map((s) => s.href),
+    ...getVimLessons().map((s) => s.href),
     '/git/tree',
     ...getMissions().map((m) => m.href),
     '/git/commands',

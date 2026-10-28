@@ -15,7 +15,15 @@ const shortDate = (day: string) => {
 };
 
 /** 내 기록: 최고 기록 · 복습할 문제 · 설정 · 기록 초기화 (브라우저에만 저장된다) */
-export default function MyRecords({ sets, recalls }: { sets: readonly MeSet[]; recalls: readonly MeRecall[] }) {
+export default function MyRecords({
+  sets,
+  recalls,
+  vimLessons = [],
+}: {
+  sets: readonly MeSet[];
+  recalls: readonly MeRecall[];
+  vimLessons?: readonly { id: string; title: string; href: string }[];
+}) {
   const save = useSave();
   const [confirming, setConfirming] = useState(false);
   const today = localDay();
@@ -78,6 +86,34 @@ export default function MyRecords({ sets, recalls }: { sets: readonly MeSet[]; r
         )}
       </section>
 
+      {vimLessons.some((l) => save.vim?.[l.id]) && (
+        <section className="flex flex-col gap-3" aria-labelledby="vim-records">
+          <h2 id="vim-records" className="text-xl font-bold">
+            Vim 편집 연습
+          </h2>
+          <p className="text-sm text-slate-400">
+            완료한 연습의 가장 짧은 시간과 키 조작 수예요. 타수와 별도로 기록해요.
+          </p>
+          <ul className="flex flex-col gap-2" data-testid="vim-records">
+            {vimLessons
+              .filter((l) => save.vim?.[l.id])
+              .map((l) => {
+                const result = save.vim![l.id]!;
+                return (
+                  <li key={l.id} className="flex flex-wrap justify-between gap-2 rounded-md bg-slate-900 p-3 text-sm">
+                    <a href={l.href} className="text-sky-300 hover:underline">
+                      {l.title}
+                    </a>
+                    <span>
+                      {(result.elapsedMs / 1000).toFixed(1)}초 · {result.actions}회
+                    </span>
+                  </li>
+                );
+              })}
+          </ul>
+        </section>
+      )}
+
       <section className="flex flex-col gap-3" aria-labelledby="wrongs">
         <h2 id="wrongs" className="text-xl font-bold">
           복습할 문제
@@ -130,7 +166,8 @@ export default function MyRecords({ sets, recalls }: { sets: readonly MeSet[]; r
           기록 초기화
         </h2>
         <p className="text-sm text-slate-400">
-          기록은 이 브라우저에만 저장돼요. 초기화하면 최고 기록 · 복습할 문제 · 이어하기가 지워지고 설정은 남아요.
+          기록은 이 브라우저에만 저장돼요. 초기화하면 최고 기록 · Vim 완료 기록 · 복습할 문제 · 이어하기가 지워지고
+          설정은 남아요.
         </p>
         {confirming ? (
           <div className="flex flex-wrap items-center gap-3 text-sm">

@@ -1,3 +1,4 @@
+import { buildVimLessons, type VimLesson } from './vim';
 // 빌드 때(Node) content/ 를 읽는다. 페이지와 검증 스크립트가 같은 로더를 쓴다.
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -23,8 +24,13 @@ const read = (root: string, path: string) => ({ path, text: readFileSync(join(ro
 
 export function loadContent(root = process.cwd()) {
   const guides = listFiles(root, 'guides', /\.md$/);
+  const setFiles = listFiles(root, 'sets', /\.ya?ml$/);
+  const vim = buildVimLessons(
+    setFiles.filter((p) => p.startsWith('content/sets/vim/')).map((p) => read(root, p)),
+    guides,
+  );
   const sets = buildContent(
-    listFiles(root, 'sets', /\.ya?ml$/).map((p) => read(root, p)),
+    setFiles.filter((p) => !p.startsWith('content/sets/vim/')).map((p) => read(root, p)),
     guides,
   );
   const missions = buildMissions(
@@ -58,11 +64,13 @@ export function loadContent(root = process.cwd()) {
   return {
     sets: sets.sets,
     missions: missions.missions,
+    vimLessons: vim.lessons,
     curricula: curricula.curricula,
     catalog,
     evalCases: evaluation.cases,
     problems: [
       ...sets.problems,
+      ...vim.problems,
       ...missions.problems,
       ...curricula.problems,
       ...catalogProblems,
@@ -196,4 +204,13 @@ export function getCatalog(): CommandEntry[] {
     cachedCatalog = catalog;
   }
   return cachedCatalog;
+}
+
+let cachedVim: VimLesson[] | null = null;
+export function getVimLessons(): VimLesson[] {
+  if (cachedVim) return cachedVim;
+  const { vimLessons, problems } = loadContent();
+  errorsOf(problems);
+  cachedVim = vimLessons;
+  return cachedVim;
 }

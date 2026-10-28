@@ -6,7 +6,10 @@ import { getCurriculum, getSets } from '../../lib/content/load';
 import { CATEGORIES } from '../../schemas/categories';
 
 export function getStaticPaths() {
-  return CATEGORIES.map((category) => ({ params: { category: category.id }, props: { category } }));
+  return CATEGORIES.filter((c) => c.id !== 'vim').map((category) => ({
+    params: { category: category.id },
+    props: { category },
+  }));
 }
 
 const { category } = Astro.props;
@@ -25,6 +28,11 @@ const curriculum = getCurriculum(category.id);
       <h1 class="text-3xl font-bold">{category.title} 타자 연습</h1>
       <p class="text-slate-400">{category.description}</p>
     </header>
+    {category.id === 'shell' && (
+      <a href="/vim" class="text-sm text-sky-300 hover:underline">
+        다음: Vim 4세트 · 실제 키로 편집 익히기 →
+      </a>
+    )}
     {curriculum && (
       <nav aria-label="목차" class="rounded-lg border border-slate-700 p-4">
         <ol class="flex flex-col gap-2" data-testid="part-index">

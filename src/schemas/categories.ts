@@ -11,6 +11,7 @@ export const CATEGORIES = [
     comment: '#',
     prompt: '$',
   },
+  { id: 'vim', title: 'Vim', description: '실제 키 조작으로 모드·이동·편집을 익히기', comment: '"' },
   {
     id: 'java',
     title: 'Java',
