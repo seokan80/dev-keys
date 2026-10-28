@@ -103,6 +103,8 @@ export default function MissionPanel({ title, timeLimitSec, start, solution, nex
     setLayout(startLayout);
     setPrevious(undefined);
     setLog([]);
+    setHistory([]);
+    setCursor(null);
     setCommands(0);
     setStartedAt(null);
     setSolved(null);
@@ -216,6 +218,7 @@ export default function MissionPanel({ title, timeLimitSec, start, solution, nex
             <span className="text-slate-400">$</span>
             <input
               ref={inputRef}
+              autoFocus
               aria-label="git 명령"
               className="flex-1 bg-transparent outline-none"
               value={input}
