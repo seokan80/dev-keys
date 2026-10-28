@@ -2,28 +2,51 @@ import type { GitError } from './types';
 
 export type Parsed = { name: string; args: string[] };
 
-/** 셸처럼 나눈다. 토큰이 따옴표로 시작하면 짝이 맞는 따옴표까지 한 덩어리 (라벨 C3' 의 ' 는 그대로 둔다) */
+/** 따옴표·이스케이프만 푼다. 변수·명령 치환은 실행하지 않는다. C2' 같은 학습용 라벨만 예외로 보존한다. */
 export function tokenize(input: string): string[] | null {
   const tokens: string[] = [];
-  let i = 0;
-  while (i < input.length) {
+  let current = '';
+  let quote: string | null = null;
+  let started = false;
+  for (let i = 0; i < input.length; i++) {
     const ch = input[i]!;
-    if (/\s/.test(ch)) {
-      i += 1;
-      continue;
+    if (!quote && !started) {
+      const label = /^C\d+'+(?:[~^]\d*)*(?=\s|$)/i.exec(input.slice(i))?.[0];
+      if (label) {
+        tokens.push(label);
+        i += label.length - 1;
+        continue;
+      }
     }
-    if (ch === '"' || ch === "'") {
-      const end = input.indexOf(ch, i + 1);
-      if (end === -1) return null;
-      tokens.push(input.slice(i + 1, end));
-      i = end + 1;
-      continue;
+    if (quote === "'") {
+      if (ch === quote) quote = null;
+      else current += ch;
+    } else if (ch === '\\') {
+      const next = input[i + 1];
+      if (next === undefined) return null;
+      if (quote === '"' && !['$', '`', '"', '\\', '\n'].includes(next)) current += ch;
+      else {
+        if (next !== '\n') current += next;
+        i++;
+      }
+      started = true;
+    } else if (quote === '"') {
+      if (ch === quote) quote = null;
+      else current += ch;
+    } else if (ch === '"' || ch === "'") {
+      quote = ch;
+      started = true;
+    } else if (/\s/.test(ch)) {
+      if (started) tokens.push(current);
+      current = '';
+      started = false;
+    } else {
+      current += ch;
+      started = true;
     }
-    let j = i;
-    while (j < input.length && !/\s/.test(input[j]!)) j += 1;
-    tokens.push(input.slice(i, j));
-    i = j;
   }
+  if (quote) return null;
+  if (started) tokens.push(current);
   return tokens;
 }
 
@@ -58,31 +81,39 @@ export function parseOptions(args: readonly string[], spec: OptionSpec): Options
   const values = new Set(spec.values ?? []);
   const out: Options = { flags: new Set(), values: new Map(), positionals: [] };
 
-  const expanded: string[] = [];
-  for (const arg of args) {
-    // 붙여 쓴 짧은 옵션: -am → -a -m
-    if (/^-[a-zA-Z]{2,}$/.test(arg) && [...arg.slice(1)].every((c) => flags.has(`-${c}`) || values.has(`-${c}`))) {
-      expanded.push(...[...arg.slice(1)].map((c) => `-${c}`));
-    } else expanded.push(arg);
-  }
-
-  for (let i = 0; i < expanded.length; i++) {
-    const arg = expanded[i]!;
-    if (arg === '-' || !arg.startsWith('-')) {
-      out.positionals.push(arg);
-    } else if (flags.has(arg)) {
-      out.flags.add(arg);
-    } else if (values.has(arg)) {
-      const value = expanded[i + 1];
-      if (value === undefined) {
-        return {
-          message: `error: switch \`${arg.replace(/^-+/, '')}' requires a value`,
-          hint: `${arg} 뒤에 값을 적어야 한다`,
-        };
-      }
+  const missing = (option: string): GitError => ({
+    message: `error: switch \`${option.replace(/^-+/, '')}' requires a value`,
+    hint: `${option} 뒤에 값을 적어야 한다`,
+  });
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i]!;
+    if (arg === '--') {
+      out.positionals.push(...args.slice(i + 1));
+      break;
+    }
+    if (arg === '-' || !arg.startsWith('-')) out.positionals.push(arg);
+    else if (flags.has(arg)) out.flags.add(arg);
+    else if (values.has(arg)) {
+      const value = args[++i];
+      if (value === undefined) return missing(arg);
       out.values.set(arg, value);
-      i += 1;
-    } else return unknownOption(arg);
+    } else if (arg.startsWith('--')) {
+      const eq = arg.indexOf('=');
+      const option = arg.slice(0, eq);
+      if (eq < 0 || !values.has(option)) return unknownOption(arg);
+      out.values.set(option, arg.slice(eq + 1));
+    } else {
+      for (let j = 1; j < arg.length; j++) {
+        const option = `-${arg[j]}`;
+        if (flags.has(option)) out.flags.add(option);
+        else if (values.has(option)) {
+          const value = arg.slice(j + 1) || args[++i];
+          if (value === undefined) return missing(option);
+          out.values.set(option, value);
+          break;
+        } else return unknownOption(arg);
+      }
+    }
   }
   return out;
 }
