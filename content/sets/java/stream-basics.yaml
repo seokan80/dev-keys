@@ -58,8 +58,8 @@ items:
       - at: groupingBy(
         note: '키(고객)별로 묶는다. 두 번째 인자는 묶인 값들을 모으는 방법'
       - at: summingInt(
-        note: '묶인 주문 금액을 더한다 → Map<String, Integer>'
-        result: 'totalByCustomer = {kim=42000, lee=8000, park=5000} (HashMap 이라 순서는 정해져 있지 않다)'
+        note: '묶인 주문 금액을 더한다. HashMap 순서는 정해져 있지 않아 결과는 키순으로 표시한다'
+        result: 'totalByCustomer = {kim=42000, lee=8000, park=5000}'
       - at: joining(
         note: '구분자 · 앞 · 뒤 — 결과는 "[kim, park]"'
         result: 'names = "[kim, park]"'
@@ -79,4 +79,12 @@ items:
 
         class StreamBasics {
             void run() {
-      after: "    }\n}"
+      after: |2-
+                Verification.check(".toList();", "paidCustomers = " + paidCustomers);
+                Verification.check("summingInt(", "totalByCustomer = " + new TreeMap<>(totalByCustomer));
+                Verification.check("joining(", "names = \"" + names + "\"");
+                Verification.check(".max(", "biggest = " + biggest);
+                Verification.check("5000));", "orders.size() = " + orders.size());
+                Verification.check(".sum();", "total = " + total);
+            }
+        }

@@ -17,6 +17,10 @@ npm run dev          # 개발 서버
 npm test             # 단위 시험 + 커버리지
 npm run test:e2e     # E2E (빌드 후 wrangler dev 로 띄움)
 npm run build        # 콘텐츠 검증 → 정적 빌드(dist)
+npm run validate:code # Java·Spring 실제 컴파일·실행 결과 비교 (JDK 21)
+npm run test:code     # 코드 검증 + 검증기 오류 감지 회귀 시험
 ```
 
 PR 을 열면 `https://pr-<번호>-dev-keys.seokan.workers.dev` 에 미리보기가 올라가고, main 에 병합하면 운영에 배포된다.
+
+Java·Spring 실행 자료와 검증 방법은 [코드 세트 검증](verify/java/README.md)을 참고한다. 일반 웹 빌드에는 JDK가 필요 없으며 코드 관련 변경의 CI에서 JVM 검사를 실행한다.

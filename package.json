@@ -20,7 +20,9 @@
     "test": "vitest run --coverage",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "eval:commands": "tsx scripts/eval-commands.ts"
+    "eval:commands": "tsx scripts/eval-commands.ts",
+    "validate:code": "tsx scripts/verify-code.ts",
+    "test:code": "tsx scripts/test-code-verification.ts"
   },
   "dependencies": {
     "@astrojs/react": "7.1.0",

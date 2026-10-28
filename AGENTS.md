@@ -18,6 +18,7 @@
 - Shell 세트는 Bash + GNU 도구 기준. 명령마다 `fileState`로 명령 뒤 현재 경로·파일 트리를 적고 `content/stories/shell/<슬러그>.sh`를 실제 실행해 출력·상태를 검증한다 (`npm run validate:shell`, build에서 필수). 이야기는 임시 디렉터리에서만 실행하며 브라우저 입력은 실행하지 않는다. 의도한 비영 종료 상태는 copy 항목의 `exitCode`(기본 0)에 적는다. `$?`는 직전 학습 명령의 상태를 쓰며 `PIPESTATUS`는 같은 명령 안에서 즉시 읽는다. Shell 도전은 앞뒤 공백만 무시하고 명시한 답과 비교한다 — 따옴표를 지우는 Git 판정을 쓰지 않는다. 세트는 `content/curriculum/shell.yaml`에도 넣는다
 - Vim은 `content/sets/vim/<슬러그>.yaml`의 `initial`·`steps`로 키 동작을 연습한다(일반 copy/recall 세트와 다르다). 특수 키는 `keys`에 `<Esc>`·`<CR>`·`<BS>`·`<C-r>`로 적고 UI에서는 실제 키 이벤트로 받는다. 본문·커서·모드·종료를 판정하며 복사·저장 단계에는 `checks: [register]`·`[saved]`를 더한다. `npm test`가 실제 Vim과 권장 풀이의 Normal 단계 결과를 대조하므로 검증 환경에 Vim 9 이상이 필요하다. 지원 밖 동작은 명시적으로 거절한다.
 - 코드 세트는 레퍼런스로 쓰인다: 최신 방식(Java 21, Spring Boot 4 · Security 7)만, 한국어 설명은 줄별 해설(`notes`의 `at`)로, 컴파일에 필요한 앞뒤 코드는 `hidden`에 (구현계획 5.6)
+- Java·Spring copy 문제는 `verify/java/cases.yaml`에 등록하고 `verify/java/cases/<세트 id>/<문제 id>/VerifyMain.java`에서 실제 실행한다. `notes.result`마다 `Verification.check(at, 실제 계산한 문자열)`가 필요하며 빠진 결과도 실패한다. `npm run validate:code`(JDK 21)와 검증기 회귀 시험 `npm run test:code`를 통과해야 한다. 코드·검증기·의존성 변경은 CI 필수 check에서 JVM 검사 후 배포한다. 형식은 [verify/java/README.md](verify/java/README.md).
 - 따라치기 텍스트는 출력 가능한 ASCII만
 - 타이핑 화면 근처에 광고 · 팝업 요소를 두지 않는다
 - 범위 밖 기능(로그인, 충돌 시뮬레이션, 원격 저장소)은 구현하지 않는다
@@ -33,6 +34,7 @@
 | E2E              | `npm run test:e2e` — 로컬은 빌드 후 `wrangler dev`로 띄워 시험. `E2E_BASE_URL`을 주면 그 주소를 시험           |
 | 콘텐츠 검증      | `npm run validate:content` (`build`가 먼저 실행한다)                                                           |
 | Shell 출력 검증  | `npm run validate:shell` — 실제 Bash 이야기의 명령·출력·현재 경로·파일 상태 비교                               |
+| 코드 실행 검증   | `npm run validate:code` · `npm run test:code` — JDK 21 필요, 실제 컴파일·실행 결과와 실패 감지 확인            |
 | 명령 찾기 정답률 | `npm run eval:commands` — 검색 · 세트 · 상황 문장을 바꾸면 돌린다. 기준선은 `tests/unit/commands/eval.test.ts` |
 
 ## 작업 방식

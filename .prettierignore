@@ -6,3 +6,7 @@ playwright-report/
 test-results/
 package-lock.json
 docs/
+verify/java/.gradle/
+verify/java/build/
+verify/java/gradlew
+verify/java/gradlew.bat
