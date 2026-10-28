@@ -32,6 +32,32 @@ export const sceneSchema = z
 export type Scene = z.infer<typeof sceneSchema>;
 export type SceneZone = z.infer<typeof zone>;
 
+const relativePath = z
+  .string()
+  .regex(/^[A-Za-z0-9._-]+(?:\/[A-Za-z0-9._-]+)*\/?$/)
+  .refine((path) => !path.split('/').some((part) => part === '.' || part === '..'), '상대 경로에 . · .. 사용 금지');
+/** 실제 이야기 실행 뒤 파일 상태. 디렉터리는 /로 끝나며 기준은 ~/workspace다. */
+export const fileStateSchema = z
+  .object({
+    cwd: z.union([z.literal('.'), relativePath.refine((path) => !path.endsWith('/'))]),
+    entries: z.array(relativePath),
+    caption: z.string().min(1).max(100),
+  })
+  .strict()
+  .superRefine((state, ctx) => {
+    const paths = new Set(state.entries);
+    if (paths.size !== state.entries.length) ctx.addIssue({ code: 'custom', message: '중복 경로' });
+    if (state.cwd !== '.' && !paths.has(`${state.cwd}/`))
+      ctx.addIssue({ code: 'custom', message: '현재 디렉터리가 트리에 없다' });
+    for (const path of state.entries) {
+      const parts = path.replace(/\/$/, '').split('/');
+      parts.pop();
+      if (parts.length && !paths.has(`${parts.join('/')}/`))
+        ctx.addIssue({ code: 'custom', message: `${path}의 부모 디렉터리가 없다` });
+    }
+  });
+export type FileState = z.infer<typeof fileStateSchema>;
+
 /** 따라치기 문제. text 는 한 줄 이상 (코드 세트는 여러 줄 블록) */
 export const copyItemSchema = z
   .object({
@@ -57,6 +83,7 @@ export const copyItemSchema = z
     output: z.string().min(1).optional(),
     /** Enter 를 치면 보여 줄 그림 (그림 보기를 켰을 때). 문제 마지막 줄에 붙는다 */
     scene: sceneSchema.optional(),
+    fileState: fileStateSchema.optional(),
     /** (engine 세트) 이 명령 앞에 엔진에서 몰래 실행할 명령 — 이야기 속 "커밋한 뒤" 같은 것. 치지 않는다 */
     before: z.array(z.string().min(1)).optional(),
     /** (engine 세트) 트리와 상관없는 명령(stash · log …)은 엔진에서 뺀다 */

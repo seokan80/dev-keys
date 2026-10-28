@@ -1,0 +1,679 @@
+id: shell-paths
+category: shell
+title: 현재 위치와 경로 익히기
+description: 서비스 폴더를 돌아다니며 pwd · ls · cd와 상대 경로, 경로를 정리하는 도구를 익힌다
+order: 1
+level: 1
+items:
+  - id: step-1
+    type: copy
+    text: pwd
+    note: 현재 디렉터리의 절대 경로를 확인한다. 옆 트리의 현재 위치와 함께 본다
+    output: ~/workspace
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: 조회 명령은 파일과 현재 위치를 바꾸지 않는다
+  - id: step-2
+    type: copy
+    text: ls -1
+    note: 항목을 한 줄에 하나씩 확인한다. 경로를 주면 이동하지 않고도 볼 수 있다
+    output: project
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: 조회 명령은 파일과 현재 위치를 바꾸지 않는다
+  - id: step-3
+    type: copy
+    text: cd project
+    note: 현재 위치를 기준으로 이동한다. ..는 부모, .은 현재 디렉터리다
+    fileState:
+      cwd: project
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: '현재 위치: ~/workspace/project'
+  - id: step-4
+    type: copy
+    text: pwd
+    note: 현재 디렉터리의 절대 경로를 확인한다. 옆 트리의 현재 위치와 함께 본다
+    output: ~/workspace/project
+    fileState:
+      cwd: project
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: 조회 명령은 파일과 현재 위치를 바꾸지 않는다
+  - id: step-5
+    type: copy
+    text: ls -1
+    note: 항목을 한 줄에 하나씩 확인한다. 경로를 주면 이동하지 않고도 볼 수 있다
+    output: |-
+      config
+      logs
+      src
+    fileState:
+      cwd: project
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: 조회 명령은 파일과 현재 위치를 바꾸지 않는다
+  - id: step-6
+    type: copy
+    text: ls -a
+    note: .gitignore처럼 점으로 시작하는 숨은 항목도 본다. .과 ..도 함께 나온다
+    output: |-
+      .
+      ..
+      .gitignore
+      config
+      logs
+      src
+    fileState:
+      cwd: project
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: 조회 명령은 파일과 현재 위치를 바꾸지 않는다
+  - id: step-7
+    type: copy
+    text: cd src
+    note: 현재 위치를 기준으로 이동한다. ..는 부모, .은 현재 디렉터리다
+    fileState:
+      cwd: project/src
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: '현재 위치: ~/workspace/project/src'
+  - id: step-8
+    type: copy
+    text: pwd
+    note: 현재 디렉터리의 절대 경로를 확인한다. 옆 트리의 현재 위치와 함께 본다
+    output: ~/workspace/project/src
+    fileState:
+      cwd: project/src
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: 조회 명령은 파일과 현재 위치를 바꾸지 않는다
+  - id: step-9
+    type: copy
+    text: ls -1
+    note: 항목을 한 줄에 하나씩 확인한다. 경로를 주면 이동하지 않고도 볼 수 있다
+    output: app.js
+    fileState:
+      cwd: project/src
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: 조회 명령은 파일과 현재 위치를 바꾸지 않는다
+  - id: step-10
+    type: copy
+    text: cd ../logs
+    note: 현재 위치를 기준으로 이동한다. ..는 부모, .은 현재 디렉터리다
+    fileState:
+      cwd: project/logs
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: '현재 위치: ~/workspace/project/logs'
+  - id: step-11
+    type: copy
+    text: pwd
+    note: 현재 디렉터리의 절대 경로를 확인한다. 옆 트리의 현재 위치와 함께 본다
+    output: ~/workspace/project/logs
+    fileState:
+      cwd: project/logs
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: 조회 명령은 파일과 현재 위치를 바꾸지 않는다
+  - id: step-12
+    type: copy
+    text: ls -1
+    note: 항목을 한 줄에 하나씩 확인한다. 경로를 주면 이동하지 않고도 볼 수 있다
+    output: app.log
+    fileState:
+      cwd: project/logs
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: 조회 명령은 파일과 현재 위치를 바꾸지 않는다
+  - id: step-13
+    type: copy
+    text: cd ../config
+    note: 현재 위치를 기준으로 이동한다. ..는 부모, .은 현재 디렉터리다
+    fileState:
+      cwd: project/config
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: '현재 위치: ~/workspace/project/config'
+  - id: step-14
+    type: copy
+    text: pwd
+    note: 현재 디렉터리의 절대 경로를 확인한다. 옆 트리의 현재 위치와 함께 본다
+    output: ~/workspace/project/config
+    fileState:
+      cwd: project/config
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: 조회 명령은 파일과 현재 위치를 바꾸지 않는다
+  - id: step-15
+    type: copy
+    text: ls -1
+    note: 항목을 한 줄에 하나씩 확인한다. 경로를 주면 이동하지 않고도 볼 수 있다
+    output: app.env
+    fileState:
+      cwd: project/config
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: 조회 명령은 파일과 현재 위치를 바꾸지 않는다
+  - id: step-16
+    type: copy
+    text: cd -
+    note: 부모가 아닌 바로 전 디렉터리로 돌아간다. 이동한 경로가 출력된다
+    output: ~/workspace/project/logs
+    fileState:
+      cwd: project/logs
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: '현재 위치: ~/workspace/project/logs'
+  - id: step-17
+    type: copy
+    text: pwd
+    note: 현재 디렉터리의 절대 경로를 확인한다. 옆 트리의 현재 위치와 함께 본다
+    output: ~/workspace/project/logs
+    fileState:
+      cwd: project/logs
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: 조회 명령은 파일과 현재 위치를 바꾸지 않는다
+  - id: step-18
+    type: copy
+    text: cd ..
+    note: 현재 위치를 기준으로 이동한다. ..는 부모, .은 현재 디렉터리다
+    fileState:
+      cwd: project
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: '현재 위치: ~/workspace/project'
+  - id: step-19
+    type: copy
+    text: ls -1 ./src
+    note: 항목을 한 줄에 하나씩 확인한다. 경로를 주면 이동하지 않고도 볼 수 있다
+    output: app.js
+    fileState:
+      cwd: project
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: 조회 명령은 파일과 현재 위치를 바꾸지 않는다
+  - id: step-20
+    type: copy
+    text: ls -1 ./config
+    note: 항목을 한 줄에 하나씩 확인한다. 경로를 주면 이동하지 않고도 볼 수 있다
+    output: app.env
+    fileState:
+      cwd: project
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: 조회 명령은 파일과 현재 위치를 바꾸지 않는다
+  - id: step-21
+    type: copy
+    text: ls -1 ./logs
+    note: 항목을 한 줄에 하나씩 확인한다. 경로를 주면 이동하지 않고도 볼 수 있다
+    output: app.log
+    fileState:
+      cwd: project
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: 조회 명령은 파일과 현재 위치를 바꾸지 않는다
+  - id: step-22
+    type: copy
+    text: cd ./src/../config
+    note: 현재 위치를 기준으로 이동한다. ..는 부모, .은 현재 디렉터리다
+    fileState:
+      cwd: project/config
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: '현재 위치: ~/workspace/project/config'
+  - id: step-23
+    type: copy
+    text: pwd
+    note: 현재 디렉터리의 절대 경로를 확인한다. 옆 트리의 현재 위치와 함께 본다
+    output: ~/workspace/project/config
+    fileState:
+      cwd: project/config
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: 조회 명령은 파일과 현재 위치를 바꾸지 않는다
+  - id: step-24
+    type: copy
+    text: cd ../..
+    note: 현재 위치를 기준으로 이동한다. ..는 부모, .은 현재 디렉터리다
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: '현재 위치: ~/workspace'
+  - id: step-25
+    type: copy
+    text: pwd
+    note: 현재 디렉터리의 절대 경로를 확인한다. 옆 트리의 현재 위치와 함께 본다
+    output: ~/workspace
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: 조회 명령은 파일과 현재 위치를 바꾸지 않는다
+  - id: step-26
+    type: copy
+    text: ls -1 project/src
+    note: 항목을 한 줄에 하나씩 확인한다. 경로를 주면 이동하지 않고도 볼 수 있다
+    output: app.js
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: 조회 명령은 파일과 현재 위치를 바꾸지 않는다
+  - id: step-27
+    type: copy
+    text: ls -1 project/config
+    note: 항목을 한 줄에 하나씩 확인한다. 경로를 주면 이동하지 않고도 볼 수 있다
+    output: app.env
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: 조회 명령은 파일과 현재 위치를 바꾸지 않는다
+  - id: step-28
+    type: copy
+    text: ls -1 project/logs
+    note: 항목을 한 줄에 하나씩 확인한다. 경로를 주면 이동하지 않고도 볼 수 있다
+    output: app.log
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: 조회 명령은 파일과 현재 위치를 바꾸지 않는다
+  - id: step-29
+    type: copy
+    text: ls -d project/*/
+    note: 일치하는 디렉터리 이름을 본다. 내용까지 펼치지 않는다
+    output: |-
+      project/config/
+      project/logs/
+      project/src/
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: 조회 명령은 파일과 현재 위치를 바꾸지 않는다
+  - id: step-30
+    type: copy
+    text: cd project/src/../logs
+    note: 현재 위치를 기준으로 이동한다. ..는 부모, .은 현재 디렉터리다
+    fileState:
+      cwd: project/logs
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: '현재 위치: ~/workspace/project/logs'
+  - id: step-31
+    type: copy
+    text: pwd
+    note: 현재 디렉터리의 절대 경로를 확인한다. 옆 트리의 현재 위치와 함께 본다
+    output: ~/workspace/project/logs
+    fileState:
+      cwd: project/logs
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: 조회 명령은 파일과 현재 위치를 바꾸지 않는다
+  - id: step-32
+    type: copy
+    text: cd ../../project/config
+    note: 현재 위치를 기준으로 이동한다. ..는 부모, .은 현재 디렉터리다
+    fileState:
+      cwd: project/config
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: '현재 위치: ~/workspace/project/config'
+  - id: step-33
+    type: copy
+    text: pwd
+    note: 현재 디렉터리의 절대 경로를 확인한다. 옆 트리의 현재 위치와 함께 본다
+    output: ~/workspace/project/config
+    fileState:
+      cwd: project/config
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: 조회 명령은 파일과 현재 위치를 바꾸지 않는다
+  - id: step-34
+    type: copy
+    text: cd ../..
+    note: 현재 위치를 기준으로 이동한다. ..는 부모, .은 현재 디렉터리다
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: '현재 위치: ~/workspace'
+  - id: step-35
+    type: copy
+    text: realpath project/src/../config/app.env
+    note: ..를 정리한 절대 경로를 구한다. 현재 디렉터리는 바뀌지 않는다
+    output: ~/workspace/project/config/app.env
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: 조회 명령은 파일과 현재 위치를 바꾸지 않는다
+  - id: step-36
+    type: copy
+    text: realpath --relative-to=project project/config/app.env
+    note: project 기준의 상대 경로를 구한다. GNU realpath의 옵션이다
+    output: config/app.env
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: 조회 명령은 파일과 현재 위치를 바꾸지 않는다
+  - id: step-37
+    type: copy
+    text: dirname project/config/app.env
+    note: 파일 이름을 제외한 디렉터리 부분만 출력한다
+    output: project/config
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: 조회 명령은 파일과 현재 위치를 바꾸지 않는다
+  - id: step-38
+    type: copy
+    text: basename project/config/app.env
+    note: 경로에서 마지막 이름만 출력한다
+    output: app.env
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/src/
+        - project/src/app.js
+      caption: 조회 명령은 파일과 현재 위치를 바꾸지 않는다
+  - id: where
+    prompt: 현재 디렉터리의 절대 경로 확인
+    answers:
+      - pwd
+    type: recall
+    note: Bash + GNU 도구 기준. 표시한 답 중 하나를 정확히 입력한다
+  - id: parent
+    prompt: 부모 디렉터리로 이동
+    answers:
+      - cd ..
+    type: recall
+    note: Bash + GNU 도구 기준. 표시한 답 중 하나를 정확히 입력한다
+  - id: previous
+    prompt: 바로 전에 있던 디렉터리로 돌아가기
+    answers:
+      - cd -
+    type: recall
+    note: Bash + GNU 도구 기준. 표시한 답 중 하나를 정확히 입력한다
+  - id: hidden
+    prompt: 현재 디렉터리의 숨은 항목까지 보기
+    answers:
+      - ls -a
+    type: recall
+    note: Bash + GNU 도구 기준. 표시한 답 중 하나를 정확히 입력한다

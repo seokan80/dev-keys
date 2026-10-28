@@ -229,7 +229,7 @@ export default function ChallengePlayer({ setId, href, questions, pool, prompt, 
     );
   }
 
-  const others = (typedInput: string) => q.answers.filter((a) => !sameCommand(typedInput, a));
+  const others = (typedInput: string) => q.answers.filter((a) => !sameCommand(typedInput, a, q.match));
 
   return (
     <section className="flex flex-col gap-4" aria-label="도전 모드">

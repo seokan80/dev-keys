@@ -9,8 +9,9 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "npm run validate:content && astro build",
+    "build": "npm run validate:content && npm run validate:shell && astro build",
     "preview": "astro preview",
+    "validate:shell": "tsx scripts/shell-story-check.ts",
     "validate:content": "tsx scripts/validate-content.ts",
     "lint": "eslint .",
     "format": "prettier --write .",

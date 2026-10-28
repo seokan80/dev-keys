@@ -28,6 +28,14 @@ describe('sameCommand — 글자 그대로 비교 (공백 · 따옴표 차이는
 });
 
 describe('judge', () => {
+  it('Shell은 따옴표·이스케이프·연산자의 뜻을 보존해 명시한 답만 인정한다', () => {
+    const question = { answers: ['printf "%s\\n" "$HOME"'], match: 'literal' as const };
+    expect(judge(question, '  printf "%s\\n" "$HOME"  ').correct).toBe(true);
+    expect(judge(question, "printf '%s\\n' '$HOME'").correct).toBe(false);
+    expect(judge({ answers: ['echo a > out'], match: 'literal' }, 'echo a \\> out').correct).toBe(false);
+    expect(sameCommand('ls -1', 'ls  -1', 'literal')).toBe(false);
+  });
+
   const create = { answers: ['git switch -c hotfix', 'git checkout -b hotfix'] };
 
   it('정답 목록 중 하나와 같으면 정답 (글자 비교)', () => {

@@ -54,7 +54,7 @@ export default function SetPlayer({
   const { settings } = save;
 
   // 그림(상태 그림 · 커밋 그래프)은 타자 영역 옆 칸에 늘 보인다. 그림 보기를 끄면 칸을 숨긴다
-  const hasScenes = graph !== null || lines.some((l) => l.scene !== null);
+  const hasScenes = graph !== null || lines.some((l) => l.scene !== null || l.fileState);
   const showPanel = hasScenes && settings.showScenes;
   /** 지금 치는 줄 (다 치면 lines.length) */
   const [lineAt, setLineAt] = useState(0);
@@ -69,6 +69,7 @@ export default function SetPlayer({
   const scenesDone = lines.slice(0, lineAt).flatMap((l) => (l.scene ? [l.scene] : []));
   const scene = scenesDone.at(-1) ?? null;
   const previousScene = scenesDone.at(-2) ?? null;
+  const filesDone = lines.slice(0, lineAt).flatMap((l) => (l.fileState ? [l.fileState] : []));
   const captions = [lastLine?.scene?.caption, lastLine?.graph?.caption].filter((c): c is string => !!c);
 
   const onFinish = (stats: TypingStats) => {
@@ -102,6 +103,8 @@ export default function SetPlayer({
         {showPanel && (
           <div className="lg:sticky lg:top-4 lg:order-2">
             <SidePanel
+              fileState={filesDone.at(-1) ?? null}
+              previousFiles={filesDone.at(-2) ?? null}
               scene={scene}
               previousScene={previousScene}
               graph={graph}

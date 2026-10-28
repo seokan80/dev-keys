@@ -15,6 +15,7 @@
 - Git 세트의 `scene`은 그 명령 뒤의 상태를 적는다 (앞 장면 · 실제 Git 동작과 맞아야 한다). 브랜치처럼 커밋 트리가 바뀌는 세트는 `engine`을 두어 엔진이 커밋 그래프를 만들게 한다(타자 영역 옆에 늘 보인다) — 숨은 커밋은 `before`, 트리와 상관없는 명령은 `skipEngine`, 그 줄을 끝냈을 때 그래프 아래 설명은 `tree.caption`. 엔진에 없는 원격 브랜치 · 태그는 `origin/…` · `tags/…` 이름의 브랜치로 흉내 낸다(그림에서 점선 · `tag:` 로 그린다 — 구현계획 5.7). 코드 세트의 `result`는 실제로 실행했을 때의 값이어야 한다
 - 도전 모드 문제(`type: recall`)는 따라친 명령을 설명만 보고 치게 한다. 엔진이 아는 명령은 `context`를 두어 동의어를 엔진으로 판정한다 — 단, 결과 트리가 같아도 뜻이 다른 명령(`branch -d`/`-D`, 이름을 쓴 `switch`/`switch -`, 목록 보기)에는 두지 않는다. prompt 의 `<자리>` 뒤에는 조사를 붙이지 않는다(값이 바뀌면 어긋난다)
 - 트리 미션(`content/missions/<슬러그>.yaml`)은 시작 명령 · 권장 풀이만 쓰고 목표는 엔진이 만든다. 새 미션은 `npm test -- -u` 로 목표 트리 스냅샷을 만든 뒤 사람이 확인한다
+- Shell 세트는 Bash + GNU 도구 기준. 명령마다 `fileState`로 명령 뒤 현재 경로·파일 트리를 적고 `content/stories/shell/<슬러그>.sh`를 실제 실행해 출력·상태를 검증한다 (`npm run validate:shell`, build에서 필수). 이야기는 임시 디렉터리에서만 실행하며 브라우저 입력은 실행하지 않는다. Shell 도전은 앞뒤 공백만 무시하고 명시한 답과 비교한다 — 따옴표를 지우는 Git 판정을 쓰지 않는다. 세트는 `content/curriculum/shell.yaml`에도 넣는다
 - 코드 세트는 레퍼런스로 쓰인다: 최신 방식(Java 21, Spring Boot 4 · Security 7)만, 한국어 설명은 줄별 해설(`notes`의 `at`)로, 컴파일에 필요한 앞뒤 코드는 `hidden`에 (구현계획 5.6)
 - 따라치기 텍스트는 출력 가능한 ASCII만
 - 타이핑 화면 근처에 광고 · 팝업 요소를 두지 않는다
@@ -30,6 +31,7 @@
 | 검사 (CI와 같음) | `npm run lint` · `npm run format:check` · `npm run typecheck` · `npm test` · `npm run build`                   |
 | E2E              | `npm run test:e2e` — 로컬은 빌드 후 `wrangler dev`로 띄워 시험. `E2E_BASE_URL`을 주면 그 주소를 시험           |
 | 콘텐츠 검증      | `npm run validate:content` (`build`가 먼저 실행한다)                                                           |
+| Shell 출력 검증  | `npm run validate:shell` — 실제 Bash 이야기의 명령·출력·현재 경로·파일 상태 비교                               |
 | 명령 찾기 정답률 | `npm run eval:commands` — 검색 · 세트 · 상황 문장을 바꾸면 돌린다. 기준선은 `tests/unit/commands/eval.test.ts` |
 
 ## 작업 방식

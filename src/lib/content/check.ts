@@ -3,7 +3,7 @@ import { judge } from '../../core/challenge';
 import { execute, initialRepo, layoutTree, type RepoState, type TreeLayout } from '../../core/git';
 import { srsKey } from '../../core/srs';
 import { CATEGORY_IDS, type CategoryId } from '../../schemas/categories';
-import { setSchema, type CopyItem, type RecallItem, type Scene, type SetData } from '../../schemas/set';
+import { setSchema, type CopyItem, type RecallItem, type Scene, type SetData, type FileState } from '../../schemas/set';
 
 export type RawFile = { path: string; text: string };
 export type Problem = { path: string; message: string; level: 'error' | 'warning' };
@@ -31,6 +31,7 @@ export type CodeLine = {
   comments: string[];
   output: string | null;
   scene: Scene | null;
+  fileState?: FileState;
   graph: LineGraph | null;
   /** 대화형 답 줄이면 앞에 보일 질문 ($ 대신) */
   prompt: string | null;
@@ -46,6 +47,7 @@ export type RecallLine = {
   prompt: { text: string; value: boolean }[];
   /** 첫 번째가 대표 정답 */
   answers: string[];
+  match?: 'literal';
   context: { setup: string[] } | null;
   note: string | null;
 };
@@ -82,7 +84,7 @@ const charLabel = (ch: string) => (ch === '\t' ? '탭' : `"${ch}"(U+${ch.codePoi
 const linesOf = (text: string) => text.replace(/\n$/, '').split('\n');
 
 function checkCopyItem(item: CopyItem, category: CategoryId, report: (msg: string) => void): CodeLine[] {
-  const maxLine = category === 'git' ? MAX_COMMAND_LINE : MAX_LINE;
+  const maxLine = category === 'git' || category === 'shell' ? MAX_COMMAND_LINE : MAX_LINE;
   const lines = linesOf(item.text);
   const where = (i: number) => `문제 ${item.id} ${i + 1}번째 줄`;
 
@@ -143,6 +145,7 @@ function checkCopyItem(item: CopyItem, category: CategoryId, report: (msg: strin
       comments: [...(i === 0 && item.note ? [item.note] : []), ...(lineNotes.has(i) ? [lineNotes.get(i)!] : [])],
       output: outputs.length > 0 ? outputs.join('\n') : null,
       scene: i === last ? (item.scene ?? null) : null,
+      ...(i === last && item.fileState ? { fileState: item.fileState } : {}),
       graph: null,
       prompt: item.prompt ?? null,
       itemId: item.id,
@@ -177,6 +180,7 @@ function checkRecallItem(
     text.replace(PLACEHOLDER, (_, name: string) => item.placeholder?.[name] ?? `<${name}>`);
   const answers = item.answers.map(fill);
   const context = item.context ? { setup: item.context.setup.map(fill) } : null;
+  if (category === 'shell' && context) report(`문제 ${item.id}: Shell에는 Git context를 쓸 수 없다`);
   if (context) checkContext(item.id, context.setup, answers, report);
 
   const prompt: RecallLine['prompt'] = [];
@@ -188,7 +192,16 @@ function checkRecallItem(
   }
   if (at < item.prompt.length) prompt.push({ text: item.prompt.slice(at), value: false });
 
-  return { key: srsKey(setId, item.id), setId, itemId: item.id, prompt, answers, context, note: item.note ?? null };
+  return {
+    key: srsKey(setId, item.id),
+    setId,
+    itemId: item.id,
+    prompt,
+    answers,
+    ...(category === 'shell' ? { match: 'literal' as const } : {}),
+    context,
+    note: item.note ?? null,
+  };
 }
 
 /**
@@ -343,7 +356,11 @@ export function buildContent(setFiles: RawFile[], guidePaths: string[]): { sets:
           report(`문제 ${item.id}: tree 는 엔진에서 도는 줄에만 — skipEngine 과 함께 쓸 수 없다`);
         if (data.engine && item.as && item.skipEngine)
           report(`문제 ${item.id}: as 는 엔진에서 돌릴 명령 — skipEngine 과 함께 쓸 수 없다`);
+        if (data.category === 'shell' && !item.fileState)
+          report(`문제 ${item.id}: Shell 명령에는 fileState가 필요하다`);
+        if (data.category !== 'shell' && item.fileState) report(`문제 ${item.id}: fileState는 Shell 세트에서만 쓴다`);
         const itemLines = checkCopyItem(item, data.category, report);
+        if (data.category === 'shell' && itemLines.length !== 1) report(`문제 ${item.id}: Shell 명령은 한 줄씩`);
         if (data.engine && itemLines.length > 1) report(`문제 ${item.id}: engine 세트의 명령은 한 줄씩`);
         lines.push(...itemLines);
       } else recalls.push(checkRecallItem(item, data.id, data.category, report));

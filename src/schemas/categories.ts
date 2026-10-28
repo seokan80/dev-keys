@@ -5,6 +5,13 @@
 export const CATEGORIES = [
   { id: 'git', title: 'Git', description: '자주 쓰는 Git 명령을 손에 익히기', comment: '#', prompt: '$' },
   {
+    id: 'shell',
+    title: 'Shell',
+    description: 'Bash와 GNU 도구로 파일을 다루고 로그를 찾기',
+    comment: '#',
+    prompt: '$',
+  },
+  {
     id: 'java',
     title: 'Java',
     description: 'Stream · Optional · record 처럼 자주 쓰는 Java 문법',
