@@ -1,0 +1,40 @@
+---
+import Base from '../../layouts/Base.astro';
+import Breadcrumb from '../../components/Breadcrumb.astro';
+import VimList from '../../components/vim/VimList';
+import { getVimLessons } from '../../lib/content/load';
+const lessons = getVimLessons();
+---
+
+<Base
+  title="Vim 입문 — 실제 키로 익히는 편집 연습 · DevKeys"
+  description="Normal/Insert 모드, 이동과 편집, 복사·붙여넣기·되돌리기, 검색·저장·종료를 브라우저 미니 편집기에서 익히세요."
+>
+  <main class="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-10">
+    <Breadcrumb items={[{ label: 'DevKeys', href: '/' }, { label: 'Vim' }]} />
+    <header class="flex flex-col gap-2">
+      <p class="text-sm text-sky-300">시즌 2 · Shell · Vim</p>
+      <h1 class="text-3xl font-bold">Vim 입문</h1>
+      <p class="text-slate-400">
+        명령을 글자로 따라 쓰는 대신, 실제 키로 커서와 본문을 바꿔 보세요. 4세트의 목표 모양에 도달하면 다음 단계로
+        넘어갑니다.
+      </p>
+    </header>
+    <p class="text-sm text-slate-400">
+      영문 키보드가 필요해요. Esc는 키로, Ctrl+R은 조합으로 누르세요. 지원하는 명령은 각 편집기 아래에서 볼 수 있어요.
+    </p>
+    <VimList
+      client:load
+      lessons={lessons.map((l) => ({
+        id: l.id,
+        title: l.title,
+        description: l.description,
+        href: l.href,
+        steps: l.steps.length,
+      }))}
+    />
+    <a href="/shell" class="text-sm text-sky-300 hover:underline">
+      ← Shell 8세트로 터미널 명령 익히기
+    </a>
+  </main>
+</Base>

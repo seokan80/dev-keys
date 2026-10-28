@@ -2,7 +2,7 @@
 import Base from '../layouts/Base.astro';
 import Breadcrumb from '../components/Breadcrumb.astro';
 import MyRecords, { type MeRecall, type MeSet } from '../components/me/MyRecords';
-import { getSets } from '../lib/content/load';
+import { getSets, getVimLessons } from '../lib/content/load';
 import { challengeHref } from '../lib/content/next';
 import { categoryOf } from '../schemas/categories';
 
@@ -30,7 +30,12 @@ const recalls: MeRecall[] = sets.flatMap((s) =>
     <Breadcrumb items={[{ label: 'DevKeys', href: '/' }, { label: '내 기록' }]} />
     <h1 class="text-3xl font-bold">내 기록</h1>
     <!-- 기록은 브라우저에만 있으니 브라우저에서 그린다 -->
-    <MyRecords client:only="react" sets={meSets} recalls={recalls}>
+    <MyRecords
+      client:only="react"
+      sets={meSets}
+      recalls={recalls}
+      vimLessons={getVimLessons().map((l) => ({ id: l.id, title: l.title, href: l.href }))}
+    >
       <p slot="fallback" class="text-slate-400">
         불러오는 중…
       </p>

@@ -1,0 +1,41 @@
+id: vim-copy-undo
+category: vim
+order: 3
+title: 복사·붙여넣기·되돌리기
+description: yy로 줄을 복사하고 p · P로 붙여 넣으며 undo와 redo로 결과를 비교한다
+initial:
+  - export APP_ENV=staging
+  - export PORT=3000
+  - echo ready
+steps:
+  - id: yank
+    prompt: 첫 줄을 yy로 복사하세요
+    keys: yy
+    checks:
+      - register
+  - id: paste
+    prompt: 아래 줄로 이동한 뒤 그 아래에 p로 붙여 넣으세요
+    keys: jp
+  - id: undo
+    prompt: u로 붙여넣기를 되돌리세요
+    keys: u
+  - id: redo
+    prompt: Ctrl+R로 붙여넣기를 다시 실행하세요
+    keys: <C-r>
+  - id: last
+    prompt: G로 마지막 줄로 이동하세요
+    keys: G
+  - id: copy-last
+    prompt: echo ready 줄을 yy로 복사하세요
+    keys: yy
+    checks:
+      - register
+  - id: before
+    prompt: P로 현재 줄 위에 붙여 넣으세요
+    keys: P
+  - id: char
+    prompt: 현재 줄 마지막 y를 x로 지우세요
+    keys: $x
+  - id: restore
+    prompt: p로 방금 지운 글자를 다시 붙이세요
+    keys: p

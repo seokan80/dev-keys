@@ -1,0 +1,40 @@
+id: vim-modes
+category: vim
+order: 1
+title: 모드 전환과 이동
+description: i · Esc로 모드를 바꾸고 hjkl · 0 · $ · gg · G로 커서를 움직인다
+initial:
+  - 'mode: demo'
+  - 'cursor: start'
+  - 'save: later'
+steps:
+  - id: insert
+    prompt: i를 눌러 입력 모드로 들어가세요
+    keys: i
+  - id: prefix
+    prompt: '줄 앞에 #와 공백을 입력하세요'
+    keys: '# '
+  - id: escape
+    prompt: Esc로 일반 모드로 돌아오세요
+    keys: <Esc>
+  - id: end
+    prompt: 현재 줄의 마지막 글자로 이동하세요
+    keys: $
+  - id: append
+    prompt: A로 줄 끝에 !를 붙이고 Esc를 누르세요
+    keys: A!<Esc>
+  - id: next
+    prompt: 아래 줄의 첫 칸으로 이동하세요
+    keys: j0
+  - id: right
+    prompt: l을 네 번 눌러 오른쪽으로 네 칸 이동하세요
+    keys: llll
+  - id: left
+    prompt: h로 왼쪽 한 칸 이동하세요
+    keys: h
+  - id: bottom
+    prompt: G로 마지막 줄의 시작으로 이동하세요
+    keys: G
+  - id: top
+    prompt: gg로 첫 줄의 시작으로 돌아오세요
+    keys: gg

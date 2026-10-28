@@ -1,0 +1,39 @@
+---
+import { getEntry, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Breadcrumb from '../../components/Breadcrumb.astro';
+import MobileNotice from '../../components/site/MobileNotice';
+import ReportLink from '../../components/site/ReportLink.astro';
+import VimPlayer from '../../components/vim/VimPlayer';
+import { getVimLessons } from '../../lib/content/load';
+import type { VimLesson } from '../../lib/content/vim';
+export function getStaticPaths() {
+  return getVimLessons().map((lesson) => ({ params: { lesson: lesson.slug }, props: { lesson } }));
+}
+const { lesson } = Astro.props as { lesson: VimLesson };
+const lessons = getVimLessons();
+const next = lessons[lessons.findIndex((l) => l.id === lesson.id) + 1];
+const guide = await getEntry('guides', `vim/${lesson.slug}`);
+if (!guide) throw new Error(`Vim 해설이 없다: ${lesson.slug}`);
+const { Content } = await render(guide);
+---
+
+<Base title={`${lesson.title} — Vim 입문 · DevKeys`} description={lesson.description}>
+  <main class="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10">
+    <Breadcrumb items={[{ label: 'DevKeys', href: '/' }, { label: 'Vim', href: '/vim' }, { label: lesson.title }]} />
+    <header class="flex flex-col gap-2">
+      <h1 class="text-3xl font-bold">{lesson.title}</h1>
+      <p class="text-slate-400">{lesson.description}</p>
+      <a href="#guide" class="text-sm text-sky-300 hover:underline">
+        해설 읽기 ↓
+      </a>
+    </header>
+    <MobileNotice client:only="react" guideHref="#guide" />
+    <VimPlayer client:only="react" lesson={lesson} next={next ? { href: next.href, title: next.title } : null} />
+    <article id="guide" class="guide scroll-mt-6 border-t border-slate-800 pt-6">
+      <p class="mb-2 text-xs font-bold text-sky-300">해설</p>
+      <Content />
+    </article>
+    <ReportLink what={`Vim 세트 · ${lesson.title} (${lesson.id})`} />
+  </main>
+</Base>

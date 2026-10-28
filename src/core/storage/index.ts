@@ -10,6 +10,8 @@ export {
   parseSave,
   recordBest,
   saveSave,
+  saveVimResult,
+  type VimResult,
   setLastPlayed,
   updateSettings,
   type Best,

@@ -16,6 +16,7 @@
 - 도전 모드 문제(`type: recall`)는 따라친 명령을 설명만 보고 치게 한다. 엔진이 아는 명령은 `context`를 두어 동의어를 엔진으로 판정한다 — 단, 결과 트리가 같아도 뜻이 다른 명령(`branch -d`/`-D`, 이름을 쓴 `switch`/`switch -`, 목록 보기)에는 두지 않는다. prompt 의 `<자리>` 뒤에는 조사를 붙이지 않는다(값이 바뀌면 어긋난다)
 - 트리 미션(`content/missions/<슬러그>.yaml`)은 시작 명령 · 권장 풀이만 쓰고 목표는 엔진이 만든다. 새 미션은 `npm test -- -u` 로 목표 트리 스냅샷을 만든 뒤 사람이 확인한다
 - Shell 세트는 Bash + GNU 도구 기준. 명령마다 `fileState`로 명령 뒤 현재 경로·파일 트리를 적고 `content/stories/shell/<슬러그>.sh`를 실제 실행해 출력·상태를 검증한다 (`npm run validate:shell`, build에서 필수). 이야기는 임시 디렉터리에서만 실행하며 브라우저 입력은 실행하지 않는다. 의도한 비영 종료 상태는 copy 항목의 `exitCode`(기본 0)에 적는다. `$?`는 직전 학습 명령의 상태를 쓰며 `PIPESTATUS`는 같은 명령 안에서 즉시 읽는다. Shell 도전은 앞뒤 공백만 무시하고 명시한 답과 비교한다 — 따옴표를 지우는 Git 판정을 쓰지 않는다. 세트는 `content/curriculum/shell.yaml`에도 넣는다
+- Vim은 `content/sets/vim/<슬러그>.yaml`의 `initial`·`steps`로 키 동작을 연습한다(일반 copy/recall 세트와 다르다). 특수 키는 `keys`에 `<Esc>`·`<CR>`·`<BS>`·`<C-r>`로 적고 UI에서는 실제 키 이벤트로 받는다. 본문·커서·모드·종료를 판정하며 복사·저장 단계에는 `checks: [register]`·`[saved]`를 더한다. `npm test`가 실제 Vim과 권장 풀이의 Normal 단계 결과를 대조하므로 검증 환경에 Vim 9 이상이 필요하다. 지원 밖 동작은 명시적으로 거절한다.
 - 코드 세트는 레퍼런스로 쓰인다: 최신 방식(Java 21, Spring Boot 4 · Security 7)만, 한국어 설명은 줄별 해설(`notes`의 `at`)로, 컴파일에 필요한 앞뒤 코드는 `hidden`에 (구현계획 5.6)
 - 따라치기 텍스트는 출력 가능한 ASCII만
 - 타이핑 화면 근처에 광고 · 팝업 요소를 두지 않는다

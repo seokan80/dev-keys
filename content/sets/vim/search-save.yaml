@@ -1,0 +1,38 @@
+id: vim-search-save
+category: vim
+order: 4
+title: 검색·저장·종료
+description: / · n · N으로 찾고 :w · :wq로 연습 파일을 저장하고 닫는다
+initial:
+  - server=staging
+  - port=3000
+  - server=staging
+steps:
+  - id: find
+    prompt: /server와 Enter로 현재 위치 다음의 server를 찾으세요
+    keys: /server<CR>
+  - id: again
+    prompt: n으로 다음 server를 찾아 처음으로 순환하세요
+    keys: n
+  - id: reverse
+    prompt: N으로 반대 방향의 server를 찾으세요
+    keys: N
+  - id: value
+    prompt: /staging과 Enter로 값을 찾으세요
+    keys: /staging<CR>
+  - id: mark
+    prompt: '현재 줄 끝에 공백과 # checked를 붙인 뒤 Esc를 누르세요'
+    keys: 'A # checked<Esc>'
+  - id: save
+    prompt: 저장 전 :q는 E37로 거절됩니다. :w와 Enter로 저장하세요
+    keys: :w<CR>
+    checks:
+      - saved
+  - id: modify
+    prompt: 줄 끝에 !를 추가하고 Esc를 누르세요
+    keys: A!<Esc>
+  - id: close
+    prompt: 이번 변경도 저장하고 :wq와 Enter로 연습 파일을 닫으세요
+    keys: :wq<CR>
+    checks:
+      - saved

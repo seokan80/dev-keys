@@ -17,6 +17,12 @@ const bestSchema = z.object({
   score: z.number().nonnegative().optional(),
   at: z.string(),
 });
+const vimResultSchema = z.object({
+  at: z.string().min(1),
+  elapsedMs: z.number().int().nonnegative(),
+  actions: z.number().int().positive(),
+});
+export type VimResult = z.infer<typeof vimResultSchema>;
 const srsSchema = z.object({
   step: z.number().int(),
   wrong: z.number().int(),
@@ -44,6 +50,7 @@ export type SaveV1 = {
   srs: Record<string, SrsEntry>;
   settings: Settings;
   lastPlayed?: { path: string; at: string };
+  vim?: Record<string, VimResult>;
 };
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -67,10 +74,12 @@ function validRecord<T>(value: unknown, schema: z.ZodType<T>): Record<string, T>
 }
 
 function toV1(raw: Record<string, unknown>): SaveV1 {
+  const vim = validRecord(raw.vim, vimResultSchema);
   const settings = settingsSchema.partial().safeParse(raw.settings);
   const lastPlayed = z.object({ path: z.string(), at: z.string() }).safeParse(raw.lastPlayed);
   return {
     version: 1,
+    ...(Object.keys(vim).length ? { vim } : {}),
     bests: validRecord(raw.bests, bestSchema),
     srs: validRecord(raw.srs, srsSchema),
     settings: { ...DEFAULT_SETTINGS, ...(settings.success ? settings.data : {}) },
@@ -158,4 +167,17 @@ export function memoryStore(initial: Record<string, string> = {}): KeyValueStore
     getItem: (key) => data.get(key) ?? null,
     setItem: (key, value) => void data.set(key, value),
   };
+}
+
+/** 완료 기록은 시간과 조작 수를 인자로 받는다. 다른 학습 모드의 타수와 섞지 않는다. */
+export function saveVimResult(save: SaveV1, id: string, result: VimResult): SaveV1 {
+  if (!vimResultSchema.safeParse(result).success) return save;
+  const previous = save.vim?.[id];
+  if (
+    previous &&
+    (previous.elapsedMs < result.elapsedMs ||
+      (previous.elapsedMs === result.elapsedMs && previous.actions <= result.actions))
+  )
+    return save;
+  return { ...save, vim: { ...save.vim, [id]: result } };
 }
