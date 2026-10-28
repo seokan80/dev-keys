@@ -32,6 +32,7 @@ export type CodeLine = {
   output: string | null;
   scene: Scene | null;
   fileState?: FileState;
+  exitCode?: number;
   graph: LineGraph | null;
   /** 대화형 답 줄이면 앞에 보일 질문 ($ 대신) */
   prompt: string | null;
@@ -146,6 +147,7 @@ function checkCopyItem(item: CopyItem, category: CategoryId, report: (msg: strin
       output: outputs.length > 0 ? outputs.join('\n') : null,
       scene: i === last ? (item.scene ?? null) : null,
       ...(i === last && item.fileState ? { fileState: item.fileState } : {}),
+      ...(category === 'shell' && i === last ? { exitCode: item.exitCode ?? 0 } : {}),
       graph: null,
       prompt: item.prompt ?? null,
       itemId: item.id,
@@ -358,6 +360,8 @@ export function buildContent(setFiles: RawFile[], guidePaths: string[]): { sets:
           report(`문제 ${item.id}: as 는 엔진에서 돌릴 명령 — skipEngine 과 함께 쓸 수 없다`);
         if (data.category === 'shell' && !item.fileState)
           report(`문제 ${item.id}: Shell 명령에는 fileState가 필요하다`);
+        if (data.category !== 'shell' && item.exitCode !== undefined)
+          report(`문제 ${item.id}: exitCode는 Shell 세트에서만 쓴다`);
         if (data.category !== 'shell' && item.fileState) report(`문제 ${item.id}: fileState는 Shell 세트에서만 쓴다`);
         const itemLines = checkCopyItem(item, data.category, report);
         if (data.category === 'shell' && itemLines.length !== 1) report(`문제 ${item.id}: Shell 명령은 한 줄씩`);

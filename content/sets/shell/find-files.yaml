@@ -1,0 +1,490 @@
+id: shell-find-files
+category: shell
+order: 5
+title: find로 파일 찾기
+description: 파일 종류·이름·권한으로 경로를 찾고 cache를 건너뛰며 임시 파일을 확인 후 정리한다
+level: 2
+items:
+  - id: step-1
+    type: copy
+    text: pwd
+    note: 탐색을 시작할 경로의 기준 위치를 확인한다
+    output: ~/workspace
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-2
+    type: copy
+    text: find project/src -type f -print | sort
+    note: -type f는 일반 파일이다. find의 탐색 순서는 보장하지 않으므로 출력은 sort로 정렬한다
+    output: |-
+      project/src/app.js
+      project/src/worker.js
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-3
+    type: copy
+    text: find project -type d -print | sort
+    note: -type d는 디렉터리다. 시작 경로 project 자체도 결과에 들어간다
+    output: |-
+      project
+      project/cache
+      project/cache/assets
+      project/config
+      project/logs
+      project/notes
+      project/src
+      project/tmp
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-4
+    type: copy
+    text: find project -type f -name "*.log" -print | sort
+    note: 따옴표로 감싼 *.log 패턴을 find에 전달한다. Bash가 먼저 펼치지 않게 한다
+    output: |-
+      project/logs/app.log
+      project/logs/worker.log
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-5
+    type: copy
+    text: find project -type f -name "*.js" -print | sort
+    note: '*.js 이름의 일반 파일을 찾는다. cache 속 bundle.js도 검색 대상이다'
+    output: |-
+      project/cache/assets/bundle.js
+      project/src/app.js
+      project/src/worker.js
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-6
+    type: copy
+    text: find project -maxdepth 1 -type f -print | sort
+    note: -maxdepth 1은 시작 경로 바로 아래까지만 본다
+    output: |-
+      project/.gitignore
+      project/README.md
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-7
+    type: copy
+    text: find project -type f -iname "readme.md" -print
+    note: -iname은 대소문자를 구분하지 않는 이름 패턴이다
+    output: project/README.md
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-8
+    type: copy
+    text: find project -type f -name ".*" -print | sort
+    note: 점으로 시작하는 파일도 찾는다. find는 기본적으로 숨은 파일도 탐색한다
+    output: project/.gitignore
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-9
+    type: copy
+    text: find project -type f -perm 600 -print | sort
+    note: -perm 600은 권한 비트가 정확히 600인 파일을 찾는다. 이 이야기에서는 app.env다
+    output: project/config/app.env
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-10
+    type: copy
+    text: find project -type f -empty -print | sort
+    note: -empty로 비어 있는 일반 파일을 찾는다
+    output: project/tmp/empty.tmp
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-11
+    type: copy
+    text: find project -type f -name "app.log" -exec wc -l {} \;
+    note: -exec에서 {}는 찾은 경로다. 세미콜론 앞 역슬래시는 Bash가 먼저 해석하지 않게 한다
+    output: 8 project/logs/app.log
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-12
+    type: copy
+    text: find project -path "*/cache" -prune -o -type f -print | sort
+    note: cache 디렉터리를 만나면 -prune으로 내려가지 않고 다른 일반 파일만 출력한다
+    output: |-
+      project/.gitignore
+      project/README.md
+      project/config/app.env
+      project/logs/app.log
+      project/logs/worker.log
+      project/notes/release notes.txt
+      project/src/app.js
+      project/src/worker.js
+      project/tmp/empty.tmp
+      project/tmp/old.tmp
+      project/tmp/session.tmp
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-13
+    type: copy
+    text: find project/tmp -type f -name "*.tmp" -print | sort
+    note: 삭제 전에 대상 임시 파일 목록을 먼저 확인한다
+    output: |-
+      project/tmp/empty.tmp
+      project/tmp/old.tmp
+      project/tmp/session.tmp
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-14
+    type: copy
+    text: find project/tmp -type f -name "*.tmp" -delete
+    note: 앞서 확인한 범위의 .tmp 일반 파일만 지운다. -delete는 실제로 삭제하는 옵션이다
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+      caption: 확인한 .tmp 파일만 지웠다
+  - id: step-15
+    type: copy
+    text: find project/tmp -type f -print | sort
+    note: 정리한 tmp 디렉터리에 파일이 남아 있는지 다시 확인한다
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: logs
+    type: recall
+    prompt: project 아래의 일반 파일 중 이름이 *.log인 경로를 정렬해 출력
+    answers:
+      - find project -type f -name "*.log" -print | sort
+      - find project -type f -name '*.log' -print | sort
+    note: Bash + GNU 도구 기준. 따옴표·연산자를 포함해 표시한 정답 중 하나를 정확히 입력한다
+  - id: dirs
+    type: recall
+    prompt: project 아래의 디렉터리 경로를 정렬해 출력
+    answers:
+      - find project -type d -print | sort
+    note: Bash + GNU 도구 기준. 따옴표·연산자를 포함해 표시한 정답 중 하나를 정확히 입력한다
+  - id: depth
+    type: recall
+    prompt: project 바로 아래의 일반 파일만 정렬해 출력
+    answers:
+      - find project -maxdepth 1 -type f -print | sort
+    note: Bash + GNU 도구 기준. 따옴표·연산자를 포함해 표시한 정답 중 하나를 정확히 입력한다
+  - id: empty
+    type: recall
+    prompt: project 아래의 비어 있는 일반 파일 경로를 정렬해 출력
+    answers:
+      - find project -type f -empty -print | sort
+    note: Bash + GNU 도구 기준. 따옴표·연산자를 포함해 표시한 정답 중 하나를 정확히 입력한다

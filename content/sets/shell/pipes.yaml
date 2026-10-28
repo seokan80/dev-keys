@@ -1,0 +1,605 @@
+id: shell-pipes
+category: shell
+order: 6
+title: 파이프와 리다이렉션
+description: 오류 로그를 모아 보고서를 만들며 | · > · >> · tee와 표준 오류의 연결 순서를 익힌다
+level: 2
+items:
+  - id: step-1
+    type: copy
+    text: pwd
+    note: 준비된 서비스 폴더에서 로그 보고서를 만든다
+    output: ~/workspace
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 명령 뒤 파일 상태다. 보고서에 쓴 내용은 다음 cat으로 확인한다
+  - id: step-2
+    type: copy
+    text: grep "ERROR" project/logs/app.log | wc -l
+    note: '|는 앞 명령의 표준 출력을 다음 명령의 표준 입력으로 연결한다'
+    output: '2'
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 명령 뒤 파일 상태다. 보고서에 쓴 내용은 다음 cat으로 확인한다
+  - id: step-3
+    type: copy
+    text: grep -E "WARN|ERROR" project/logs/app.log | sort
+    note: 경고와 오류를 골라 정렬한다. 표준 오류는 기본 파이프에 들어가지 않는다
+    output: |-
+      ERROR database offline
+      ERROR payment timeout
+      WARN queue delayed
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 명령 뒤 파일 상태다. 보고서에 쓴 내용은 다음 cat으로 확인한다
+  - id: step-4
+    type: copy
+    text: head -n 6 project/logs/app.log | tail -n 3
+    note: 앞 여섯 줄 중 마지막 세 줄을 골라 읽는다
+    output: |-
+      ERROR payment timeout
+      INFO retry payment
+      ERROR database offline
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 명령 뒤 파일 상태다. 보고서에 쓴 내용은 다음 cat으로 확인한다
+  - id: step-5
+    type: copy
+    text: cut -d " " -f 1 project/logs/app.log | sort | uniq -c
+    note: 로그 수준 열을 자르고 정렬한 뒤 같은 줄의 수를 센다. uniq는 이웃한 같은 줄을 묶는다
+    output: |2-
+            2 ERROR
+            5 INFO
+            1 WARN
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 명령 뒤 파일 상태다. 보고서에 쓴 내용은 다음 cat으로 확인한다
+  - id: step-6
+    type: copy
+    text: grep "ERROR" project/logs/app.log > project/errors.txt
+    note: '>는 표준 출력을 파일로 보낸다. 대상이 있으면 실행 전에 내용을 비운다'
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/errors.txt
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 명령 뒤 파일 상태다. 보고서에 쓴 내용은 다음 cat으로 확인한다
+  - id: step-7
+    type: copy
+    text: cat project/errors.txt
+    note: 저장된 오류 보고서를 다시 읽어 실제 내용을 확인한다
+    output: |-
+      ERROR payment timeout
+      ERROR database offline
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/errors.txt
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 명령 뒤 파일 상태다. 보고서에 쓴 내용은 다음 cat으로 확인한다
+  - id: step-8
+    type: copy
+    text: grep "ERROR" project/logs/worker.log >> project/errors.txt
+    note: '>>는 기존 내용을 남기고 worker의 오류를 뒤에 덧붙인다'
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/errors.txt
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 명령 뒤 파일 상태다. 보고서에 쓴 내용은 다음 cat으로 확인한다
+  - id: step-9
+    type: copy
+    text: cat project/errors.txt
+    note: 두 로그에서 모은 오류가 보고서에 함께 남았는지 확인한다
+    output: |-
+      ERROR payment timeout
+      ERROR database offline
+      ERROR job failed
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/errors.txt
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 명령 뒤 파일 상태다. 보고서에 쓴 내용은 다음 cat으로 확인한다
+  - id: step-10
+    type: copy
+    text: wc -l < project/errors.txt
+    note: <는 파일을 표준 입력으로 연다. wc에는 파일 이름 인자를 주지 않아 이름이 출력되지 않는다
+    output: '3'
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/errors.txt
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 명령 뒤 파일 상태다. 보고서에 쓴 내용은 다음 cat으로 확인한다
+  - id: step-11
+    type: copy
+    text: grep "WARN" project/logs/app.log | tee project/warnings.txt
+    note: tee는 표준 출력을 화면과 파일에 함께 쓴다
+    output: WARN queue delayed
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/errors.txt
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+        - project/warnings.txt
+      caption: 명령 뒤 파일 상태다. 보고서에 쓴 내용은 다음 cat으로 확인한다
+  - id: step-12
+    type: copy
+    text: cat project/warnings.txt
+    note: tee가 만든 경고 보고서를 다시 읽는다
+    output: WARN queue delayed
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/errors.txt
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+        - project/warnings.txt
+      caption: 명령 뒤 파일 상태다. 보고서에 쓴 내용은 다음 cat으로 확인한다
+  - id: step-13
+    type: copy
+    text: cat project/config/missing.env 2> project/stderr.txt
+    note: 없는 파일의 오류를 2>로 파일에 저장한다. 화면 출력은 없어도 cat의 종료 상태는 1이다
+    exitCode: 1
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/errors.txt
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/stderr.txt
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+        - project/warnings.txt
+      caption: 종료 상태 1 — 줄 위 설명과 출력으로 의미를 확인한다
+  - id: step-14
+    type: copy
+    text: cat project/stderr.txt
+    note: 표준 오류 파일에 실제 오류 메시지가 저장됐는지 확인한다
+    output: 'cat: project/config/missing.env: No such file or directory'
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/errors.txt
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/stderr.txt
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+        - project/warnings.txt
+      caption: 명령 뒤 파일 상태다. 보고서에 쓴 내용은 다음 cat으로 확인한다
+  - id: step-15
+    type: copy
+    text: cat project/config/missing.env > project/stdout.txt 2>&1
+    note: 먼저 표준 출력을 파일로 연결한 뒤 2>&1로 표준 오류도 같은 곳에 연결한다
+    exitCode: 1
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/errors.txt
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/stderr.txt
+        - project/stdout.txt
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+        - project/warnings.txt
+      caption: 종료 상태 1 — 줄 위 설명과 출력으로 의미를 확인한다
+  - id: step-16
+    type: copy
+    text: cat project/stdout.txt
+    note: 표준 출력 파일 안에 오류 메시지도 들어 있음을 확인한다
+    output: 'cat: project/config/missing.env: No such file or directory'
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/errors.txt
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/stderr.txt
+        - project/stdout.txt
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+        - project/warnings.txt
+      caption: 명령 뒤 파일 상태다. 보고서에 쓴 내용은 다음 cat으로 확인한다
+  - id: step-17
+    type: copy
+    text: cat project/config/missing.env 2>&1 > project/empty.txt
+    note: 순서를 바꾸면 표준 오류는 원래 표준 출력으로 가고 뒤의 >는 표준 출력만 파일로 보낸다
+    output: 'cat: project/config/missing.env: No such file or directory'
+    exitCode: 1
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/empty.txt
+        - project/errors.txt
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/stderr.txt
+        - project/stdout.txt
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+        - project/warnings.txt
+      caption: 종료 상태 1 — 줄 위 설명과 출력으로 의미를 확인한다
+  - id: step-18
+    type: copy
+    text: wc -c < project/empty.txt
+    note: 마지막 파일은 0바이트다. 리다이렉션은 왼쪽에서 오른쪽으로 처리된다
+    output: '0'
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/empty.txt
+        - project/errors.txt
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/stderr.txt
+        - project/stdout.txt
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+        - project/warnings.txt
+      caption: 명령 뒤 파일 상태다. 보고서에 쓴 내용은 다음 cat으로 확인한다
+  - id: count
+    type: recall
+    prompt: project/logs/app.log에서 ERROR가 있는 줄 수를 파이프로 wc에 전달해 세기
+    answers:
+      - grep "ERROR" project/logs/app.log | wc -l
+    note: Bash + GNU 도구 기준. 따옴표·연산자를 포함해 표시한 정답 중 하나를 정확히 입력한다
+  - id: append
+    type: recall
+    prompt: worker 로그의 ERROR 줄을 project/errors.txt 뒤에 추가
+    answers:
+      - grep "ERROR" project/logs/worker.log >> project/errors.txt
+    note: Bash + GNU 도구 기준. 따옴표·연산자를 포함해 표시한 정답 중 하나를 정확히 입력한다
+  - id: stdin
+    type: recall
+    prompt: project/errors.txt를 표준 입력으로 읽어 이름 없이 줄바꿈 수만 출력
+    answers:
+      - wc -l < project/errors.txt
+    note: Bash + GNU 도구 기준. 따옴표·연산자를 포함해 표시한 정답 중 하나를 정확히 입력한다
+  - id: tee
+    type: recall
+    prompt: app 로그의 WARN 줄을 화면과 project/warnings.txt 파일에 함께 쓰기
+    answers:
+      - grep "WARN" project/logs/app.log | tee project/warnings.txt
+    note: Bash + GNU 도구 기준. 따옴표·연산자를 포함해 표시한 정답 중 하나를 정확히 입력한다
+  - id: stderr
+    type: recall
+    prompt: 없는 project/config/missing.env를 cat으로 읽고 표준 오류만 project/stderr.txt에 저장
+    answers:
+      - cat project/config/missing.env 2> project/stderr.txt
+    note: Bash + GNU 도구 기준. 따옴표·연산자를 포함해 표시한 정답 중 하나를 정확히 입력한다

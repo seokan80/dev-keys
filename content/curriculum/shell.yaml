@@ -1,13 +1,10 @@
 parts:
   - title: 경로와 파일
-    description: 현재 위치를 확인하고 서비스 파일을 만들고 옮긴다
-    sets: [paths, files]
-    planned: [파일 내용 읽기, grep으로 로그 찾기]
+    description: 현재 위치를 확인하고 서비스 파일을 만들고 읽는다
+    sets: [paths, files, read-files, grep-logs]
   - title: 찾고 연결하기
     description: 필요한 파일을 찾고 명령의 출력을 다음 명령에 전달한다
-    sets: []
-    planned: [find로 파일 찾기, 파이프와 리다이렉션]
+    sets: [find-files, pipes]
   - title: 뜻을 정확히 전달하기
     description: 따옴표와 변수·종료 상태를 구분해 Shell 명령을 조합한다
-    sets: []
-    planned: [따옴표와 변수, 종료 상태와 조건 실행]
+    sets: [quoting, status]

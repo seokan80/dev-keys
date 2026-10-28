@@ -73,6 +73,8 @@ export default function SetPlayer({
   const captions = [lastLine?.scene?.caption, lastLine?.graph?.caption].filter((c): c is string => !!c);
 
   const onFinish = (stats: TypingStats) => {
+    // 결과 화면으로 전환하며 자식이 사라져도 마지막 명령의 상태를 남긴다.
+    setLineAt(lines.length);
     if (review) {
       // 검수 모드: 기록하지 않는다
       setPhase({ kind: 'result', run: phase.run, stats, improved: false, previous: best ?? null, reviewed: true });
@@ -109,7 +111,7 @@ export default function SetPlayer({
               previousScene={previousScene}
               graph={graph}
               step={graphStep}
-              last={lastCommand ? { command: lastCommand, captions } : null}
+              last={lastCommand ? { command: lastCommand, captions, exitCode: lastLine?.exitCode } : null}
             />
           </div>
         )}
