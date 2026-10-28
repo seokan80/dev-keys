@@ -55,6 +55,9 @@ const WHY = [
         <a href="#season-1" class="hover:underline">
           Git 지도
         </a>
+        <a href="/shell" class="hover:underline">
+          Shell
+        </a>
         <a href="/warmup" class="hover:underline">
           손가락 풀기
         </a>
@@ -144,12 +147,19 @@ const WHY = [
             </span>
           </a>
         </li>
-        <li class="flex flex-col gap-2 rounded-lg border border-dashed border-slate-600 p-4" data-testid="season-2">
-          <span class="text-xs font-bold text-amber-300">시즌 2 · 준비 중</span>
-          <strong class="text-lg">터미널 · 쉘</strong>
-          <span class="text-sm text-slate-400">
-            ls · cd · grep · find · 파이프 · ssh — 서버에 들어가 로그를 찾고, 쉘 한 줄로 일을 줄인다
-          </span>
+        <li data-testid="season-2">
+          <a
+            href="/shell"
+            class="flex h-full flex-col gap-2 rounded-lg border border-sky-700 bg-sky-500/5 p-4 hover:bg-sky-500/10"
+            data-testid="season-shell"
+          >
+            <span class="text-xs font-bold text-sky-300">시즌 2 · Shell 시작</span>
+            <strong class="text-lg">터미널 · Shell · Vim</strong>
+            <span class="text-sm text-slate-400">
+              현재 위치와 파일을 다루는 Shell {count('shell')}세트. 실제 출력과 파일 트리를 보며 익힌다.
+            </span>
+            <span class="mt-auto text-sm text-slate-400">로그 검색 · 파이프 · Vim 편집 연습은 준비 중</span>
+          </a>
         </li>
         <li class="flex flex-col gap-2 rounded-lg border border-dashed border-slate-600 p-4" data-testid="season-3">
           <span class="text-xs font-bold text-amber-300">시즌 3 · 준비 중</span>

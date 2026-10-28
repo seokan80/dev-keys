@@ -19,7 +19,7 @@ const category = categoryOf(set.category);
 const nextSet = nextSetOf(getSets(), set);
 const challenge = set.recalls.length > 0 ? challengeHref(set) : undefined;
 // 그림(상태 그림 · 커밋 그래프)이 있으면 타자 영역 옆에 칸을 두니 페이지를 넓게
-const hasPanel = set.graph !== null || set.lines.some((l) => l.scene !== null);
+const hasPanel = set.graph !== null || set.lines.some((l) => l.scene !== null || l.fileState);
 const next = nextSet ? { href: nextSet.href, title: nextSet.title, description: nextSet.description } : null;
 
 const guide = await getEntry('guides', `${set.category}/${set.slug}`);

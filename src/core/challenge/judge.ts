@@ -3,6 +3,8 @@ import { SUPPORTED_COMMANDS, compare, execute, initialRepo, tokenize, type ExecR
 /** 뜻 보고 치기 한 문제. answers 는 placeholder 를 채운 정답들 (첫 번째가 대표 정답) */
 export type RecallQuestion = {
   answers: readonly string[];
+  /** Shell은 따옴표·연산자 의미를 보존해 명시한 답과만 비교한다. */
+  match?: 'literal';
   /** 이 상태에서 엔진으로 실행해 동의어를 판정한다 (Git 문제) */
   context?: { setup: readonly string[] } | null;
 };
@@ -19,7 +21,8 @@ function tokensOf(text: string, gitAnswer: boolean): string[] | null {
 }
 
 /** 글자 그대로 비교. 공백 개수 · 따옴표 종류 차이는 무시한다 */
-export function sameCommand(input: string, answer: string): boolean {
+export function sameCommand(input: string, answer: string, match?: 'literal'): boolean {
+  if (match === 'literal') return input.trim() === answer.trim();
   const gitAnswer = tokenize(answer)?.[0] === 'git';
   const a = tokensOf(input, gitAnswer);
   const b = tokensOf(answer, gitAnswer);
@@ -59,8 +62,8 @@ function setupState(setup: readonly string[]): RepoState | null {
  */
 export function judge(question: RecallQuestion, input: string): Verdict {
   if (input.trim() === '') return WRONG;
-  if (question.answers.some((a) => sameCommand(input, a))) return { correct: true, via: 'text' };
-  if (!question.context) return WRONG;
+  if (question.answers.some((a) => sameCommand(input, a, question.match))) return { correct: true, via: 'text' };
+  if (!question.context || question.match === 'literal') return WRONG;
 
   const tokens = tokensOf(input, true);
   if (!tokens || !SUPPORTED_COMMANDS.includes(tokens[1] ?? '')) return WRONG;
