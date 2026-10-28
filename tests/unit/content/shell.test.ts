@@ -6,13 +6,39 @@ import { checkShellStory, runShellStory } from '../../../scripts/lib/shell-story
 const sets = getSets().filter((set) => set.category === 'shell');
 
 describe('Shell 기초 콘텐츠와 실제 Bash 대조', () => {
-  it('두 세트의 도전 문제는 따옴표를 보존하는 판정을 쓴다', () => {
-    expect(sets.map((set) => set.slug)).toEqual(['paths', 'files']);
+  it('여덟 세트의 도전 문제는 따옴표를 보존하는 판정을 쓴다', () => {
+    expect(sets.map((set) => set.slug)).toEqual([
+      'paths',
+      'files',
+      'read-files',
+      'grep-logs',
+      'find-files',
+      'pipes',
+      'quoting',
+      'status',
+    ]);
     expect(sets.every((set) => set.recalls.length >= 4 && set.recalls.every((q) => q.match === 'literal'))).toBe(true);
   });
 
   it.each(sets)('$title: 명령·출력·현재 경로·파일 트리가 실제 Bash와 같다', (set) => {
     expect(checkShellStory(set)).toEqual([]);
+  });
+
+  it('명시한 비영 종료 상태만 허용하고 잘못 기록한 상태는 잡는다', () => {
+    const set = sets.find((set) => set.slug === 'status')!;
+    const failed = set.lines.find((line) => line.text === 'false')!;
+    expect(failed.exitCode).toBe(1);
+    expect(
+      checkShellStory({ ...set, lines: set.lines.map((line) => (line === failed ? { ...line, exitCode: 0 } : line)) }),
+    ).toEqual(['shell-status/step-2: 종료 상태 1 (기대 0)']);
+  });
+
+  it('공백이 있는 경로를 보존하고 절대 경로는 막는다', () => {
+    expect(
+      fileStateSchema.safeParse({ cwd: '.', entries: ['project/', 'project/release notes.txt'], caption: '파일' })
+        .success,
+    ).toBe(true);
+    expect(fileStateSchema.safeParse({ cwd: '.', entries: ['/outside'], caption: '파일' }).success).toBe(false);
   });
 
   it('각 이야기는 새 파일 상태에서 시작하고 실행할 때마다 결과가 같다', () => {

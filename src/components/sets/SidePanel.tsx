@@ -16,7 +16,7 @@ type Props = {
   /** 커밋 그래프 단계 */
   step: number;
   /** 방금 친 명령과 그 줄의 설명들 */
-  last: { command: string; captions: string[] } | null;
+  last: { command: string; captions: string[]; exitCode?: number } | null;
 };
 
 /**
@@ -53,6 +53,11 @@ export default function SidePanel({
         {last ? (
           <>
             <code className="block truncate font-mono text-xs text-slate-400">$ {last.command}</code>
+            {last.exitCode !== undefined && (
+              <p className={last.exitCode === 0 ? 'text-emerald-300' : 'text-amber-300'} data-testid="shell-exit-code">
+                종료 상태 {last.exitCode}
+              </p>
+            )}
             {last.captions.map((c) => (
               <p key={c} className="text-sky-200">
                 {c}

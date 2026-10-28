@@ -4,13 +4,13 @@ import { hydrated, typeLines } from './helpers';
 
 const sets = getSets().filter((set) => set.category === 'shell');
 
-test('시즌 2에서 Shell 목록과 준비 중 커리큘럼을 볼 수 있다', async ({ page }) => {
+test('시즌 2에서 완성된 Shell 8세트 커리큘럼을 볼 수 있다', async ({ page }) => {
   await page.goto('/');
   await page.getByTestId('season-shell').click();
   await expect(page).toHaveURL('/shell');
-  await expect(page.getByTestId('set-card')).toHaveCount(2);
+  await expect(page.getByTestId('set-card')).toHaveCount(8);
   await expect(page.getByTestId('part')).toHaveCount(3);
-  await expect(page.getByTestId('planned').getByRole('listitem')).toHaveCount(6);
+  await expect(page.getByTestId('planned').getByRole('listitem')).toHaveCount(0);
 });
 
 for (const set of sets) {
@@ -24,6 +24,7 @@ for (const set of sets) {
     for (const line of set.lines.slice(1)) {
       await typeLines(page, [line]);
       const cwd = line.fileState!.cwd;
+      await expect(page.getByTestId('shell-exit-code')).toHaveText(`종료 상태 ${line.exitCode ?? 0}`);
       await expect(page.getByTestId('shell-cwd')).toHaveText(`현재: ~/workspace${cwd === '.' ? '' : `/${cwd}`}`);
     }
     await expect(page.getByTestId('result')).toContainText('100%');
@@ -53,4 +54,15 @@ test('파일 그림 보기 설정을 끄면 옆 칸을 숨긴다', async ({ page
   await hydrated(page);
   await page.getByLabel('그림 보기').uncheck();
   await expect(page.getByTestId('side-panel')).toHaveCount(0);
+});
+
+test('따옴표 문제에서 값 확장과 리터럴을 정답으로 섞지 않는다', async ({ page }) => {
+  await page.goto('/shell/challenge/quoting');
+  const input = page.getByLabel('답', { exact: true });
+  await input.fill("cat '$file'");
+  await input.press('Enter');
+  await expect(page.getByTestId('feedback')).toHaveAttribute('data-correct', 'false');
+  await input.fill('cat "${file}"');
+  await input.press('Enter');
+  await expect(page.getByTestId('question')).toContainText('$file이라는 글자');
 });

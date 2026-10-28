@@ -1,0 +1,675 @@
+id: shell-quoting
+category: shell
+order: 7
+title: 따옴표와 변수
+description: 공백이 있는 파일 이름과 * 패턴으로 작은따옴표·큰따옴표·변수 확장의 차이를 눈으로 확인한다
+level: 2
+items:
+  - id: step-1
+    type: copy
+    text: pwd
+    note: 변수와 따옴표를 연습할 시작 위치다. 공백이 있는 파일 이름도 준비되어 있다
+    output: ~/workspace
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-2
+    type: copy
+    text: file='project/notes/release notes.txt'
+    note: 공백을 포함한 경로를 변수 file에 넣는다. 대입의 = 양옆에는 공백을 넣지 않는다
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-3
+    type: copy
+    text: printf "%s\n" "$file"
+    note: 큰따옴표 안에서는 변수를 확장하되 공백을 기준으로 인자를 나누지 않는다
+    output: project/notes/release notes.txt
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-4
+    type: copy
+    text: cat "$file"
+    note: 경로를 하나의 인자로 전달해 공백이 있는 파일을 읽는다
+    output: |-
+      release candidate
+      check logs first
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-5
+    type: copy
+    text: printf '%s\n' '$file'
+    note: 작은따옴표 안에서는 $file을 변수로 확장하지 않고 그대로 출력한다
+    output: $file
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-6
+    type: copy
+    text: printf "<%s>\n" "$file"
+    note: 큰따옴표로 감싸면 공백을 포함한 값이 인자 하나다
+    output: <project/notes/release notes.txt>
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-7
+    type: copy
+    text: printf "<%s>\n" $file
+    note: 따옴표를 빼면 값의 공백에서 인자가 나뉜다. 꺾쇠 한 쌍이 인자 하나를 표시한다
+    output: |-
+      <project/notes/release>
+      <notes.txt>
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-8
+    type: copy
+    text: pattern='project/logs/*.log'
+    note: 작은따옴표로 *를 감싸 패턴 자체를 변수에 넣는다
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-9
+    type: copy
+    text: printf "%s\n" "$pattern"
+    note: 큰따옴표 안의 변수 확장은 *를 파일 목록으로 펼치지 않는다
+    output: project/logs/*.log
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-10
+    type: copy
+    text: printf "%s\n" $pattern
+    note: 따옴표 밖에서는 값의 *도 파일 이름 패턴으로 펼쳐진다
+    output: |-
+      project/logs/app.log
+      project/logs/worker.log
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-11
+    type: copy
+    text: name=world
+    note: 간단한 이름은 공백 없이 대입할 수 있다
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-12
+    type: copy
+    text: printf "%s\n" "hello $name"
+    note: 큰따옴표 안에서 $name을 값으로 바꿔 출력한다
+    output: hello world
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-13
+    type: copy
+    text: printf '%s\n' 'hello $name'
+    note: 작은따옴표 안에서는 hello $name이라는 글자 그대로다
+    output: hello $name
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-14
+    type: copy
+    text: label='release candidate'
+    note: 공백을 포함한 짧은 표시 값을 변수에 넣는다
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-15
+    type: copy
+    text: printf "%s\n" "$label"
+    note: 변수를 큰따옴표로 감싸 공백을 보존한다
+    output: release candidate
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-16
+    type: copy
+    text: unset label
+    note: unset으로 변수를 해제한다
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-17
+    type: copy
+    text: printf "%s\n" "${label:-draft}"
+    note: 변수가 없거나 빈 값이면 :- 뒤의 기본값을 쓴다. 이 표현 자체는 변수에 대입하지 않는다
+    output: draft
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-18
+    type: copy
+    text: lines=$(wc -l < project/logs/app.log)
+    note: $()로 명령의 표준 출력을 받아 변수에 넣는다. 뒤의 줄바꿈은 제거된다
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-19
+    type: copy
+    text: 'printf "log lines: %s\n" "$lines"'
+    note: 명령 치환으로 얻은 줄 수를 출력한다
+    output: 'log lines: 8'
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-20
+    type: copy
+    text: printf "%s\n" "config/${name}.env"
+    note: ${name}처럼 중괄호로 변수 이름의 경계를 분명히 한다
+    output: config/world.env
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-21
+    type: copy
+    text: export APP_ENV=staging
+    note: export한 변수는 이후 실행한 자식 프로세스의 환경에도 전달된다
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: step-22
+    type: copy
+    text: bash --noprofile --norc -c 'printf "%s\n" "$APP_ENV"'
+    note: 새 Bash에서 APP_ENV를 읽는다. 작은따옴표는 바깥 Bash의 조기 확장을 막는다
+    output: staging
+    fileState:
+      cwd: .
+      entries:
+        - project/
+        - project/.gitignore
+        - project/README.md
+        - project/cache/
+        - project/cache/assets/
+        - project/cache/assets/bundle.js
+        - project/config/
+        - project/config/app.env
+        - project/logs/
+        - project/logs/app.log
+        - project/logs/worker.log
+        - project/notes/
+        - project/notes/release notes.txt
+        - project/src/
+        - project/src/app.js
+        - project/src/worker.js
+        - project/tmp/
+        - project/tmp/empty.tmp
+        - project/tmp/old.tmp
+        - project/tmp/session.tmp
+      caption: 조회·변수 명령은 파일 상태를 바꾸지 않는다
+  - id: path
+    type: recall
+    prompt: 변수 file에 담긴 공백 포함 경로를 하나의 인자로 cat에 전달
+    answers:
+      - cat "$file"
+      - cat "${file}"
+    note: Bash + GNU 도구 기준. 따옴표·연산자를 포함해 표시한 정답 중 하나를 정확히 입력한다
+  - id: literal
+    type: recall
+    prompt: 변수를 확장하지 않고 $file이라는 글자를 한 줄로 출력
+    answers:
+      - printf '%s\n' '$file'
+    note: Bash + GNU 도구 기준. 따옴표·연산자를 포함해 표시한 정답 중 하나를 정확히 입력한다
+  - id: default
+    type: recall
+    prompt: 변수 label이 없거나 비어 있으면 draft를 출력
+    answers:
+      - printf "%s\n" "${label:-draft}"
+    note: Bash + GNU 도구 기준. 따옴표·연산자를 포함해 표시한 정답 중 하나를 정확히 입력한다
+  - id: export
+    type: recall
+    prompt: 자식 프로세스에 전달할 환경 변수 APP_ENV에 staging 대입
+    answers:
+      - export APP_ENV=staging
+    note: Bash + GNU 도구 기준. 따옴표·연산자를 포함해 표시한 정답 중 하나를 정확히 입력한다
+  - id: substitution
+    type: recall
+    prompt: app.log의 줄바꿈 수를 명령 치환으로 변수 lines에 저장
+    answers:
+      - lines=$(wc -l < project/logs/app.log)
+    note: Bash + GNU 도구 기준. 따옴표·연산자를 포함해 표시한 정답 중 하나를 정확히 입력한다

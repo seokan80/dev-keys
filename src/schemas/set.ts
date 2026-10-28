@@ -34,7 +34,7 @@ export type SceneZone = z.infer<typeof zone>;
 
 const relativePath = z
   .string()
-  .regex(/^[A-Za-z0-9._-]+(?:\/[A-Za-z0-9._-]+)*\/?$/)
+  .regex(/^[A-Za-z0-9._-]+(?: [A-Za-z0-9._-]+)*(?:\/[A-Za-z0-9._-]+(?: [A-Za-z0-9._-]+)*)*\/?$/)
   .refine((path) => !path.split('/').some((part) => part === '.' || part === '..'), '상대 경로에 . · .. 사용 금지');
 /** 실제 이야기 실행 뒤 파일 상태. 디렉터리는 /로 끝나며 기준은 ~/workspace다. */
 export const fileStateSchema = z
@@ -81,6 +81,8 @@ export const copyItemSchema = z
       .optional(),
     /** 명령을 치고 Enter 를 누르면 그 아래에 보여 줄 출력 (터미널 화면) */
     output: z.string().min(1).optional(),
+    /** Shell은 일치 없음 등 의도한 비영 종료 상태도 검증한다. 생략하면 0. */
+    exitCode: z.number().int().min(0).max(255).optional(),
     /** Enter 를 치면 보여 줄 그림 (그림 보기를 켰을 때). 문제 마지막 줄에 붙는다 */
     scene: sceneSchema.optional(),
     fileState: fileStateSchema.optional(),

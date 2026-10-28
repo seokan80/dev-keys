@@ -17,9 +17,13 @@ export function runShellStory(slug: string, root = process.cwd()): ShellStep[] {
     SHELL_CAPTURE="$1/output"
     mkdir "$SHELL_ROOT"
     cd "$SHELL_ROOT" || exit 1
+    SHELL_LAST_STATUS=0
+    restore_status() { return "$1"; }
     step() {
       local status=0
-      eval "$1" > "$SHELL_CAPTURE" 2>&1 || status=$?
+      # 기록용 명령이 바꾼 $?를 복원한 직후 학습 명령을 실행한다.
+      { restore_status "$SHELL_LAST_STATUS"; eval "$1" > "$SHELL_CAPTURE" 2>&1; } || status=$?
+      SHELL_LAST_STATUS=$status
       printf '%s\0' "$1" "$status" "$(cat "$SHELL_CAPTURE")" "$PWD" "$(find "$SHELL_ROOT" -mindepth 1 -printf '%P%y\n')"
     }
     source "$2"
@@ -70,7 +74,8 @@ export function checkShellStory(set: ContentSet, root = process.cwd()): string[]
     if (!step) return;
     const label = `${set.id}/${line.itemId}`;
     if (line.text !== step.command) problems.push(`${label}: 이야기 명령과 다름`);
-    if (step.status !== 0) problems.push(`${label}: 종료 상태 ${step.status}`);
+    if (step.status !== (line.exitCode ?? 0))
+      problems.push(`${label}: 종료 상태 ${step.status} (기대 ${line.exitCode ?? 0})`);
     if ((line.output ?? '') !== step.output) problems.push(`${label}: 실제 출력과 다름`);
     if (
       line.fileState?.cwd !== step.cwd ||
